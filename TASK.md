@@ -189,7 +189,7 @@ Full plan: `~/.claude/plans/now-remove-the-stale-delightful-seahorse.md`
 | AC3 | Met | test_worker.py: bed census + check-in, 900m geofence flag verified. |
 | AC4 | Honestly unmet, reported not hidden | eval/reports/runs.jsonl real run: naive 1.077 vs lgbm 1.110 WAPE. |
 | AC5 | Met | test_calibration.py: isotonic calibration verified not to worsen Brier on validation. |
-| AC6 | **Not met** (found 2026-09-19) | eval/run_replay.py never calls the solver, uses same-week hindsight with no quantity limit, and with its default empty district map scores identically to baseline (53,305 vs 53,305). The earlier 'Met' was wrong. |
+| AC6 | Met on its declared metric, with caveats (2026-09-19) | Rebuilt replay (eval/replay_sim.py, common random numbers). Test window: stock-out weeks 10,774 -> 10,131 (-6.0%); unmet units +0.25% (spreads, doesn't add supply); 14,815 transfers in 26 weeks. The earlier 'Met' on the old replay was wrong: it never called the solver. |
 | AC7 | Met, verified structurally + behaviorally | test_tools.py: no approve/send/write tool exists; real prompt-injection fixture produces zero messaging calls. |
 | AC8 | Met | test_alerts.py: signed order, translated text+voice to both facilities. |
 | AC9 | Met | test_federated.py: fit() return-type whitelist, Meghalaya excluded from training, DP noise statistically verified. |
@@ -264,3 +264,10 @@ Real click-through (Playwright Chromium; the in-app browser pane refused localho
 - Text reports wrote fuzzy name matches at full confidence ("IFA" -> rifampicin, "xyz" -> gonadotropin). The match score is now the drug field's confidence, so anything under the 0.85 gate becomes a confirmation card. Plain "IFA" is ambiguous across four products and deliberately not an alias.
 - Re-sealed: 15a895a0... -> 49ddeae9... (the seal refused the unforced run, as designed). Real-HMIS forecasting and federation runs do not use the synthetic ledger and are unaffected. Facility-week comparison re-measured (same candidates, no tuning): naive 0.220, LightGBM residual-on-median3 0.239, median-of-3 0.256, LightGBM direct 0.307. Naive still wins.
 - While checking what the re-seal made stale, found AC6's replay is a no-op (see acceptance table).
+
+## AC6 replay rebuilt (2026-09-19), user chose "rebuild"
+- eval/replay_sim.py re-implements the generator's ledger dynamics with all hidden events pre-drawn (seed+7), so both arms face identical demand/shocks/delays/leakage. Sanity: no-transfer dispensed over the dev window 27.09M vs 26.93M in the sealed ledger (0.6%).
+- Policy sees only reported dispensed + closing stock (last 8 weeks) and current on-hand; scoring uses true shocked demand.
+- Dev window (26 weeks before test), stock-out weeks vs 29,281 status quo: legacy rule +291; cover_weeks 1: -263 (unmet -1.20%); 2: -411 (unmet -0.25%); 3: -215; 4: -17. Picked 2 by AC6's declared metric (stock-out days), not unmet units.
+- Test window, scored once (runs.jsonl): stock-out weeks 10,774 -> 10,131 (-6.0%); unmet units 9,580,662 -> 9,604,262 (+0.25%); 14,815 transfers, 1.26M units moved; expired 0 both arms (shelf life 104 weeks exceeds the window).
+- Honest reading: redistribution spreads a structural shortage (fill rate ~68%) across more facilities; it does not reduce total shortfall, and the transfer volume is operationally heavy. A minimum transfer size or batching per route would be the next thing to try, on dev only.

@@ -82,7 +82,7 @@ uv run python -m eval.seal_generator     # regenerates data/synthetic/*.parquet,
 
 ```bash
 uv run python -m eval.run_final           # real-HMIS frozen test: LightGBM vs naive baselines
-uv run python -m eval.run_replay          # solver-assisted vs monthly-indent stock-out replay
+uv run python -m eval.run_replay          # solver vs no-transfer status quo, frozen synthetic test window
 uv run python -m eval.run_federated_eval  # local-only vs federated vs centralised (Meghalaya)
 ```
 
@@ -103,10 +103,15 @@ numbers behind these headlines):
   training weeks naive scores WAPE 0.220 vs 0.239 for the best LightGBM variant (residual on
   median-of-3) and 0.307 for the monthly model's settings, so the app uses whichever measured best at its
   grain. (Re-measured after the drug-mapping re-seal; the pre-seal numbers were 0.243 / 0.255 / 0.397.)
-- **Stock-out replay (AC6) is not a real result yet.** `eval/run_replay.py` never calls the solver,
-  credits a shortfall as covered if any district facility had surplus that same week (hindsight, no
-  quantity limit), and by default has no district mapping, so both policies score identically (53,305
-  stock-out weeks each).
+- Stock-out replay (AC6, synthetic Nashik ledger, frozen 26-week test window, 760 facilities x 16
+  items): weekly solver transfers cut facility-weeks with a stock-out from **10,774 to 10,131 (-6.0%)**
+  versus no lateral transfers. Total unmet demand does not fall (+0.25%): redistribution spreads scarce
+  stock so fewer facilities run dry, it does not add supply, and fill rate is about 68% either way.
+  It took 14,815 transfers (about 570 a week), too many to approve one by one. Both arms run through
+  `eval/replay_sim.py` with identical pre-drawn demand, shocks and delays; the solver sees only
+  reported history. `cover_weeks=2` was chosen on the 26 weeks before the test window
+  (`eval/tune_replay.py`); the old donor rule made stock-outs worse there (+291 weeks). The previous
+  replay never called the solver and scored identically to baseline.
 
 ## Testing
 

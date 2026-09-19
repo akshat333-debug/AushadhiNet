@@ -10,6 +10,9 @@ from fastapi.testclient import TestClient
 
 from backend.app import create_app
 
+pytest.importorskip("firebase_admin", reason="cloud-mode tests need the gcp extra")
+pytest.importorskip("google.cloud.firestore", reason="cloud-mode tests need the gcp extra")
+
 SA = "pubsub-push@proj.iam.gserviceaccount.com"
 
 

@@ -14,7 +14,7 @@ git clone -q "$REPO" "$WORK/clone"
 cd "$WORK/clone"
 
 echo "== 1. backend setup =="
-uv sync --extra ml --extra dev
+uv sync --extra ml --extra dev --extra gcp  # gcp so the cloud-mode tests run too
 cp .env.example .env
 uv run python -m eval.seal_generator
 

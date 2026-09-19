@@ -8,7 +8,6 @@ Pub/Sub pushes each message to backend/api/pubsub_push.py.
 from __future__ import annotations
 
 import logging
-import uuid
 from datetime import datetime, timezone
 from functools import lru_cache
 

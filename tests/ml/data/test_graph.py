@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 
 from backend.domain import Facility, FacilityType
-from ml.data.graph import CACHE_DIR, HaversineProvider, drive_matrix
+from ml.data.graph import HaversineProvider, drive_matrix
 
 
 def _facs():

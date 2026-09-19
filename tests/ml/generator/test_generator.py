@@ -4,7 +4,6 @@ from __future__ import annotations
 from datetime import date
 
 import pandas as pd
-import pytest
 
 from backend.domain import Drug, Facility, FacilityType
 from ml.generator import generate

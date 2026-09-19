@@ -36,11 +36,12 @@ Placeholders live in `.env.example` (`GCP_PROJECT=REPLACE_ME`, etc.). No other f
 ## 3. Repository layout
 ```
 backend/            FastAPI app
-  api/              routes: webhooks (twilio, ivr, simulator), officer, public
+  runtime.py        inbound-message routing, contacts registry, risk helpers, draft proposals; local seeding
+  api/              routes: webhooks (twilio, ivr), simulator (local only), officer, public, agent, pubsub push (cloud)
   providers/        speech, llm, embed, translate, tts, store_live, store_history, queue, sign, messaging
   ingest/           extraction schemas, confidence gate, NLEM matcher, confirmation cards
-  domain/           Pydantic models: Facility, StockRecord, BedCensus, CheckIn, Forecast, TransferOrder
-  agent/            ADK agent, tools (read-only + propose_order), audit log
+  domain/           Pydantic models: Facility, Contact, StockRecord, BedCensus, CheckIn, Forecast, TransferOrder
+  agent/            agent, jurisdiction-checked tools (reads + draft-only proposals), audit log
   action/           order signing, alerts, escalation ladder
 ml/
   generator/        SEALED synthetic ledger (stock/beds/attendance) — nothing else may import it
@@ -48,21 +49,21 @@ ml/
   forecast/         baselines, croston, lgbm, timesfm, ensemble, calibration, reconcile
   optimize/         min-cost-flow transfers, deputation, referral
   federated/        flower client/server, fedprox + DP, experiments
-eval/               protocol.lock (splits, seeds, generator hash), runners, reports
+eval/               protocol.lock (splits, seeds, generator hash), tuning (val/dev only), scoring runners, replay simulator, reports
 frontend/           Next.js app
 infra/              docker-compose.yml, Dockerfiles, terraform/ (state module), cloudbuild.yaml
 tests/              mirrors packages; e2e/ (Playwright)
-data/               README + manifest (raw/ is gitignored)
+data/               README, manifest and raw/ (open-licence source files, committed); synthetic/ is built, not committed
 docs/               review1/ + api docs
 ```
 
 ## 4. Data flow (Input → Processing → Store → ML → Output)
-1. WhatsApp message → Twilio → `POST /webhooks/twilio` (signature verified) → 200 returned immediately → message queued.
-2. Worker: media is downloaded (type and size checked) → Chirp for audio or Gemini for images → a `StockRecord` / `BedCensus` / `CheckIn` with a confidence value per field.
+1. WhatsApp message → Twilio → `POST /webhooks/twilio` (signature verified) → 200 returned immediately → message queued. The local web simulator posts to the same entry point.
+2. Worker (cloud: Pub/Sub pushes to `/internal/pubsub/ingest`, OIDC-verified; local: in-process queue): sender looked up in the contacts registry → media is downloaded (type and size checked) → Chirp for audio or Gemini for images → a `StockRecord` / `BedCensus` / `CheckIn` with a confidence value per field.
 3. Confidence gate: any field under the threshold (default 0.85) → confirmation card sent back → the record stays `pending`. Otherwise it is `confirmed`.
 4. Confirmed record → Firestore (live) + BigQuery (history).
-5. Nightly job, or a trigger on a new record: forecast → stock-out probabilities → the solver proposes orders → orders stored as `draft`.
-6. Officer PWA and agent: queries go through read-only tools; `propose_order` can only create drafts. Only a human click on `POST /orders/{id}/approve` (role checked) moves an order to `approved`.
+5. When an officer clicks "Propose transfers" or asks the agent: next-week forecast from reported history → stock-out probabilities using live stock → the solver proposes transfers (donors keep 2 weeks of cover) → stored as `draft`, replacing the district's earlier drafts. No scheduled job runs this yet.
+6. Officer PWA and agent: queries go through read-only tools; `propose_order` can only create drafts. Only a human click on `POST /officer/orders/{id}/approve` (role and jurisdiction checked against the order's own facilities) moves an order to `approved`.
 7. Approved order → signed → alerts sent in the recipient's language plus a route plan → escalation timer starts → dashboard updates in real time.
 8. Federation (offline job): each state client trains on its own partition → sends clipped, noised updates → Flower server aggregates with FedProx → global model is sent back.
 

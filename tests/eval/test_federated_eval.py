@@ -23,6 +23,7 @@ def test_run_is_logged_to_runs_jsonl(tmp_path):
     assert len(lines) == 1
     logged = json.loads(lines[0])
     assert logged["model"] == "federated_linear_head"
+    assert logged["run_id"] == record["run_id"]
     assert len(logged["metrics"]["arms"]) == 3
     assert "protocol_hash" in logged and "git_sha" in logged
 

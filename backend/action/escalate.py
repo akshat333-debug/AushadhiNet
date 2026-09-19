@@ -6,7 +6,7 @@ the decision logic itself has no dependency on the scheduler.
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from backend.config import get_settings
 from backend.domain import OrderStatus, TransferOrder

@@ -5,7 +5,8 @@ Built for **Build with AI: Code for Communities** (Second Edition), Problem Stat
 
 Full requirements: [project.md](project.md). Architecture and stack: [architecture.md](architecture.md).
 Build plan and file-by-file order: [modular-plan.md](modular-plan.md). Progress log with every bug found
-and fixed along the way: [TASK.md](TASK.md). Original research document: [docs/review1/](docs/review1/).
+and fixed along the way: [TASK.md](TASK.md). Current status and results: [state.md](state.md).
+What is left: [tasklist.md](tasklist.md). Original research document: [docs/review1/](docs/review1/).
 
 ## What it does
 
@@ -116,19 +117,19 @@ numbers behind these headlines):
 ## Testing
 
 ```bash
-uv run pytest -q                          # backend + ml + eval: ~285 tests
+uv run pytest -q                          # backend + ml + eval: ~340 tests
 cd frontend && npx playwright test        # frontend e2e, needs both dev servers (playwright.config.ts starts them)
 ```
 
 ## Project layout
 
 ```
-backend/     FastAPI app: domain models, provider abstractions (local/google), ingest, agent, action, API
+backend/     FastAPI app: domain models, providers (local/google), ingest, agent, action, API, runtime wiring
 ml/          data parsers, sealed synthetic generator, forecasting, optimisation, federated learning
 eval/        the frozen evaluation protocol and every scoring script
 frontend/    Next.js officer PWA, WhatsApp simulator, public transparency view
 infra/       Dockerfiles, docker-compose, Terraform (per-state GCP project), Cloud Build
-data/        provenance, licenses, and the download manifest (raw data itself is gitignored)
+data/        provenance, licences, manifest, and the raw open-licence source files
 docs/        the original Review-1 research document, and API reference
 tests/       mirrors every package above, plus frontend/tests/e2e
 ```
@@ -151,7 +152,7 @@ tests/       mirrors every package above, plus frontend/tests/e2e
 
 - Local-mode state (stock, orders, outbox) is in memory and resets when the backend restarts.
 - Built and tested but not called by the app: the Croston/ensemble forecasters, calibration,
-  hierarchical reconciliation, and `load_weather_all`.
+  and hierarchical reconciliation.
 
 - The 220 handwriting-extraction evaluation images are **programmatically rendered text**, not real
   photographs of handwritten registers (see `scripts/generate_labelled_registers.py`'s docstring). Real

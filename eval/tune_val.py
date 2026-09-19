@@ -8,7 +8,6 @@ params are what ml/forecast/lgbm.py ships as defaults.
 from __future__ import annotations
 
 import lightgbm as lgb
-import numpy as np
 
 from backend.domain import Grain
 from eval.metrics import wape

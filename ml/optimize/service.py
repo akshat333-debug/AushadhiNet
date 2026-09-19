@@ -13,7 +13,7 @@ from backend.domain import Facility, TransferOrder
 from ml.data.graph import drive_matrix
 from ml.forecast.service import latest_forecasts
 from ml.optimize.constraints import SolverConfig
-from ml.optimize import deputation, referral, transfers
+from ml.optimize import transfers
 
 
 def _surplus_deficit_from_forecasts(forecasts, stock_by_facility_drug: dict, cold_chain_by_drug: dict, cold_chain_by_facility: dict, cover_weeks: float | None = None):

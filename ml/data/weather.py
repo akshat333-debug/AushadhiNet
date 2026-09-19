@@ -47,11 +47,3 @@ def load_weather(json_path: pathlib.Path | str | None = None, district_id: str =
     tests): returns one row per day for `district_id`."""
     path = pathlib.Path(json_path) if json_path is not None else _DISTRICT_FILES[district_id]
     return _load_one(path, district_id)
-
-
-def load_weather_all() -> pd.DataFrame:
-    """Every district with a fetched weather file (see _DISTRICT_FILES)."""
-    return pd.concat(
-        [_load_one(path, district_id) for district_id, path in _DISTRICT_FILES.items()],
-        ignore_index=True,
-    )

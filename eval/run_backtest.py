@@ -13,7 +13,7 @@ import pandas as pd
 from backend.domain import Grain
 
 from eval.protocol import Protocol, load_protocol
-from eval.splits import Split, for_grain
+from eval.splits import for_grain
 
 
 class TestWindowAccessError(RuntimeError):

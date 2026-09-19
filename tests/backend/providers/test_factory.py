@@ -5,7 +5,6 @@ import sys
 
 import pytest
 
-import backend.providers.factory as factory_module
 from backend.providers.factory import get
 
 

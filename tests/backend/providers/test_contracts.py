@@ -16,7 +16,7 @@ from backend.providers.messaging_local import LocalMessaging
 from backend.providers.queue_local import LocalQueue
 from backend.providers.routes_local import LocalRouteProvider
 from backend.providers.sign_local import LocalSigner
-from backend.providers.speech_local import FIXTURES_DIR as SPEECH_FIXTURES, LocalSpeechProvider
+from backend.providers.speech_local import LocalSpeechProvider
 from backend.providers.store_history_local import LocalHistoryStore
 from backend.providers.store_live_local import LocalLiveStore
 from backend.providers.translate_local import LocalTranslateProvider

@@ -87,6 +87,9 @@ numbers behind these headlines):
   federated 0.996, centralised 1.000; all about 21% better than lag-1 naive (1.261). Federation
   **ties** local-only, it does not beat it. Chosen on an inner split of train (`eval/tune_federated.py`)
   so this validation number was not tuned against. Earlier raw-space run: 1.122 / 1.182 / 1.336.
+- App forecasts (facility × week, synthetic ledger) use lag-1 naive, not LightGBM. On the last 13
+  training weeks naive scores WAPE 0.243 vs 0.255 for the best LightGBM variant (residual on last
+  week) and 0.397 for the monthly model's settings, so the app uses whichever measured best at its grain.
 
 ## Testing
 

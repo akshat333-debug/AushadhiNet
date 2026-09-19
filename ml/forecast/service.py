@@ -25,10 +25,9 @@ def latest_forecasts(
     panel: pd.DataFrame | None = None,
 ) -> list[Forecast]:
     """Facility x drug demand forecasts at FACILITY_WEEK grain, using
-    seasonal-naive as the production default (the honestly-reported
-    winner on the real frozen test as of the first eval/run_final.py run
-    -- see TASK.md). Swapping in the LightGBM/ensemble registry model is a
-    one-line change here once it earns its place on train/val.
+    lag-1 naive. LightGBM wins at DISTRICT_MONTH grain but loses here
+    (last 13 train weeks: naive 0.243 WAPE, best LightGBM variant 0.255),
+    see TASK.md.
     """
     panel = panel if panel is not None else build_panel(Grain.FACILITY_WEEK)
     subset = panel[panel["facility_id"].isin(facility_ids) & panel["drug_id"].isin(drug_ids)]

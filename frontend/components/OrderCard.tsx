@@ -24,11 +24,14 @@ export default function OrderCard({
         </span>
       </div>
       <p className="mt-1 text-sm">
-        {order.from_facility_id} &rarr; {order.to_facility_id}
+        <a className="underline" href={`/facility/${order.from_facility_id}`}>{order.from_facility_id}</a> &rarr;{" "}
+        <a className="underline" href={`/facility/${order.to_facility_id}`}>{order.to_facility_id}</a>
         {order.drug_id && ` (${order.drug_id} x${order.quantity})`}
       </p>
       <p className="text-xs text-gray-500">{order.rationale}</p>
-      <p className="text-xs text-gray-400">{order.drive_minutes.toFixed(0)} min drive</p>
+      <p className="text-xs text-gray-400">
+        {order.drive_minutes < 1 ? "Same coordinates in the facility directory (co-located)" : `${order.drive_minutes.toFixed(0)} min drive`}
+      </p>
       {order.status === "draft" && (
         <div className="mt-2 flex gap-2">
           <button

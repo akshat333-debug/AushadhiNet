@@ -24,7 +24,8 @@ def probability(forecast_df: pd.DataFrame, current_stock_df: pd.DataFrame, join_
     z_span = stats.norm.ppf(0.9) - stats.norm.ppf(0.1)
     sigma = ((df["p90"] - df["p10"]) / z_span).clip(lower=1e-6)
 
-    df["stockout_prob"] = 1.0 - stats.norm.cdf(df["on_hand"], loc=df["p50"], scale=sigma)
+    # Demand is whole units: running out means demand >= on_hand + 1, so evaluate at on_hand + 0.5.
+    df["stockout_prob"] = 1.0 - stats.norm.cdf(df["on_hand"] + 0.5, loc=df["p50"], scale=sigma)
     df["stockout_prob"] = df["stockout_prob"].clip(0.0, 1.0)
     return df
 
@@ -36,5 +37,5 @@ def is_monotone_in_stock(forecast_row: pd.Series, stock_levels: np.ndarray) -> b
     z_span = stats.norm.ppf(0.9) - stats.norm.ppf(0.1)
     sigma = max((forecast_row["p90"] - forecast_row["p10"]) / z_span, 1e-6)
     for stock in stock_levels:
-        probs.append(1.0 - stats.norm.cdf(stock, loc=forecast_row["p50"], scale=sigma))
+        probs.append(1.0 - stats.norm.cdf(stock + 0.5, loc=forecast_row["p50"], scale=sigma))
     return all(a >= b - 1e-9 for a, b in zip(probs, probs[1:]))

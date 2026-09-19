@@ -35,3 +35,32 @@ async def simulator_message(msg: SimulatorMessage) -> dict:
         message_sid=msg.message_id,
     )
     return {"status": "queued"}
+
+
+def _local_only() -> None:
+    from fastapi import HTTPException
+    from backend.config import get_settings
+    if get_settings().mode != "local":
+        raise HTTPException(404, "simulator endpoints exist only in local mode")
+
+
+@router.get("/contacts")
+def simulator_contacts(limit: int = 25) -> list[dict]:
+    """Pilot-district facilities with their dev WhatsApp numbers, for the simulator's sender picker."""
+    _local_only()
+    from backend.local_runtime import PILOT_DISTRICT, phone_for_facility
+    from ml.data.facilities import facility_index
+    facilities = [f for f in facility_index().values() if f.district_id == PILOT_DISTRICT][:limit]
+    return [{"facility_id": f.facility_id, "name": f.name, "phone": phone_for_facility(f.facility_id)} for f in facilities]
+
+
+@router.get("/outbox")
+def simulator_outbox(phone: str) -> list[dict]:
+    """Replies the local messaging provider 'sent' to one number (what WhatsApp would deliver)."""
+    _local_only()
+    from backend.providers import factory
+    sent = factory.get("messaging").sent
+    return [
+        {"seq": i, "kind": m.kind, "body": "[voice note]" if m.kind == "media" else m.body, "buttons": m.extra.get("buttons", [])}
+        for i, m in enumerate(sent) if m.to == phone
+    ]

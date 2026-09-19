@@ -5,6 +5,8 @@ built.
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -14,8 +16,16 @@ from backend.config import get_settings
 from backend.providers.base import ProviderError
 
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    if get_settings().mode == "local":
+        from backend.local_runtime import start
+        start()
+    yield
+
+
 def create_app() -> FastAPI:
-    app = FastAPI(title="AushadhiNet API")
+    app = FastAPI(title="AushadhiNet API", lifespan=_lifespan)
 
     # Explicit origin allow-list, never a wildcard: the Next.js frontend
     # runs on a different origin (localhost:3000) than the API

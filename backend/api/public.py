@@ -1,6 +1,6 @@
 """Public transparency view (modular-plan.md §5.5, project.md §4's public
-role): aggregate district stock-out days only, no facility-level
-identifiers -- what distinguishes this from a monitoring dashboard leak.
+role): aggregate district counts only, no facility-level identifiers --
+what distinguishes this from a monitoring dashboard leak.
 """
 from __future__ import annotations
 
@@ -8,38 +8,35 @@ from collections import defaultdict
 
 from fastapi import APIRouter
 
-from backend.domain import RecordStatus
-from backend.providers import factory
 
 router = APIRouter(prefix="/public", tags=["public"])
 
 
 @router.get("/district-summary")
 def district_summary() -> list[dict]:
-    """Returns one row per district: stock-out-risk facility count
-    (aggregated), never a facility ID, name, or address."""
-    live = factory.get("store_live")
-    records = live.query("stock_records", {"status": RecordStatus.CONFIRMED})
+    """One row per district: facilities reporting, facilities with any drug
+    under one week of cover (latest report per drug), and the same count per
+    drug. Never emits a facility ID, name or address."""
+    from backend.local_runtime import below_cover, latest_records
+    from ml.data.facilities import facility_index
+    index = facility_index()
 
-    # facility_id -> district_id would normally come from the facility
-    # directory; this endpoint only ever emits the district_id, never
-    # the facility_id it was derived from.
-    from ml.data.facilities import load_facilities
-    facility_district = {f.facility_id: f.district_id for f in load_facilities()}
+    latest = latest_records()
 
-    at_risk_by_district: dict[str, int] = defaultdict(int)
-    total_by_district: dict[str, int] = defaultdict(int)
-    LOW_STOCK_THRESHOLD = 5
-
-    for record in records:
-        district_id = facility_district.get(record.facility_id)
-        if district_id is None:
+    reporting: dict[str, set] = defaultdict(set)
+    at_risk: dict[str, set] = defaultdict(set)
+    by_drug: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    for (facility_id, drug_id), record in latest.items():
+        facility = index.get(facility_id)
+        if facility is None:
             continue
-        total_by_district[district_id] += 1
-        if record.on_hand <= LOW_STOCK_THRESHOLD:
-            at_risk_by_district[district_id] += 1
+        reporting[facility.district_id].add(facility_id)
+        if below_cover(record):
+            at_risk[facility.district_id].add(facility_id)
+            by_drug[facility.district_id][drug_id] += 1
 
     return [
-        {"district_id": district_id, "facilities_reporting": total, "facilities_at_risk": at_risk_by_district.get(district_id, 0)}
-        for district_id, total in sorted(total_by_district.items())
+        {"district_id": d, "facilities_reporting": len(f), "facilities_at_risk": len(at_risk[d]),
+         "at_risk_by_drug": dict(sorted(by_drug[d].items(), key=lambda kv: -kv[1]))}
+        for d, f in sorted(reporting.items())
     ]

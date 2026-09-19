@@ -6,53 +6,56 @@ is its first real caller).
 from __future__ import annotations
 
 import uuid
-from datetime import date
 
-import numpy as np
 import pandas as pd
 
 from backend.domain import Forecast, Grain
 
 from ml.data.panel import build as build_panel
-from ml.forecast.baselines import seasonal_naive
 from ml.forecast.stockout import probability as stockout_probability
 
 
 def latest_forecasts(
     facility_ids: list[str],
     drug_ids: list[str],
-    horizon_weeks: int = 4,
+    horizon_weeks: int = 1,
     panel: pd.DataFrame | None = None,
+    on_hand: dict[tuple[str, str], float] | None = None,
 ) -> list[Forecast]:
-    """Facility x drug demand forecasts at FACILITY_WEEK grain, using
-    lag-1 naive. LightGBM wins at DISTRICT_MONTH grain but loses here
+    """Next-week facility x drug demand forecasts at FACILITY_WEEK grain,
+    using lag-1 naive. LightGBM wins at DISTRICT_MONTH grain but loses here
     (last 13 train weeks: naive 0.243 WAPE, best LightGBM variant 0.255),
-    see TASK.md.
+    see TASK.md. `on_hand` overrides the ledger's closing stock with live
+    reports when given, so a new WhatsApp report changes the risk.
     """
     panel = panel if panel is not None else build_panel(Grain.FACILITY_WEEK)
-    subset = panel[panel["facility_id"].isin(facility_ids) & panel["drug_id"].isin(drug_ids)]
+    subset = panel[panel["facility_id"].isin(facility_ids) & panel["drug_id"].isin(drug_ids)].sort_values("week")
+    grouped = subset.groupby(["facility_id", "drug_id"])
+    stats = grouped.agg(
+        n=("dispensed", "size"), p50=("dispensed", "last"),
+        spread=("dispensed", lambda s: s.iloc[-8:].std(ddof=0)),
+        ledger_on_hand=("on_hand_close", "last"), origin=("week", "max"),
+    ).reset_index()
+    stats = stats[stats["n"] >= 2]
+    if stats.empty:
+        return []
 
-    forecasts: list[Forecast] = []
-    for (facility_id, drug_id), group in subset.groupby(["facility_id", "drug_id"]):
-        group = group.sort_values("week")
-        history = group["dispensed"].to_numpy()
-        if len(history) < 2:
-            continue
-        p50 = float(seasonal_naive(pd.Series(history), horizon=1, season_length=1)[0])
-        spread = max(float(np.std(history[-8:])), 1.0)
-        p10, p90 = max(0.0, p50 - 1.2816 * spread), p50 + 1.2816 * spread
+    stats["spread"] = stats["spread"].fillna(0.0)
+    stats["p10"] = (stats["p50"] - 1.2816 * stats["spread"]).clip(lower=0.0)
+    stats["p90"] = stats["p50"] + 1.2816 * stats["spread"]
+    live = on_hand or {}
+    stats["on_hand"] = [live.get((f, d), l) for f, d, l in zip(stats["facility_id"], stats["drug_id"], stats["ledger_on_hand"])]
+    probs = stockout_probability(
+        stats.rename(columns={"facility_id": "entity_id"})[["entity_id", "drug_id", "p10", "p50", "p90"]],
+        stats.rename(columns={"facility_id": "entity_id"})[["entity_id", "drug_id", "on_hand"]],
+    )["stockout_prob"].to_numpy()
 
-        on_hand = float(group["on_hand_close"].iloc[-1])
-        prob_df = stockout_probability(
-            pd.DataFrame([{"entity_id": facility_id, "drug_id": drug_id, "p10": p10, "p50": p50, "p90": p90}]),
-            pd.DataFrame([{"entity_id": facility_id, "drug_id": drug_id, "on_hand": on_hand}]),
-        )
-        stockout_prob = float(prob_df.iloc[0]["stockout_prob"])
-
-        forecasts.append(Forecast(
-            forecast_id=str(uuid.uuid4()), grain=Grain.FACILITY_WEEK, entity_id=facility_id,
-            drug_id=drug_id, origin_date=group["week"].max().date(), horizon=horizon_weeks,
-            p50=p50, p10=p10, p90=p90, stockout_prob=stockout_prob,
+    return [
+        Forecast(
+            forecast_id=str(uuid.uuid4()), grain=Grain.FACILITY_WEEK, entity_id=row.facility_id,
+            drug_id=row.drug_id, origin_date=row.origin.date(), horizon=horizon_weeks,
+            p50=float(row.p50), p10=float(row.p10), p90=float(row.p90), stockout_prob=float(prob),
             model="seasonal_naive", model_version="0.1", features_hash="n/a",
-        ))
-    return forecasts
+        )
+        for row, prob in zip(stats.itertuples(), probs)
+    ]

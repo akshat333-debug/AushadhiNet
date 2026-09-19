@@ -5,6 +5,7 @@ os.environ (architecture.md §2) -- callers pass the CSV path explicitly.
 from __future__ import annotations
 
 import pathlib
+from functools import lru_cache
 
 import pandas as pd
 
@@ -90,3 +91,9 @@ def load_facilities(
             )
         )
     return facilities
+
+
+@lru_cache(maxsize=1)
+def facility_index() -> dict[str, Facility]:
+    """Every facility in the national directory, keyed by facility_id. Loaded once per process."""
+    return {f.facility_id: f for f in load_facilities()}

@@ -57,3 +57,17 @@ def test_use_cache_false_bypasses_cache(tmp_path):
 
     drive_matrix(facs, provider=CountingProvider(), cache_dir=tmp_path, use_cache=False)
     assert calls["n"] > 0
+
+
+def test_cache_respects_facility_order(tmp_path):
+    """Regression: the cache key used sorted IDs while the matrix is indexed in call order,
+    so a second call with the same facilities in another order read transposed rows."""
+    from backend.domain import Facility, FacilityType
+    from ml.data.graph import drive_matrix
+    a = Facility(facility_id="A", name="a", state_code="MH", district_id="mh/x", facility_type=FacilityType.PHC, lat=19.0, lon=73.0)
+    b = Facility(facility_id="B", name="b", state_code="MH", district_id="mh/x", facility_type=FacilityType.PHC, lat=19.5, lon=73.0)
+    c = Facility(facility_id="C", name="c", state_code="MH", district_id="mh/x", facility_type=FacilityType.PHC, lat=20.5, lon=73.0)
+    forward = drive_matrix([a, b, c], cache_dir=tmp_path)
+    reverse = drive_matrix([c, b, a], cache_dir=tmp_path)
+    assert reverse[0][1] == forward[2][1]  # C->B in both orders
+    assert reverse[0][2] == forward[2][0]  # C->A in both orders

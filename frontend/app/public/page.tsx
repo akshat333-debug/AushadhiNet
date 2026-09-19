@@ -11,13 +11,17 @@ import { api, DistrictSummaryRow } from "@/lib/api";
 export default function PublicPage() {
   const [rows, setRows] = useState<DistrictSummaryRow[]>([]);
 
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
-    api.districtSummary().then(setRows).catch(() => setRows([]));
+    api.districtSummary().then(setRows).catch((e) => setError((e as Error).message));
   }, []);
 
   return (
     <div className="mx-auto max-w-lg">
       <h1 className="mb-4 text-xl font-semibold">Public Transparency View</h1>
+      <p className="mb-3 text-sm text-gray-500">Facilities with at least one medicine under one week of cover. No facility is named.</p>
+      {error && <p className="mb-2 text-sm text-red-600">Could not load: {error}</p>}
       <table className="w-full border-collapse text-sm" data-testid="public-table">
         <thead>
           <tr className="border-b text-left">

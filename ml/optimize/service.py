@@ -38,6 +38,7 @@ def propose(
     cold_chain_by_drug: dict[str, bool],
     stock_by_facility_drug: dict[tuple[str, str], float],
     cfg: SolverConfig | None = None,
+    panel: pd.DataFrame | None = None,
 ) -> list[TransferOrder]:
     """Forecast-driven drug transfer proposals for a facility cluster
     (typically one district). Deputation and referral need staffing/bed
@@ -51,7 +52,7 @@ def propose(
     facility_ids = [f.facility_id for f in facilities]
     cold_chain_by_facility = {f.facility_id: f.has_cold_chain for f in facilities}
 
-    forecasts = latest_forecasts(facility_ids, drug_ids)
+    forecasts = latest_forecasts(facility_ids, drug_ids, panel=panel, on_hand=stock_by_facility_drug)
     surplus, deficit = _surplus_deficit_from_forecasts(
         forecasts, stock_by_facility_drug, cold_chain_by_drug, cold_chain_by_facility,
     )

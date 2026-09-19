@@ -25,7 +25,7 @@ def _haversine_m(lat1, lon1, lat2, lon2) -> float:
     return 2 * r_m * math.asin(math.sqrt(a))
 
 
-def handle_stock_message(payload: dict, facility_id: str) -> None:
+def handle_stock_message(payload: dict, facility_id: str):
     """payload: {body, num_media, media_url, media_content_type,
     reporter_phone_hash}. Downloads media if present, extracts, gates,
     and writes confirmed records; pending records get a confirmation card
@@ -56,6 +56,7 @@ def handle_stock_message(payload: dict, facility_id: str) -> None:
 
     if decision.card is not None:
         messaging.send_buttons(payload["from"], decision.card.text, decision.card.buttons)
+    return decision
 
 
 def _download_media(media_url: str, settings) -> bytes:

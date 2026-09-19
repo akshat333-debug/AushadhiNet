@@ -43,14 +43,15 @@ def test_district_summary_returns_district_ids_not_facility_ids():
 def test_district_summary_counts_at_risk_facilities():
     from ml.data.facilities import load_facilities
     facs = load_facilities(state="Maharashtra", district="Nashik")[:2]
-    _seed_record(facs[0].facility_id, "ors", on_hand=2, record_id="r2")   # at risk
-    _seed_record(facs[1].facility_id, "ors", on_hand=500, record_id="r3")  # not at risk
+    _seed_record(facs[0].facility_id, "ors-new-who", on_hand=0, record_id="r2")          # under a week of cover
+    _seed_record(facs[1].facility_id, "ors-new-who", on_hand=1_000_000, record_id="r3")  # well covered
 
     client = TestClient(create_app())
     data = client.get("/public/district-summary").json()
     nashik_row = next(row for row in data if row["district_id"] == "mh/nashik")
-    assert nashik_row["facilities_at_risk"] >= 1
-    assert nashik_row["facilities_reporting"] >= 2
+    assert nashik_row["facilities_at_risk"] == 1
+    assert nashik_row["facilities_reporting"] == 2
+    assert nashik_row["at_risk_by_drug"] == {"ors-new-who": 1}
 
 
 def test_public_endpoint_requires_no_auth():

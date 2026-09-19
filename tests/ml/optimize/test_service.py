@@ -15,7 +15,7 @@ def test_propose_returns_draft_orders_from_end_to_end_forecast(monkeypatch):
                   facility_type=FacilityType.PHC, lat=20.05, lon=73.85),
     ]
 
-    def fake_forecasts(facility_ids, drug_ids, horizon_weeks=4, panel=None):
+    def fake_forecasts(facility_ids, drug_ids, horizon_weeks=1, panel=None, on_hand=None):
         from backend.domain import Forecast, Grain
         return [
             Forecast(forecast_id="f1", grain=Grain.FACILITY_WEEK, entity_id="F1", drug_id="ors",

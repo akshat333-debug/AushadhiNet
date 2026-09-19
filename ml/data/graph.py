@@ -50,7 +50,8 @@ class HaversineProvider:
 
 
 def _cache_key(facilities: list[Facility], provider: DriveTimeProvider) -> str:
-    ids = ",".join(sorted(f.facility_id for f in facilities))
+    # Order matters: the cached matrix is indexed in the caller's facility order.
+    ids = ",".join(f.facility_id for f in facilities)
     provider_tag = f"{type(provider).__name__}:{getattr(provider, 'avg_speed_kmh', '')}"
     return hashlib.sha256(f"{ids}|{provider_tag}".encode()).hexdigest()[:24]
 

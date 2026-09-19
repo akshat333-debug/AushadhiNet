@@ -1,61 +1,108 @@
 "use client";
 /**
- * Order queue with approve/reject (modular-plan.md step 42, AC7/AC8's
- * human gate). Approving/rejecting calls backend/api/officer.py, which is
- * the only path that can move an order past `draft`.
+ * Order queue (AC7/AC8's human gate). "Propose transfers" runs the solver
+ * and saves drafts; approving calls backend/api/officer.py, the only path
+ * that can move an order past `draft`, which also sends the WhatsApp and
+ * voice alerts to both facilities.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import OrderCard from "@/components/OrderCard";
 import { api, TransferOrder } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 
-const DISTRICT_ID = "mh/nashik"; // pilot district (project.md)
+const PILOT_DISTRICT = "mh/nashik";
 
 export default function OrdersPage() {
+  const { user, ready } = useAuth();
   const [orders, setOrders] = useState<TransferOrder[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { user, ready } = useAuth();
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState<"draft" | "all">("draft");
 
-  async function refresh() {
+  const districtId = user && user.jurisdiction.includes("/") ? user.jurisdiction : PILOT_DISTRICT;
+
+  const refresh = useCallback(async () => {
     try {
-      const data = await api.listOrders(DISTRICT_ID);
-      setOrders(data);
+      setOrders(await api.listOrders(districtId));
       setError(null);
     } catch (err) {
       setError((err as Error).message);
     }
-  }
+  }, [districtId]);
 
   useEffect(() => {
-    refresh();
-  }, []);
+    if (user) refresh();
+  }, [user, refresh]);
 
-  async function handleApprove(id: string) {
-    await api.approveOrder(id, DISTRICT_ID);
-    await refresh();
+  async function act(label: string, fn: () => Promise<unknown>) {
+    setBusy(true);
+    setNotice(null);
+    try {
+      await fn();
+      await refresh();
+    } catch (err) {
+      setError(`${label}: ${(err as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
   }
 
-  async function handleReject(id: string) {
-    await api.rejectOrder(id, DISTRICT_ID);
-    await refresh();
-  }
-
-  if (!ready) {
-    return null; // avoid a hydration mismatch flash before the client auth check runs
-  }
+  if (!ready) return null;
   if (!user) {
-    return <p className="text-sm text-gray-500">Sign in as a block/district/state officer to view orders.</p>;
+    return <p className="text-sm text-gray-500">Sign in as a block, district or state officer (top right) to view orders.</p>;
   }
+
+  const shown = filter === "draft" ? orders.filter((o) => o.status === "draft") : orders;
 
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="mb-4 text-xl font-semibold">Transfer Orders — {DISTRICT_ID}</h1>
+      <h1 className="mb-4 text-xl font-semibold">Transfer Orders — {districtId}</h1>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <button
+          className="rounded bg-blue-600 px-3 py-1 text-sm text-white disabled:opacity-50"
+          disabled={busy}
+          data-testid="propose"
+          onClick={() =>
+            act("Propose", async () => {
+              const drafts = await api.proposeOrders(districtId);
+              setNotice(`${drafts.length} draft transfer(s) proposed.`);
+            })
+          }
+        >
+          {busy ? "Working…" : "Propose transfers"}
+        </button>
+        {user.role === "state" && (
+          <button
+            className="rounded border px-3 py-1 text-sm disabled:opacity-50"
+            disabled={busy}
+            onClick={() =>
+              act("Escalation", async () => {
+                const escalated = await api.runEscalation();
+                setNotice(`${escalated.length} overdue order(s) escalated.`);
+              })
+            }
+          >
+            Run escalation check
+          </button>
+        )}
+        <select className="ml-auto rounded border px-1 py-0.5 text-sm" value={filter} onChange={(e) => setFilter(e.target.value as "draft" | "all")}>
+          <option value="draft">Drafts</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+      {notice && <p className="mb-2 text-sm text-green-700" data-testid="notice">{notice}</p>}
       {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
       <div className="space-y-3" data-testid="order-list">
-        {orders.map((order) => (
-          <OrderCard key={order.order_id} order={order} onApprove={handleApprove} onReject={handleReject} />
+        {shown.map((order) => (
+          <OrderCard
+            key={order.order_id}
+            order={order}
+            onApprove={(id) => act("Approve", () => api.approveOrder(id))}
+            onReject={(id) => act("Reject", () => api.rejectOrder(id))}
+          />
         ))}
-        {orders.length === 0 && !error && <p className="text-sm text-gray-500">No orders yet.</p>}
+        {shown.length === 0 && !error && <p className="text-sm text-gray-500">No {filter === "draft" ? "draft " : ""}orders yet.</p>}
       </div>
     </div>
   );

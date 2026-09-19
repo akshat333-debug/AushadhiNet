@@ -27,7 +27,7 @@ Requires: Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 20+.
 uv sync --extra ml --extra dev    # add --extra gcp only for cloud mode
 cp .env.example .env               # defaults are all local-mode; no keys needed
 uv run python -m eval.seal_generator   # rebuilds data/synthetic/, fails if hash != protocol.lock
-uv run pytest -q                   # ~300 tests, a few minutes
+uv run pytest -q                   # ~320 tests, a few minutes
 uv run uvicorn backend.app:app --reload --port 8000
 
 # 2. Frontend (separate terminal)
@@ -36,8 +36,20 @@ npm install
 npm run dev                        # http://localhost:3000
 ```
 
-Open `http://localhost:3000/sim` to try the WhatsApp simulator, `/orders` to see the officer approval
-queue, `/agent` to ask the officer agent a question, and `/public` for the public transparency view.
+On startup (local mode) the backend seeds Nashik's 760 facilities with the latest week of the sealed
+synthetic ledger and gives each a dev WhatsApp number. Demo walkthrough at `http://localhost:3000`:
+
+1. **Simulator** (`/sim`): pick a facility, send `ORS 0`. The reply confirms what was recorded.
+2. **Sign in** (top right): "District officer, Nashik".
+3. **Dashboard**: India → Maharashtra → Nashik → a facility shows live stock, next-week demand and
+   stock-out risk. Alerts list drugs under one week of cover.
+4. **Agent** (`/agent`): "Which facilities are at risk?", "Why is MH-0000221 at risk for ORS?",
+   "Propose transfers" (drafts only).
+5. **Orders** (`/orders`): Propose transfers, approve one. Both facilities get a WhatsApp text and
+   voice note, visible in the simulator's outbox for that facility.
+6. Sign in as "District officer, Dhule" and try the same facility: refused, in the UI and in the agent.
+
+`/public` is the no-login transparency view (district counts only).
 
 ### Docker
 
@@ -126,6 +138,14 @@ tests/       mirrors every package above, plus frontend/tests/e2e
   of bugs found and fixed along the way, and the current forecasting/federation results above.
 
 ## What's not done yet
+
+- **Drug mapping in the synthetic ledger is loose.** `ml/data/drugs.py` matches HMIS items to NLEM
+  entries by substring, so "Calcium Tablets" became `calcium-gluconate` (an injection) and "Blood
+  Transfusion sets" became `b`. Fixing it changes the sealed generator's output and needs a re-seal.
+  The "IFA" text report also resolves to `rifampicin`.
+- Local-mode state (stock, orders, outbox) is in memory and resets when the backend restarts.
+- Built and tested but not called by the app: the Croston/ensemble forecasters, calibration,
+  hierarchical reconciliation, and `load_weather_all`.
 
 - The 220 handwriting-extraction evaluation images are **programmatically rendered text**, not real
   photographs of handwritten registers (see `scripts/generate_labelled_registers.py`'s docstring). Real

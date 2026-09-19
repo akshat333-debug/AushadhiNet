@@ -26,7 +26,14 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, { ...init, headers });
   if (!response.ok) {
     const body = await response.text();
-    throw new ApiError(response.status, body || response.statusText);
+    let message = body || response.statusText;
+    try {
+      const detail = JSON.parse(body).detail;
+      if (typeof detail === "string") message = detail;
+    } catch {
+      /* not JSON: keep the raw text */
+    }
+    throw new ApiError(response.status, message);
   }
   const contentType = response.headers.get("content-type") || "";
   return (contentType.includes("application/json") ? response.json() : response.text()) as Promise<T>;
@@ -49,14 +56,63 @@ export interface DistrictSummaryRow {
   district_id: string;
   facilities_reporting: number;
   facilities_at_risk: number;
+  at_risk_by_drug: Record<string, number>;
+}
+
+export interface Contact {
+  facility_id: string;
+  name: string;
+  phone: string;
+}
+
+export interface OutboxMessage {
+  seq: number;
+  kind: string;
+  body: string;
+  buttons: string[];
+}
+
+export interface FacilitySummary {
+  facility_id: string;
+  name: string;
+  block: string | null;
+  type: string;
+  at_risk: boolean;
+}
+
+export interface StockRow {
+  drug_id: string;
+  on_hand: number;
+  as_of_date: string;
+  status: string;
+  reporter_phone_hash: string;
+}
+
+export interface ForecastRow {
+  drug_id: string;
+  p10: number;
+  p50: number;
+  p90: number;
+  stockout_prob: number;
+  horizon: number;
+}
+
+export interface FacilityDetail {
+  facility: { facility_id: string; name: string; district_id: string; block: string | null; facility_type: string };
+  stock: StockRow[];
+  forecasts: ForecastRow[];
 }
 
 export const api = {
   listOrders: (districtId: string) => request<TransferOrder[]>(`/officer/orders/${districtId}`),
-  approveOrder: (orderId: string, districtId: string) =>
-    request<TransferOrder>(`/officer/orders/${orderId}/approve?district_id=${encodeURIComponent(districtId)}`, { method: "POST" }),
-  rejectOrder: (orderId: string, districtId: string) =>
-    request<TransferOrder>(`/officer/orders/${orderId}/reject?district_id=${encodeURIComponent(districtId)}`, { method: "POST" }),
+  approveOrder: (orderId: string) => request<TransferOrder>(`/officer/orders/${orderId}/approve`, { method: "POST" }),
+  rejectOrder: (orderId: string) => request<TransferOrder>(`/officer/orders/${orderId}/reject`, { method: "POST" }),
+  proposeOrders: (districtId: string) => request<TransferOrder[]>(`/officer/propose/${districtId}`, { method: "POST" }),
+  runEscalation: () => request<TransferOrder[]>("/officer/escalation/sweep", { method: "POST" }),
+  districtFacilities: (districtId: string) => request<FacilitySummary[]>(`/officer/districts/${districtId}/facilities`),
+  facilityDetail: (facilityId: string) => request<FacilityDetail>(`/officer/facility/${encodeURIComponent(facilityId)}`),
+  simulatorContacts: () => request<Contact[]>("/simulator/contacts"),
+  simulatorOutbox: (phone: string) => request<OutboxMessage[]>(`/simulator/outbox?phone=${encodeURIComponent(phone)}`),
   districtSummary: () => request<DistrictSummaryRow[]>("/public/district-summary"),
   simulatorSend: (payload: { from_phone: string; body?: string; media_base64?: string; media_content_type?: string; message_id: string }) =>
     request<{ status: string }>("/simulator/message", { method: "POST", body: JSON.stringify(payload) }),

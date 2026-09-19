@@ -35,12 +35,14 @@ export default function OrdersPage() {
     if (user) refresh();
   }, [user, refresh]);
 
-  async function act(label: string, fn: () => Promise<unknown>) {
+  // The notice is shown only after the list refresh, so it never sits over stale orders.
+  async function act(label: string, fn: () => Promise<string | void>) {
     setBusy(true);
     setNotice(null);
     try {
-      await fn();
+      const message = await fn();
       await refresh();
+      if (message) setNotice(message);
     } catch (err) {
       setError(`${label}: ${(err as Error).message}`);
     } finally {
@@ -66,7 +68,7 @@ export default function OrdersPage() {
           onClick={() =>
             act("Propose", async () => {
               const drafts = await api.proposeOrders(districtId);
-              setNotice(`${drafts.length} draft transfer(s) proposed.`);
+              return `${drafts.length} draft transfer(s) proposed.`;
             })
           }
         >
@@ -79,7 +81,7 @@ export default function OrdersPage() {
             onClick={() =>
               act("Escalation", async () => {
                 const escalated = await api.runEscalation();
-                setNotice(`${escalated.length} overdue order(s) escalated.`);
+                return `${escalated.length} overdue order(s) escalated.`;
               })
             }
           >
@@ -98,8 +100,8 @@ export default function OrdersPage() {
           <OrderCard
             key={order.order_id}
             order={order}
-            onApprove={(id) => act("Approve", () => api.approveOrder(id))}
-            onReject={(id) => act("Reject", () => api.rejectOrder(id))}
+            onApprove={(id) => act("Approve", async () => void (await api.approveOrder(id)))}
+            onReject={(id) => act("Reject", async () => void (await api.rejectOrder(id)))}
           />
         ))}
         {shown.length === 0 && !error && <p className="text-sm text-gray-500">No {filter === "draft" ? "draft " : ""}orders yet.</p>}

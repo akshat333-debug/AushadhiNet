@@ -29,8 +29,11 @@ def _design_matrix(panel: pd.DataFrame, target_col: str) -> tuple[np.ndarray, np
     featured = build_features(panel, Grain.DISTRICT_MONTH, target_col=target_col)
     supervised = featured.dropna(subset=[target_col])
     cols = feature_columns(featured, target_col)
-    X = supervised[list(cols)].fillna(0.0).to_numpy(dtype=float)
-    y = supervised[target_col].to_numpy(dtype=float)
+    # log1p space: states differ in volume by orders of magnitude, so raw-level
+    # weights don't transfer; log-space shapes do (chosen on an inner split of
+    # the train window, see eval/tune_federated.py).
+    X = np.log1p(supervised[list(cols)].fillna(0.0).clip(lower=0).to_numpy(dtype=float))
+    y = np.log1p(supervised[target_col].clip(lower=0).to_numpy(dtype=float))
     return X, y, cols
 
 
@@ -104,9 +107,9 @@ class LinearHeadClient(NumPyClient):
         if len(self.y) == 0:
             return float("nan"), 0, {}
         X_aug = np.hstack([self.X, np.ones((len(self.y), 1))])
-        pred = X_aug @ w
         from eval.metrics import wape
-        return float(wape(self.y, pred)), len(self.y), {"wape": float(wape(self.y, pred))}
+        score = float(wape(np.expm1(self.y), np.expm1(X_aug @ w)))
+        return score, len(self.y), {"wape": score}
 
 
 def make(state_code: str, panel: pd.DataFrame, **kwargs) -> LinearHeadClient:

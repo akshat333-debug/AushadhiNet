@@ -37,7 +37,13 @@ class LGBMForecaster:
         X = supervised[list(cols)]
         y = supervised[self.target_col]
 
-        default_params = {"n_estimators": 100, "max_depth": 5, "min_child_samples": 5, "verbosity": -1}
+        # L1 objective: WAPE is minimised by the conditional median, not the mean.
+        # Chosen on the validation window only (eval/tune_val.py), never the test window.
+        default_params = {
+            "objective": "l1", "n_estimators": 300, "learning_rate": 0.03, "num_leaves": 15,
+            "min_child_samples": 20, "subsample": 0.8, "subsample_freq": 1,
+            "colsample_bytree": 0.8, "random_state": 0, "verbosity": -1,
+        }
         model = lgb.LGBMRegressor(**(self.params or default_params))
         model.fit(X, y)
 

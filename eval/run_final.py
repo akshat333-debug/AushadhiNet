@@ -42,10 +42,17 @@ def _git_sha() -> str:
 
 
 def _predict_seasonal_naive(train_df, test_df, target_col: str) -> np.ndarray:
-    """The naive baseline: this period's forecast is last period's actual
-    (the lag-1 feature panel.py/features.py already computed)."""
+    """Lag-1 naive (season_length=1): this period's forecast is last
+    period's actual. Name kept for continuity with earlier runs.jsonl rows."""
     fallback = float(train_df[target_col].mean())
     return test_df[f"{target_col}_lag1"].fillna(fallback).to_numpy()
+
+
+def _predict_median3(train_df, test_df, target_col: str) -> np.ndarray:
+    """Median of the last 3 actuals -- a tougher robust baseline for lumpy issuance."""
+    fallback = float(train_df[target_col].median())
+    lags = [f"{target_col}_lag{k}" for k in (1, 2, 3)]
+    return test_df[lags].median(axis=1).fillna(fallback).to_numpy()
 
 
 def compute_metrics(
@@ -65,13 +72,17 @@ def compute_metrics(
         panel_max_date = pd.to_datetime(panel[date_col]).max().date()
     split = for_grain(grain, protocol, panel_max_date=panel_max_date)
 
-    train_df = featured[split.train_mask(featured)]
+    # Hyperparameters were picked on train->val; the final fit uses train+val,
+    # which ends before the test window starts.
+    train_df = featured[split.train_mask(featured) | split.val_mask(featured)]
     test_df = featured[split.test_mask(featured)].dropna(subset=[target_col])
     if test_df.empty:
         raise RuntimeError("test window is empty -- check the panel covers the frozen test dates")
 
     if model_name == "seasonal_naive":
         preds = _predict_seasonal_naive(train_df, test_df, target_col)
+    elif model_name == "median3":
+        preds = _predict_median3(train_df, test_df, target_col)
     elif model_name == "lgbm":
         model = LGBMForecaster(target_col=target_col).fit(train_df)
         preds = model.predict(test_df)
@@ -107,10 +118,8 @@ def append_run(model_name: str, grain: Grain = Grain.DISTRICT_MONTH, reports_pat
 
 
 def main(model_name: str = "lgbm") -> None:
-    naive = append_run("seasonal_naive")
-    model = append_run(model_name)
-    print(f"seasonal_naive: {naive['metrics']}")
-    print(f"{model_name}: {model['metrics']}")
+    for name in ("seasonal_naive", "median3", model_name):
+        print(f"{name}: {append_run(name)['metrics']}")
 
 
 if __name__ == "__main__":

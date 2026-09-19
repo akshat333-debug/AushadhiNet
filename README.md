@@ -69,7 +69,7 @@ uv run python -m eval.seal_generator     # regenerates data/synthetic/*.parquet,
 ## Evaluation
 
 ```bash
-uv run python -m eval.run_final           # real-HMIS frozen test: LightGBM vs seasonal-naive
+uv run python -m eval.run_final           # real-HMIS frozen test: LightGBM vs naive baselines
 uv run python -m eval.run_replay          # solver-assisted vs monthly-indent stock-out replay
 uv run python -m eval.run_federated_eval  # local-only vs federated vs centralised (Meghalaya)
 ```
@@ -78,11 +78,15 @@ Every run appends to `eval/reports/runs.jsonl` — nothing is ever overwritten, 
 every scored attempt is auditable. **Current honest results** (see TASK.md for full detail and the real
 numbers behind these headlines):
 
-- Forecasting (real HMIS, frozen test): seasonal-naive currently **beats** LightGBM (WAPE 1.077 vs
-  1.110). Reported as-is, not hidden — see TASK.md's step-21 entry for why and what would need to change
-  (via train/validation only, never re-touching the frozen test).
-- Federation (Meghalaya, validation split): local-only currently **beats** both federated and centralised
-  training with a linear head model (WAPE 1.122 vs 1.182 vs 1.336).
+- Forecasting (real HMIS, Maharashtra, frozen test Sep 2019 – Feb 2020, 2,501 district-drug-months):
+  LightGBM WAPE **0.871** vs lag-1 naive 1.078 and median-of-3 0.959 (19% better than naive). This is
+  the second scored attempt; the first (L2 objective, WAPE 1.110, lost to naive) stays in `runs.jsonl`.
+  The fix (L1 objective, since WAPE rewards the median) was chosen on the validation window only
+  (`eval/tune_val.py`).
+- Federation (Meghalaya, validation split, 541 rows): log-space linear head. Local-only 0.993,
+  federated 0.996, centralised 1.000; all about 21% better than lag-1 naive (1.261). Federation
+  **ties** local-only, it does not beat it. Chosen on an inner split of train (`eval/tune_federated.py`)
+  so this validation number was not tuned against. Earlier raw-space run: 1.122 / 1.182 / 1.336.
 
 ## Testing
 
@@ -125,6 +129,5 @@ tests/       mirrors every package above, plus frontend/tests/e2e
   extraction accuracy needs either real photos + annotation, or a real Gemini key in cloud mode.
 - Terraform (`infra/terraform/`) and `docker compose up` are written but not run end-to-end in this
   environment — see the honest notes above and in TASK.md.
-- Forecasting doesn't yet beat the seasonal-naive baseline on the frozen test; federation doesn't yet
-  beat local-only training for the data-poor state. Both are reported honestly rather than hidden or
-  tuned against the evaluation data.
+- Federation ties but does not beat local-only training for the data-poor state; its value here is
+  matching local accuracy without pooling raw data, not beating it.

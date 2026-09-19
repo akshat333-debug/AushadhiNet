@@ -156,7 +156,10 @@ tests/       mirrors every package above, plus frontend/tests/e2e
 - The 220 handwriting-extraction evaluation images are **programmatically rendered text**, not real
   photographs of handwritten registers (see `scripts/generate_labelled_registers.py`'s docstring). Real
   extraction accuracy needs either real photos + annotation, or a real Gemini key in cloud mode.
-- Terraform (`infra/terraform/`) and `docker compose up` are written but not run end-to-end in this
-  environment — see the honest notes above and in TASK.md.
+- Terraform passes `terraform validate`; `plan`/`apply` need a GCP project. Cloud-mode gaps to close
+  before deploying (found while reviewing the module, not yet fixed): nothing subscribes the worker to
+  Pub/Sub in cloud mode (local mode only); BigQuery inserts use bare table names and the module creates
+  no tables; `cloudbuild.yaml` pushes to `gcr.io` (Container Registry is deprecated for Artifact Registry),
+  deploys only the backend, and sets `--no-allow-unauthenticated`, which would block Twilio's webhook.
 - Federation ties but does not beat local-only training for the data-poor state; its value here is
   matching local accuracy without pooling raw data, not beating it.

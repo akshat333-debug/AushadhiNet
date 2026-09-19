@@ -3,12 +3,8 @@
 # leave the state's own boundary. Federation only ever moves DP-noised
 # model updates out of this project (ml/federated/dp.py).
 #
-# HONEST NOTE: `terraform validate` has not been run against this module
-# in this session -- the Terraform CLI is not installed in this sandbox
-# (Homebrew's `terraform` formula was removed for licensing reasons; a
-# `hashicorp/tap` install was judged not worth the time given AC11 itself
-# is explicitly deferred until GCP credits arrive). Validate this for
-# real as the first step once a GCP project and credits exist.
+# `terraform validate` passes (Terraform 1.16, google provider 5.45). `plan`
+# and `apply` need a real GCP project and have not been run.
 
 terraform {
   required_version = ">= 1.5"
@@ -72,15 +68,26 @@ resource "google_bigquery_dataset" "history" {
   depends_on = [google_project_service.required]
 }
 
+# Names must match backend/providers/queue_google.py: topic = the code's topic
+# string, subscription = "<topic>-sub".
 resource "google_pubsub_topic" "raw_messages" {
-  project = var.project_id
-  name    = "ingest-raw-message"
+  project    = var.project_id
+  name       = "ingest.raw_message"
+  depends_on = [google_project_service.required]
+}
+
+resource "google_pubsub_subscription" "raw_messages_worker" {
+  project              = var.project_id
+  name                 = "ingest.raw_message-sub"
+  topic                = google_pubsub_topic.raw_messages.id
+  ack_deadline_seconds = 60
 }
 
 resource "google_kms_key_ring" "order_signing" {
-  project  = var.project_id
-  name     = "aushadhinet-order-signing"
-  location = var.region
+  project    = var.project_id
+  name       = "aushadhinet-order-signing"
+  location   = var.region
+  depends_on = [google_project_service.required]
 }
 
 resource "google_kms_crypto_key" "order_signing_key" {
@@ -107,4 +114,13 @@ output "firestore_database" {
 
 output "bigquery_dataset" {
   value = google_bigquery_dataset.history.dataset_id
+}
+
+# SIGNING_KEY in .env: an asymmetric key's first version is created with the key.
+output "signing_key_version" {
+  value = "${google_kms_crypto_key.order_signing_key.id}/cryptoKeyVersions/1"
+}
+
+output "raw_message_topic" {
+  value = google_pubsub_topic.raw_messages.name
 }

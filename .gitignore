@@ -17,3 +17,6 @@ models/
 *.tsbuildinfo
 test-results/
 playwright-report/
+.terraform/
+*.tfstate
+*.tfstate.*

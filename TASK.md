@@ -277,3 +277,8 @@ Real click-through (Playwright Chromium; the in-app browser pane refused localho
 - Real finding from the run: the seal was platform-dependent. Linux container output hashed 55d3a8c8 vs sealed 49ddeae9 with identical locked numpy/pandas/pyarrow on the same arch; 6,177 of ~14.5M stock values differed by at most 1.8e-12 (last-bit float differences). The seal hashed raw parquet bytes. Now hashes CSV contents with floats at 4 decimals; host and container both give 5268c2a1. Re-sealed under the new definition; the data is unchanged, so earlier synthetic results still hold.
 - Second bug: the first CMD used `;`, so when the seal check failed the server still started on unsealed data. Now `&&`: no serving without a matching seal.
 - Result: stack healthy, 11/11 Playwright against the containers (both ports owned by Docker).
+
+## Terraform validate (2026-09-19)
+- Installed Terraform 1.16.3 via hashicorp/tap. `terraform fmt -check` clean; `terraform validate` passes (google provider 5.45.2, lock file committed).
+- Fixed what validate can't see: Pub/Sub topic was `ingest-raw-message` but the code publishes to `ingest.raw_message`; subscription `ingest.raw_message-sub` was missing; Pub/Sub and KMS lacked depends_on on API enablement (first-apply race); added signing_key_version and topic outputs.
+- Open cloud-mode gaps (AC11, deferred): no cloud Pub/Sub subscriber for the worker; BigQuery inserts use bare table names and no tables are provisioned; cloudbuild uses gcr.io, deploys only the backend, and --no-allow-unauthenticated would block the Twilio webhook.

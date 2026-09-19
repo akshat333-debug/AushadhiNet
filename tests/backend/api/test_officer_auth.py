@@ -20,7 +20,7 @@ def _client():
 def _seed_order(order_id="o1", from_id=NASHIK_A, to_id=NASHIK_B):
     order = TransferOrder(
         order_id=order_id, kind=OrderKind.DRUG_TRANSFER, from_facility_id=from_id, to_facility_id=to_id,
-        drug_id="ors-new-who", quantity=10, batches=[BatchLine(batch_no="B1", quantity=10)],
+        drug_id="ors", quantity=10, batches=[BatchLine(batch_no="B1", quantity=10)],
         drive_minutes=25.0, rationale="test", created_at=datetime.now(timezone.utc), created_by="solver",
     )
     factory.get("store_live").put("orders", order_id, order)

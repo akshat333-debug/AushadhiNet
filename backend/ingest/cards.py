@@ -18,7 +18,8 @@ class ConfirmationCard:
 
 
 def build(record, low_fields: list[str]) -> ConfirmationCard:
-    field_list = ", ".join(low_fields)
+    labels = {"drug_id": "which medicine this is", "on_hand": "the quantity", "expiry": "the expiry date", "batch_no": "the batch number"}
+    field_list = ", ".join(labels.get(f, f) for f in low_fields)
     text = (
         f"Please confirm for {getattr(record, 'drug_id', 'this record')}: "
         f"we're not fully sure about {field_list}. Reply YES to confirm as read, "

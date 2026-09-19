@@ -12,11 +12,12 @@ ponytail: regex-based PDF text parsing, not a layout-aware parser. Upgrade
 to pdfplumber table extraction if the miss rate on real register photos
 turns out to matter.
 
-The 15 stock items reported by HMIS M19 do not use NLEM's formal medicine
-names (e.g. "ORS (New WHO)" vs NLEM's "Oral Rehydration Salts"), so this
-loader also guarantees each M19 item is present, either as an alias on an
-already-parsed NLEM entry (matched by simple substring) or, failing that,
-as its own drug entry -- this is what step 8's DoD test checks.
+The 16 stock items reported by HMIS M19 do not use NLEM's formal names, and
+several are not medicines at all (gloves, transfusion sets, kits). They come
+from a hand-curated table (`M19_CATALOGUE`), one distinct drug_id each, listed
+first so their short aliases ("ORS", "Zinc") win exact-alias lookups. An
+earlier substring matcher mapped "Calcium Tablets" to calcium gluconate
+injection and "Blood Transfusion sets" to a mis-parsed entry "B".
 """
 from __future__ import annotations
 
@@ -46,6 +47,27 @@ M19_ITEMS = [
     "Paediatrics Antibiotics ( Amoxycillin and Injectable Gentamicin)",
     "Vit A syrup", "ORS (New WHO)", "RTI /STI colour coded syndromic kits ( I to VII)",
     "Zinc 20 mg tablet", "Albendazole 400 mg tablet", "Calcium Tablets",
+]
+
+# One entry per M19 item, in M19_ITEMS order. Plain "IFA" is deliberately not an
+# alias: it is ambiguous across four products, so it goes to a confirmation card.
+M19_CATALOGUE = [
+    {"drug_id": "gloves", "name": "Gloves", "form": "consumable", "unit": "pair", "nlem_level": "P", "aliases": ["Gloves", "gloves"]},
+    {"drug_id": "mva-syringe", "name": "MVA Syringe", "form": "device", "unit": "piece", "nlem_level": "S", "aliases": ["MVA Syringes", "MVA", "MVA syringe"]},
+    {"drug_id": "fluconazole-tab", "name": "Fluconazole tablet", "form": "tablet", "unit": "tablet", "nlem_level": "P", "aliases": ["Tab. Fluconazole", "Fluconazole tablet", "Fluconazole"]},
+    {"drug_id": "blood-transfusion-set", "name": "Blood transfusion set", "form": "consumable", "unit": "set", "nlem_level": "S", "aliases": ["Blood Transfusion sets", "BT set", "Transfusion set"]},
+    {"drug_id": "glutaraldehyde-2pct", "name": "Glutaraldehyde 2%", "form": "solution", "unit": "bottle", "nlem_level": "P", "aliases": ["Gluteraldehyde 2%", "Glutaraldehyde", "Cidex"]},
+    {"drug_id": "ifa-adult", "name": "IFA tablet (adult, red)", "strength": "60 mg iron + 500 mcg folic acid", "form": "tablet", "unit": "tablet", "nlem_level": "P", "aliases": ["IFA tablets ( Adult)", "IFA adult", "IFA red", "Red IFA"]},
+    {"drug_id": "ifa-blue", "name": "IFA tablet (adolescent 10-19, blue)", "form": "tablet", "unit": "tablet", "nlem_level": "P", "aliases": ["IFA - Blue ( Adolescent 10-19 yrs)", "IFA blue", "Blue IFA"]},
+    {"drug_id": "ifa-pink", "name": "IFA tablet (junior 6-10, pink)", "form": "tablet", "unit": "tablet", "nlem_level": "P", "aliases": ["IFA- Pink ( Junior 6-10 yrs)", "IFA pink", "Pink IFA"]},
+    {"drug_id": "ifa-syrup", "name": "IFA syrup (paediatric)", "form": "syrup", "unit": "bottle", "nlem_level": "P", "aliases": ["IFA Syrup (Paediatric)", "IFA syrup"]},
+    {"drug_id": "paed-antibiotics", "name": "Paediatric antibiotics (amoxicillin, injectable gentamicin)", "form": "mixed", "unit": "unit", "nlem_level": "P", "aliases": ["Paediatrics Antibiotics ( Amoxycillin and Injectable Gentamicin)", "Paediatric antibiotics"]},
+    {"drug_id": "vitamin-a-syrup", "name": "Vitamin A syrup", "form": "syrup", "unit": "bottle", "nlem_level": "P", "aliases": ["Vit A syrup", "Vit A", "Vitamin A", "Vitamin A syrup"]},
+    {"drug_id": "ors", "name": "ORS (WHO low-osmolarity)", "form": "sachet", "unit": "sachet", "nlem_level": "P", "aliases": ["ORS (New WHO)", "ORS", "Oral rehydration salts"]},
+    {"drug_id": "rti-sti-kit", "name": "RTI/STI colour-coded syndromic kit (I-VII)", "form": "kit", "unit": "kit", "nlem_level": "S", "aliases": ["RTI /STI colour coded syndromic kits ( I to VII)", "RTI kit", "STI kit"]},
+    {"drug_id": "zinc-20mg", "name": "Zinc 20 mg dispersible tablet", "strength": "20 mg", "form": "tablet", "unit": "tablet", "nlem_level": "P", "aliases": ["Zinc 20 mg tablet", "Zinc", "Zinc 20mg"]},
+    {"drug_id": "albendazole-400mg", "name": "Albendazole 400 mg tablet", "strength": "400 mg", "form": "tablet", "unit": "tablet", "nlem_level": "P", "aliases": ["Albendazole 400 mg tablet", "Albendazole", "Albendazole 400"]},
+    {"drug_id": "calcium-tab", "name": "Calcium tablet", "form": "tablet", "unit": "tablet", "nlem_level": "P", "aliases": ["Calcium Tablets", "Calcium", "Calcium tablet"]},
 ]
 
 
@@ -83,28 +105,6 @@ def load_nlem(pdf_path: pathlib.Path | str = DEFAULT_PDF) -> list[Drug]:
             continue  # duplicate section cross-reference (NLEM lists some drugs twice)
         drugs[did] = Drug(drug_id=did, name=name, unit="unit", nlem_level=nlem_level, aliases=[name])
 
-    _ensure_m19_items_present(drugs)
-    return list(drugs.values())
-
-
-def _ensure_m19_items_present(drugs: dict[str, Drug]) -> None:
-    for item in M19_ITEMS:
-        item_key = re.sub(r"[^a-z0-9]+", "", item.lower())
-        matched = False
-        for d in drugs.values():
-            name_key = re.sub(r"[^a-z0-9]+", "", d.name.lower())
-            if name_key in item_key or item_key in name_key or _share_first_word(d.name, item):
-                if item not in d.aliases:
-                    d.aliases.append(item)
-                matched = True
-                break
-        if not matched:
-            did = drug_id(item)
-            if did not in drugs:
-                drugs[did] = Drug(drug_id=did, name=item, unit="unit", nlem_level="P", aliases=[item])
-
-
-def _share_first_word(a: str, b: str) -> bool:
-    wa = re.findall(r"[a-z]+", a.lower())
-    wb = re.findall(r"[a-z]+", b.lower())
-    return bool(wa) and bool(wb) and wa[0] == wb[0] and len(wa[0]) > 3
+    curated = [Drug(**entry) for entry in M19_CATALOGUE]
+    curated_ids = {d.drug_id for d in curated}
+    return curated + [d for d in drugs.values() if d.drug_id not in curated_ids]

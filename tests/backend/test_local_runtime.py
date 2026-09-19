@@ -31,9 +31,9 @@ def test_text_report_is_recorded_and_acknowledged():
         facility_id = client.get("/simulator/contacts", params={"limit": 1}).json()[0]["facility_id"]
         phone = phone_for_facility(facility_id)
         _send(client, phone, "ORS 3", "m1")
-        assert any("Recorded" in b and "ors-new-who 3" in b for b in _outbox(client, phone))
+        assert any("Recorded" in b and "ors 3" in b for b in _outbox(client, phone))
         detail = client.get(f"/officer/facility/{facility_id}", headers=OFFICER).json()
-        assert any(s["drug_id"] == "ors-new-who" and s["on_hand"] == 3 for s in detail["stock"])
+        assert any(s["drug_id"] == "ors" and s["on_hand"] == 3 for s in detail["stock"])
 
 
 def test_unregistered_number_and_unreadable_text_get_replies():

@@ -82,7 +82,7 @@ def test_ask_logs_entry_and_exit():
 
 def test_tools_refuse_facilities_outside_the_officers_jurisdiction():
     with pytest.raises(PermissionError):
-        tools.call_tool("explain_risk", "u1", "mh/dhule", facility_id="MH-0000221", drug_id="ors-new-who")
+        tools.call_tool("explain_risk", "u1", "mh/dhule", facility_id="MH-0000221", drug_id="ors")
 
 
 def test_agent_answers_out_of_jurisdiction_questions_with_a_refusal():
@@ -94,7 +94,7 @@ def test_agent_answers_out_of_jurisdiction_questions_with_a_refusal():
 def test_agent_resolves_drug_names_and_explains_risk():
     from backend.agent.agent import OfficerCtx, ask
     answer = ask("why is MH-0000221 at risk for ORS?", OfficerCtx(uid="u1", jurisdiction="mh/nashik"))
-    assert answer.cited_ids == ["MH-0000221", "ors-new-who"]
+    assert answer.cited_ids == ["MH-0000221", "ors"]
     assert "stock-out probability" in answer.text
 
 

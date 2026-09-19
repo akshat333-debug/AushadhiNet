@@ -32,7 +32,10 @@ def from_text(body: str, facility_id: str, reporter_phone_hash: str) -> Extracti
             continue
         matches = nlem_match(drug_name, k=1)
         drug_id = matches[0].drug_id if matches else drug_name.lower().replace(" ", "-")
-        confidence = Confidence(field_confidence={"on_hand": 1.0}, overall=1.0, source=ConfidenceSource.MANUAL)
+        # The quantity is typed, so it is certain; the drug is only as certain as the name match.
+        # A fuzzy match below the gate threshold becomes a confirmation card, never a silent write.
+        drug_conf = matches[0].score if matches else 0.0
+        confidence = Confidence(field_confidence={"on_hand": 1.0, "drug_id": drug_conf}, overall=drug_conf, source=ConfidenceSource.MANUAL)
         records.append(StockRecord(
             record_id=str(uuid.uuid4()), facility_id=facility_id, drug_id=drug_id,
             reported_at=datetime.now(timezone.utc), as_of_date=date.today(),

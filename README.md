@@ -100,8 +100,13 @@ numbers behind these headlines):
   **ties** local-only, it does not beat it. Chosen on an inner split of train (`eval/tune_federated.py`)
   so this validation number was not tuned against. Earlier raw-space run: 1.122 / 1.182 / 1.336.
 - App forecasts (facility × week, synthetic ledger) use lag-1 naive, not LightGBM. On the last 13
-  training weeks naive scores WAPE 0.243 vs 0.255 for the best LightGBM variant (residual on last
-  week) and 0.397 for the monthly model's settings, so the app uses whichever measured best at its grain.
+  training weeks naive scores WAPE 0.220 vs 0.239 for the best LightGBM variant (residual on
+  median-of-3) and 0.307 for the monthly model's settings, so the app uses whichever measured best at its
+  grain. (Re-measured after the drug-mapping re-seal; the pre-seal numbers were 0.243 / 0.255 / 0.397.)
+- **Stock-out replay (AC6) is not a real result yet.** `eval/run_replay.py` never calls the solver,
+  credits a shortfall as covered if any district facility had surplus that same week (hindsight, no
+  quantity limit), and by default has no district mapping, so both policies score identically (53,305
+  stock-out weeks each).
 
 ## Testing
 
@@ -139,10 +144,6 @@ tests/       mirrors every package above, plus frontend/tests/e2e
 
 ## What's not done yet
 
-- **Drug mapping in the synthetic ledger is loose.** `ml/data/drugs.py` matches HMIS items to NLEM
-  entries by substring, so "Calcium Tablets" became `calcium-gluconate` (an injection) and "Blood
-  Transfusion sets" became `b`. Fixing it changes the sealed generator's output and needs a re-seal.
-  The "IFA" text report also resolves to `rifampicin`.
 - Local-mode state (stock, orders, outbox) is in memory and resets when the backend restarts.
 - Built and tested but not called by the app: the Croston/ensemble forecasters, calibration,
   hierarchical reconciliation, and `load_weather_all`.

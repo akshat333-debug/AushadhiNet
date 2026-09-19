@@ -189,7 +189,7 @@ Full plan: `~/.claude/plans/now-remove-the-stale-delightful-seahorse.md`
 | AC3 | Met | test_worker.py: bed census + check-in, 900m geofence flag verified. |
 | AC4 | Honestly unmet, reported not hidden | eval/reports/runs.jsonl real run: naive 1.077 vs lgbm 1.110 WAPE. |
 | AC5 | Met | test_calibration.py: isotonic calibration verified not to worsen Brier on validation. |
-| AC6 | Met | test_transfers.py (constraints), eval/run_replay.py (solver_assisted <= baseline stockouts, real run). |
+| AC6 | **Not met** (found 2026-09-19) | eval/run_replay.py never calls the solver, uses same-week hindsight with no quantity limit, and with its default empty district map scores identically to baseline (53,305 vs 53,305). The earlier 'Met' was wrong. |
 | AC7 | Met, verified structurally + behaviorally | test_tools.py: no approve/send/write tool exists; real prompt-injection fixture produces zero messaging calls. |
 | AC8 | Met | test_alerts.py: signed order, translated text+voice to both facilities. |
 | AC9 | Met | test_federated.py: fit() return-type whitelist, Meghalaya excluded from training, DP noise statistically verified. |
@@ -258,3 +258,9 @@ Real click-through (Playwright Chromium; the in-app browser pane refused localho
 - Performance: stock-out probability was computed one DataFrame per series (~10k); now batched. National facility directory is cached and loaded at startup; public summary used to reload it per request.
 - Open: loose HMIS->NLEM drug mapping in the sealed generator (calcium tablets -> calcium-gluconate, blood transfusion sets -> "b"); needs a re-seal. Unused modules listed in README.
 - Verification: 320 passed / 1 skipped; 11/11 Playwright e2e through the real UI against a freshly restarted backend.
+
+## Drug mapping fix + re-seal (2026-09-19)
+- ml/data/drugs.py substring-matched the 16 HMIS M19 items onto NLEM entries: "Calcium Tablets" -> calcium gluconate (an injection), "Blood Transfusion sets" -> a mis-parsed entry "B", and several items collapsed together (13 ids for 16 items). Replaced with a curated M19_CATALOGUE, one id each, listed first so its short aliases win.
+- Text reports wrote fuzzy name matches at full confidence ("IFA" -> rifampicin, "xyz" -> gonadotropin). The match score is now the drug field's confidence, so anything under the 0.85 gate becomes a confirmation card. Plain "IFA" is ambiguous across four products and deliberately not an alias.
+- Re-sealed: 15a895a0... -> 49ddeae9... (the seal refused the unforced run, as designed). Real-HMIS forecasting and federation runs do not use the synthetic ledger and are unaffected. Facility-week comparison re-measured (same candidates, no tuning): naive 0.220, LightGBM residual-on-median3 0.239, median-of-3 0.256, LightGBM direct 0.307. Naive still wins.
+- While checking what the re-seal made stale, found AC6's replay is a no-op (see acceptance table).

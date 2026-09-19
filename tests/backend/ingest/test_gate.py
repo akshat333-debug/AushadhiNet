@@ -26,7 +26,7 @@ def test_low_confidence_field_always_lands_in_pending_with_card_naming_it():
     assert record.status == RecordStatus.PENDING
     assert decision.card is not None
     assert "on_hand" in decision.card.low_fields
-    assert "on_hand" in decision.card.text
+    assert "the quantity" in decision.card.text
 
 
 def test_high_confidence_record_is_confirmed_without_a_card():

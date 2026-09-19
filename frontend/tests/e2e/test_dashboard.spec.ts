@@ -11,7 +11,7 @@ test.describe("Dashboard drill-down", () => {
     await expect(facility).toBeVisible({ timeout: 30_000 });
     await facility.click();
     await expect(page.getByTestId("facility-stock")).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId("facility-stock")).toContainText("ors-new-who");
+    await expect(page.getByTestId("facility-stock")).toContainText("ors");
   });
 
   test("anonymous users see districts but must sign in for facilities", async ({ page }) => {

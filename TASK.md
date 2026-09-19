@@ -240,3 +240,6 @@ Fresh-clone script (scripts/fresh_clone_check.sh) run for real end to end.
 
 Nothing has been committed to git yet. Per the workflow's Gate 3, commit/push requires asking the user
 first, regardless of how many earlier gates were approved.
+
+## Post-push audit (2026-09-19)
+Correction: the earlier fresh_clone_check.sh run did not prove a fresh clone works -- it ran in the working dir, where gitignored data/raw and data/synthetic already existed. A real clone from GitHub failed 60 tests. Fixed: committed data/raw (open licences, ~78 MB), moved flwr/statsforecast/pypdf/pyarrow/timesfm into the ml extra (flwr was wrongly in gcp), added python-multipart to core and twilio to dev, fixed a bad dhule path in raw_manifest.sha256, and the script now clones HEAD into a temp dir. Rerun from a true clone: 303 passed, 1 skipped; next build clean; 6/6 Playwright e2e; synthetic regen hash matches protocol.lock.

@@ -1,6 +1,6 @@
 # Data provenance
 
-Raw files are stored in `data/raw/` and are gitignored. Integrity check: `shasum -a 256 -c data/raw_manifest.sha256` (run from `data/`). All raw files were downloaded on 18 Sep 2026.
+Raw files are committed in `data/raw/` (about 78 MB, all under open licences that allow redistribution with attribution) so a fresh clone runs offline; data.gov.in rejects scripted downloads, so re-fetching is not reliable. Integrity check: `shasum -a 256 -c data/raw_manifest.sha256` (run from `data/`). All raw files were downloaded on 18 Sep 2026.
 
 ## Pilot district: Nashik, Maharashtra
 Why Nashik was picked:

@@ -1,4 +1,3 @@
-48acf436eaba58c07da45c39b2e7e588bc2b49fabfec7bf5970a22076976f36b  raw/.DS_Store
 390782219070604556d1daa7ed5925fe4136b1f0e425fceb91a950893e5ae78a  raw/facilities/geocode_health_centre.csv
 2e47bb979e496469ca0ac04cbdfe84ce6e66e3ec7cde1685a0d85bdedc3d5fac  raw/hmis/hmis-item-2013-14-mn-as-for-Apr.csv
 3e0bce86d6b704ce6f0f29d69b399eb2405abc6b1476b8ecc477d9bae5ea7214  raw/hmis/hmis-item-2013-14-mn-as-for-Aug.csv
@@ -338,4 +337,4 @@ c4be089360f382cb5a4da59890af5451a92875d23e7a9e77d2c6bb9c5d49a413  raw/hmis/hmis-
 537107798423e513f8eec9844d2965afd324394505beb20e9e91f04ca96d677e  raw/hmis/hmis-item-2019-20-mn-meg-for-Sep.csv
 17dfa27760a73cee226392109a4e96f2594921431cfd6b7a8acfe8eab5e01533  raw/nlem/nlem2022.pdf
 d5b94e1807e895eb4c7ab73f97a9438cb9c9ed71ca861ea0da5fd7f85bed20df  raw/weather/nashik_power_daily_2013_2020.json
-b57d5e5e1e6fcde349086dc3d4118debef9bea849be8f50d7a14d1dcd1569511  data/raw/weather/dhule_power_daily_2013_2020.json
+b57d5e5e1e6fcde349086dc3d4118debef9bea849be8f50d7a14d1dcd1569511  raw/weather/dhule_power_daily_2013_2020.json

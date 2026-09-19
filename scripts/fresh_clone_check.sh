@@ -5,18 +5,25 @@
 # note on why (Docker daemon unavailable in the environment this project
 # was built in); everything else in this script is a real, executed check.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+# Clones HEAD into a temp dir so gitignored local files (data/synthetic,
+# .venv, node_modules) cannot mask a broken quickstart.
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+git clone -q "$REPO" "$WORK/clone"
+cd "$WORK/clone"
 
 echo "== 1. backend setup =="
-uv sync --extra ml --extra dev --extra gcp
-[ -f .env ] || cp .env.example .env
+uv sync --extra ml --extra dev
+cp .env.example .env
+uv run python -m eval.seal_generator
 
 echo "== 2. backend tests =="
 uv run pytest -q
 
 echo "== 3. frontend setup =="
 cd frontend
-[ -d node_modules ] || npm install
+npm ci
 
 echo "== 4. frontend build (compile check) =="
 npx next build

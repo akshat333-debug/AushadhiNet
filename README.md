@@ -24,9 +24,10 @@ Requires: Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 20+.
 
 ```bash
 # 1. Backend
-uv sync --extra ml --extra dev --extra gcp
+uv sync --extra ml --extra dev    # add --extra gcp only for cloud mode
 cp .env.example .env               # defaults are all local-mode; no keys needed
-uv run pytest -q                   # ~285 tests, a few minutes
+uv run python -m eval.seal_generator   # rebuilds data/synthetic/, fails if hash != protocol.lock
+uv run pytest -q                   # ~300 tests, a few minutes
 uv run uvicorn backend.app:app --reload --port 8000
 
 # 2. Frontend (separate terminal)

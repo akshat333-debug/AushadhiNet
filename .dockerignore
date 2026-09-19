@@ -1,0 +1,14 @@
+.git
+.venv
+**/node_modules
+**/.next
+**/__pycache__
+.pytest_cache
+.code-review-graph
+.claude
+.env
+data/synthetic
+data/interim
+frontend/test-results
+frontend/playwright-report
+*.tsbuildinfo

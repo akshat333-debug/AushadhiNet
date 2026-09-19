@@ -1,18 +1,20 @@
 FROM python:3.12-slim
 
 WORKDIR /app
+RUN pip install --no-cache-dir uv==0.11.*
 
-RUN pip install --no-cache-dir uv
+# Locked dependencies first so code edits don't bust this layer. Local mode needs only the ml extra.
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-install-project --extra ml --no-dev
 
-COPY pyproject.toml ./
 COPY backend ./backend
 COPY ml ./ml
 COPY eval ./eval
-COPY data/README.md data/raw_manifest.sha256 ./data/
+COPY data ./data
 
-RUN uv pip install --system --no-cache -e ".[ml,gcp]"
-
-ENV AUSHADHI_MODE=local
+ENV AUSHADHI_MODE=local PATH="/app/.venv/bin:$PATH"
 EXPOSE 8000
 
-CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Rebuilds the sealed synthetic ledger on first start (hash-checked against eval/protocol.lock).
+# Refuses to serve if the regenerated ledger does not match the seal.
+CMD ["sh", "-c", "python -m eval.seal_generator && exec uvicorn backend.app:app --host 0.0.0.0 --port 8000"]

@@ -23,10 +23,17 @@ OUTPUT_FILES = ("stock.parquet", "beds.parquet", "attendance.parquet")
 
 
 def compute_content_hash(output_dir: pathlib.Path = OUTPUT_DIR) -> str:
-    """sha256 over the sorted concatenation of output parquet bytes."""
+    """sha256 over the outputs' contents written as CSV with floats at 4 decimals.
+
+    Not the raw parquet bytes: macOS and Linux builds of the same locked numpy
+    differ in the last bits of some floats (max 1.8e-12 on 6,177 of ~14.5M
+    stock values), which changed the byte hash while the data was the same."""
+    import pandas as pd
     hasher = hashlib.sha256()
     for name in sorted(OUTPUT_FILES):
-        hasher.update((output_dir / name).read_bytes())
+        df = pd.read_parquet(output_dir / name)
+        hasher.update(name.encode())
+        hasher.update(df.to_csv(index=False, float_format="%.4f", date_format="%Y-%m-%d").encode())
     return hasher.hexdigest()
 
 

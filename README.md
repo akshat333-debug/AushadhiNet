@@ -53,17 +53,17 @@ synthetic ledger and gives each a dev WhatsApp number. Demo walkthrough at `http
 
 ### Docker
 
-`infra/docker-compose.yml` runs the same two services in containers:
+`infra/docker-compose.yml` runs the same two services in containers (backend on locked
+dependencies, frontend as a production `next build`):
 
 ```bash
-cd infra && docker compose up --build
+docker compose -f infra/docker-compose.yml up --build
 ```
 
-**Honest note**: this compose file was written and structurally tested (`tests/infra/test_compose.py`),
-but never run end-to-end in the sandbox this project was built in — the Docker daemon wasn't running
-there. The credential-free local run it packages *was* verified for real: the Playwright end-to-end
-suite (`frontend/tests/e2e/`) ran against real `uvicorn` + `next dev` processes with zero GCP credentials
-and all 6 tests passed. Run `docker compose up --build` yourself before relying on it for a demo.
+On every start the backend regenerates the synthetic ledger and checks it against the seal in
+`eval/protocol.lock`; it refuses to serve if the hash differs. First start takes a minute or two.
+Verified on 2026-09-19: the stack came up healthy (backend about 860 MB RAM) and all 11 Playwright
+tests passed against the containers.
 
 ## Rebuilding the synthetic data
 

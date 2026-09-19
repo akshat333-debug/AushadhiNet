@@ -1,5 +1,5 @@
 # AC10: the whole demo loop runs with zero GCP credentials.
-# `docker compose up` from the repo root, then open http://localhost:3000
+# `docker compose -f infra/docker-compose.yml up --build`, then open http://localhost:3000
 services:
   backend:
     build:
@@ -8,15 +8,20 @@ services:
     ports: ["8000:8000"]
     environment:
       - AUSHADHI_MODE=local
-    volumes:
-      - ../data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/public/district-summary')"]
+      interval: 10s
+      timeout: 30s
+      retries: 30
+      start_period: 180s  # first start regenerates and hash-checks the synthetic ledger
 
   frontend:
     build:
       context: ..
       dockerfile: infra/Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_BASE: http://localhost:8000
     ports: ["3000:3000"]
-    environment:
-      - NEXT_PUBLIC_API_BASE=http://localhost:8000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy

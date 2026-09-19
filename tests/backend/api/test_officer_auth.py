@@ -57,7 +57,7 @@ def test_district_officer_can_approve_order_in_their_jurisdiction():
 
 
 def test_approval_alerts_both_facilities():
-    from backend.local_runtime import phone_for_facility
+    from backend.runtime import phone_for_facility
     client = _client()
     _seed_order("oa")
     client.post("/officer/orders/oa/approve", headers=_auth("district", "mh"))

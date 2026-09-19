@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     twilio_whatsapp_from: str = Field("whatsapp:+14155238886", validation_alias="TWILIO_WHATSAPP_FROM")
     firestore_emulator_host: str = Field("localhost:8080", validation_alias="FIRESTORE_EMULATOR_HOST")
     bigquery_project: str = Field("REPLACE_ME", validation_alias="BIGQUERY_PROJECT")
+    bigquery_dataset: str = Field("aushadhinet_mh", validation_alias="BIGQUERY_DATASET")
+    # Pub/Sub push: the OIDC token's audience and the service account allowed to push.
+    pubsub_push_audience: str = Field("REPLACE_ME", validation_alias="PUBSUB_PUSH_AUDIENCE")
+    pubsub_push_service_account: str = Field("REPLACE_ME", validation_alias="PUBSUB_PUSH_SERVICE_ACCOUNT")
     signing_key: str = Field("REPLACE_ME", validation_alias="SIGNING_KEY")
     maps_api_key: str = Field("REPLACE_ME", validation_alias="MAPS_API_KEY")
 

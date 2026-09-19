@@ -19,7 +19,7 @@ from backend.providers.base import ProviderError
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     if get_settings().mode == "local":
-        from backend.local_runtime import start
+        from backend.runtime import start
         start()
     yield
 
@@ -54,12 +54,14 @@ def create_app() -> FastAPI:
     from backend.api.officer import router as officer_router
     from backend.api.public import router as public_router
     from backend.api.agent_api import router as agent_router
+    from backend.api.pubsub_push import router as pubsub_router
     app.include_router(twilio_router)
     app.include_router(ivr_router)
     app.include_router(simulator_router)
     app.include_router(officer_router)
     app.include_router(public_router)
     app.include_router(agent_router)
+    app.include_router(pubsub_router)
 
     return app
 

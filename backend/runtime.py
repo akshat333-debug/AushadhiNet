@@ -1,7 +1,9 @@
-"""Local-mode runtime wiring. Seeds the pilot district (facilities, dev
-contact numbers, latest stock from the sealed synthetic ledger) and
-subscribes the ingest worker to the in-process queue. In cloud mode
-Firestore holds this state and Pub/Sub pushes to the worker instead.
+"""Runtime wiring shared by both modes: inbound-message routing, the
+contacts registry, risk helpers and draft proposals. `start()` is local
+mode only: it seeds the pilot district (facilities, dev contact numbers,
+latest stock from the sealed synthetic ledger) and subscribes the worker
+to the in-process queue. In cloud mode Firestore holds that state and
+Pub/Sub pushes each message to backend/api/pubsub_push.py.
 """
 from __future__ import annotations
 
@@ -52,13 +54,19 @@ def phone_for_facility(facility_id: str) -> str:
 
 
 def facility_for_phone(phone: str) -> str | None:
-    return _contacts().get(phone)
+    contact = factory.get("store_live").get("contacts", phone)
+    return contact.facility_id if contact else None
 
 
-@lru_cache(maxsize=1)
-def _contacts() -> dict[str, str]:
+def seed_contacts() -> int:
+    from backend.domain import Contact
     from ml.data.facilities import facility_index
-    return {phone_for_facility(f.facility_id): f.facility_id for f in facility_index().values() if f.district_id == PILOT_DISTRICT}
+    live = factory.get("store_live")
+    pilot = [f for f in facility_index().values() if f.district_id == PILOT_DISTRICT]
+    for f in pilot:
+        phone = phone_for_facility(f.facility_id)
+        live.put("contacts", phone, Contact(phone=phone, facility_id=f.facility_id))
+    return len(pilot)
 
 
 def seed() -> int:
@@ -157,5 +165,15 @@ def handle_inbound(payload: dict) -> None:
 def start() -> None:
     from ml.data.facilities import facility_index
     facility_index()  # national directory load takes seconds; pay it at startup, not on the first request
+    seed_contacts()
     factory.get("queue").subscribe("ingest.raw_message", handle_inbound)
     log.info("seeded %d stock records for %s", seed(), PILOT_DISTRICT)
+
+
+if __name__ == "__main__":
+    # One-off cloud seeding: `AUSHADHI_MODE=cloud python -m backend.runtime seed` loads the pilot
+    # district's contacts and latest ledger stock into Firestore.
+    import sys
+    if sys.argv[1:] != ["seed"]:
+        raise SystemExit("usage: python -m backend.runtime seed")
+    print(f"contacts: {seed_contacts()}, stock records: {seed()}")

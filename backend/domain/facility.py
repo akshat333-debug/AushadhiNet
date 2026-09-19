@@ -61,3 +61,11 @@ class Drug(BaseModel):
         if v not in ("P", "S", "T"):
             raise ValueError("nlem_level must be P, S or T")
         return v
+
+
+class Contact(BaseModel):
+    """A registered WhatsApp number and the facility it reports for (doc id = phone)."""
+    model_config = ConfigDict(extra="forbid")
+
+    phone: str
+    facility_id: str

@@ -29,7 +29,7 @@ def test_local_mode_never_imports_google_sdk(monkeypatch):
     monkeypatch.setattr("backend.providers.factory.get_settings", lambda: type("S", (), {"mode": "local", "duckdb_path": ":memory:", "signing_key": "k"})())
     blocked = [m for m in list(sys.modules) if m.startswith("google.cloud") or m.startswith("google.genai")]
     for m in blocked:
-        del sys.modules[m]
+        monkeypatch.delitem(sys.modules, m)  # restored after the test; a permanent delete re-registers protobufs on the next import
 
     for name in ("speech", "llm", "embed", "translate", "tts", "store_live", "store_history", "queue", "sign", "messaging", "routes"):
         get(name)

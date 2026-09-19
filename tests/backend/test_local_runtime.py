@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from backend.app import create_app
 from backend.domain import RecordStatus
-from backend.local_runtime import phone_for_facility
+from backend.runtime import phone_for_facility
 from backend.providers import factory
 
 OFFICER = {"Authorization": "Bearer dev:o1:district:mh/nashik"}

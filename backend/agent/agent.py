@@ -54,7 +54,7 @@ def _keyword_dispatch(question: str, officer: OfficerCtx) -> tuple[str, list[str
     with genuine tool-calling. It can only call tools already in
     TOOL_REGISTRY, through call_tool's jurisdiction check -- no more power
     than the real agent has."""
-    from backend.local_runtime import PILOT_DISTRICT
+    from backend.runtime import PILOT_DISTRICT
     lowered = question.lower()
     district = officer.jurisdiction if "/" in officer.jurisdiction else PILOT_DISTRICT
 

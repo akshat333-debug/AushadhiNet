@@ -13,7 +13,7 @@ services:
       interval: 10s
       timeout: 30s
       retries: 30
-      start_period: 180s  # first start regenerates and hash-checks the synthetic ledger
+      start_period: 60s
 
   frontend:
     build:

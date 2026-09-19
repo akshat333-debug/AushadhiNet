@@ -1,27 +1,66 @@
-# Cloud Build pipeline (architecture.md §1): builds and deploys the
-# backend to Cloud Run. Deferred until GCP credits arrive (AC11) -- not
-# run in this session, but the pipeline shape is real and lint-checked.
+# Builds both images into Artifact Registry and deploys them to Cloud Run.
+# Run from the repo root:
+#   gcloud builds submit --config infra/cloudbuild.yaml \
+#     --substitutions=_BACKEND_URL=https://aushadhinet-backend-<hash>.a.run.app,_FRONTEND_URL=https://aushadhinet-frontend-<hash>.a.run.app
+# First deploy: Cloud Run URLs are only known after a service exists, so deploy once, then
+# rerun with the real URLs and `terraform apply -var backend_url=...` to turn on Pub/Sub push.
+#
+# The backend allows unauthenticated requests because Twilio's webhook cannot send Google
+# credentials; the app authenticates every other route itself (Firebase ID tokens for
+# officers, Twilio signatures, OIDC-verified Pub/Sub pushes). The simulator is local-only.
+substitutions:
+  _REGION: asia-south1
+  _REPO: aushadhinet
+  _STATE: mh
+  _BACKEND_URL: https://REPLACE_ME
+  _FRONTEND_URL: https://REPLACE_ME
+
 steps:
-  - name: "gcr.io/cloud-builders/docker"
-    args: ["build", "-t", "gcr.io/$PROJECT_ID/aushadhinet-backend", "-f", "infra/Dockerfile.backend", "."]
+  - id: backend-image
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend:$SHORT_SHA", "-f", "infra/Dockerfile.backend", "."]
 
-  - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "gcr.io/$PROJECT_ID/aushadhinet-backend"]
+  - id: frontend-image
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/frontend:$SHORT_SHA", "-f", "infra/Dockerfile.frontend",
+           "--build-arg", "NEXT_PUBLIC_API_BASE=${_BACKEND_URL}", "."]
+    waitFor: ["-"]
 
-  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    entrypoint: sh
+    args: ["-c", "docker push ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend:$SHORT_SHA && docker push ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/frontend:$SHORT_SHA"]
+
+  - id: deploy-backend
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
       - run
       - deploy
       - aushadhinet-backend
-      - "--image=gcr.io/$PROJECT_ID/aushadhinet-backend"
-      - "--region=asia-south1"
-      - "--platform=managed"
-      - "--set-env-vars=AUSHADHI_MODE=cloud"
-      - "--no-allow-unauthenticated"
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend:$SHORT_SHA
+      - --region=${_REGION}
+      - --service-account=aushadhinet-backend@$PROJECT_ID.iam.gserviceaccount.com
+      - --allow-unauthenticated
+      - --memory=2Gi
+      - --set-env-vars=AUSHADHI_MODE=cloud,GCP_PROJECT=$PROJECT_ID,BIGQUERY_PROJECT=$PROJECT_ID,BIGQUERY_DATASET=aushadhinet_${_STATE},CORS_ALLOWED_ORIGINS=${_FRONTEND_URL},PUBSUB_PUSH_AUDIENCE=${_BACKEND_URL}/internal/pubsub/ingest,PUBSUB_PUSH_SERVICE_ACCOUNT=pubsub-push@$PROJECT_ID.iam.gserviceaccount.com,SIGNING_KEY=projects/$PROJECT_ID/locations/${_REGION}/keyRings/aushadhinet-order-signing/cryptoKeys/transfer-order-signer/cryptoKeyVersions/1
+      - --set-secrets=TWILIO_AUTH_TOKEN=twilio-auth-token:latest,GEMINI_API_KEY=gemini-api-key:latest
+
+  - id: deploy-frontend
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - aushadhinet-frontend
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/frontend:$SHORT_SHA
+      - --region=${_REGION}
+      - --allow-unauthenticated
+      - --port=3000
 
 images:
-  - "gcr.io/$PROJECT_ID/aushadhinet-backend"
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/frontend:$SHORT_SHA
 
 options:
   logging: CLOUD_LOGGING_ONLY

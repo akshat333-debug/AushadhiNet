@@ -28,9 +28,15 @@ def _decode_local_dev_token(token: str) -> AuthUser:
 
 
 def _decode_firebase_token(token: str) -> AuthUser:
+    import firebase_admin
     from firebase_admin import auth as fb_auth
 
-    decoded = fb_auth.verify_id_token(token)
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(options={"projectId": get_settings().gcp_project})
+    try:
+        decoded = fb_auth.verify_id_token(token)
+    except (ValueError, fb_auth.InvalidIdTokenError, fb_auth.ExpiredIdTokenError, fb_auth.RevokedIdTokenError, fb_auth.CertificateFetchError) as exc:
+        raise HTTPException(401, "invalid or expired sign-in token") from exc
     return AuthUser(
         uid=decoded["uid"], role=decoded.get("role", "facility"),
         jurisdiction=decoded.get("jurisdiction", ""),

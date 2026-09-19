@@ -4,6 +4,8 @@ query parameters -- never raw string interpolation.
 """
 from __future__ import annotations
 
+import json
+
 from backend.config import get_settings
 from backend.providers.base import ProviderError
 
@@ -12,13 +14,20 @@ class GoogleHistoryStore:
     def __init__(self):
         from google.cloud import bigquery
 
-        self._client = bigquery.Client(project=get_settings().bigquery_project)
+        settings = get_settings()
+        self._client = bigquery.Client(project=settings.bigquery_project)
+        self._dataset = f"{settings.bigquery_project}.{settings.bigquery_dataset}"
         self._bigquery = bigquery
 
     def insert(self, table: str, rows: list[dict]) -> None:
         if not rows:
             return
-        errors = self._client.insert_rows_json(table, rows)
+        # Nested values (e.g. confidence) go into STRING columns as JSON.
+        flat = [{k: json.dumps(v) if isinstance(v, (dict, list)) else v for k, v in row.items()} for row in rows]
+        try:
+            errors = self._client.insert_rows_json(f"{self._dataset}.{table}", flat)
+        except Exception as e:  # noqa: BLE001
+            raise ProviderError(f"BigQuery insert failed: {e}") from e
         if errors:
             raise ProviderError(f"BigQuery insert failed: {errors}")
 

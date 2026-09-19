@@ -44,7 +44,7 @@ def get_stock(facility_id: str, drug_id: str | None = None) -> list:
 
 
 def get_forecast(facility_id: str, drug_id: str) -> list:
-    from backend.local_runtime import forecast_panel, latest_stock
+    from backend.runtime import forecast_panel, latest_stock
     return latest_forecasts([facility_id], [drug_id], panel=forecast_panel(), on_hand=latest_stock({facility_id}))
 
 
@@ -59,7 +59,7 @@ def list_orders(district_id: str) -> list:
 
 def list_at_risk(district_id: str, limit: int = 10) -> list[dict]:
     """Facility x drug pairs under one week of cover in a district, lowest stock first."""
-    from backend.local_runtime import below_cover, latest_records, weekly_demand
+    from backend.runtime import below_cover, latest_records, weekly_demand
     from ml.data.facilities import facility_index
     index = facility_index()
     demand = weekly_demand()
@@ -95,7 +95,7 @@ def propose_order(facilities: list[Facility], drug_ids: list[str], cold_chain_by
 def propose_transfers(district_id: str) -> list[TransferOrder]:
     """Runs the solver for a district and stores the proposals as drafts
     for an officer to approve or reject. Cannot produce anything but drafts."""
-    from backend.local_runtime import propose_for_district, replace_drafts
+    from backend.runtime import propose_for_district, replace_drafts
     return replace_drafts(district_id, propose_for_district(district_id))
 
 

@@ -25,6 +25,7 @@ class SimulatorMessage(BaseModel):
 
 @router.post("/message")
 async def simulator_message(msg: SimulatorMessage) -> dict:
+    _local_only()  # in cloud mode this would let anyone post reports as any number
     media_url = None
     if msg.media_base64:
         media_url = f"data:{msg.media_content_type or 'application/octet-stream'};base64,{msg.media_base64}"
@@ -48,7 +49,7 @@ def _local_only() -> None:
 def simulator_contacts(limit: int = 25) -> list[dict]:
     """Pilot-district facilities with their dev WhatsApp numbers, for the simulator's sender picker."""
     _local_only()
-    from backend.local_runtime import PILOT_DISTRICT, phone_for_facility
+    from backend.runtime import PILOT_DISTRICT, phone_for_facility
     from ml.data.facilities import facility_index
     facilities = [f for f in facility_index().values() if f.district_id == PILOT_DISTRICT][:limit]
     return [{"facility_id": f.facility_id, "name": f.name, "phone": phone_for_facility(f.facility_id)} for f in facilities]

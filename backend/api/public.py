@@ -17,7 +17,7 @@ def district_summary() -> list[dict]:
     """One row per district: facilities reporting, facilities with any drug
     under one week of cover (latest report per drug), and the same count per
     drug. Never emits a facility ID, name or address."""
-    from backend.local_runtime import below_cover, latest_records
+    from backend.runtime import below_cover, latest_records
     from ml.data.facilities import facility_index
     index = facility_index()
 

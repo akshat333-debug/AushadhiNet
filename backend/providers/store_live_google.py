@@ -9,6 +9,22 @@ from backend.config import get_settings
 from backend.providers.base import ProviderError
 
 
+def _collection_models() -> dict[str, type[BaseModel]]:
+    """Firestore stores plain JSON; callers expect the same models the local store returns."""
+    from backend.domain import AuditEvent, BedCensus, CheckIn, Contact, Facility, StockRecord, TransferOrder
+    return {
+        "audit_events": AuditEvent, "bed_census": BedCensus, "checkins": CheckIn, "contacts": Contact,
+        "facilities": Facility, "orders": TransferOrder, "stock_records": StockRecord,
+    }
+
+
+def _to_model(collection: str, data: dict | None):
+    if data is None:
+        return None
+    model = _collection_models().get(collection)
+    return model.model_validate(data) if model else data
+
+
 class GoogleLiveStore:
     def __init__(self):
         from google.cloud import firestore
@@ -23,18 +39,18 @@ class GoogleLiveStore:
 
     def get(self, collection: str, doc_id: str):
         snap = self._client.collection(collection).document(doc_id).get()
-        return snap.to_dict() if snap.exists else None
+        return _to_model(collection, snap.to_dict()) if snap.exists else None
 
     def query(self, collection: str, filters: dict) -> list:
         query = self._client.collection(collection)
         for field, value in filters.items():
-            query = query.where(field, "==", value)
-        return [doc.to_dict() for doc in query.stream()]
+            query = query.where(field, "==", getattr(value, "value", value))  # enums are stored as their string value
+        return [_to_model(collection, doc.to_dict()) for doc in query.stream()]
 
     def watch(self, collection: str, callback: Callable) -> Callable:
         def on_snapshot(col_snapshot, changes, read_time):
             for change in changes:
-                callback(change.document.id, change.document.to_dict())
+                callback(change.document.id, _to_model(collection, change.document.to_dict()))
 
         watch = self._client.collection(collection).on_snapshot(on_snapshot)
         return watch.unsubscribe

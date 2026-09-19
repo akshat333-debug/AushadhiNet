@@ -100,7 +100,7 @@ def test_agent_resolves_drug_names_and_explains_risk():
 
 def test_agent_drafts_transfers_only_as_drafts():
     from backend.agent.agent import OfficerCtx, ask
-    from backend.local_runtime import seed
+    from backend.runtime import seed
     seed()
     answer = ask("propose transfers", OfficerCtx(uid="u1", jurisdiction="mh/nashik"))
     assert answer.draft_order_id is not None

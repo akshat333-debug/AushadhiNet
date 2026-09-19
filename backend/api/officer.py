@@ -77,7 +77,7 @@ def approve_order(order_id: str, user: AuthUser = Depends(OFFICER)):
     _audit(user, "approve_order", signed)
 
     from ml.data.facilities import facility_index
-    from backend.local_runtime import phone_for_facility
+    from backend.runtime import phone_for_facility
     index = facility_index()
     send_transfer_alerts(
         signed, index[signed.from_facility_id], index[signed.to_facility_id],
@@ -104,7 +104,7 @@ def propose_orders(district_id: str, user: AuthUser = Depends(OFFICER)):
     """Runs the forecast-driven transfer solver for one district and saves
     the proposals as drafts. Drafts only: approval is a separate call."""
     check_jurisdiction(user, district_id)
-    from backend.local_runtime import propose_for_district, replace_drafts
+    from backend.runtime import propose_for_district, replace_drafts
     return replace_drafts(district_id, propose_for_district(district_id))
 
 
@@ -117,7 +117,7 @@ def run_escalation(user: AuthUser = Depends(require_role("state"))):
 def district_facilities(district_id: str, user: AuthUser = Depends(OFFICER)):
     check_jurisdiction(user, district_id)
     from ml.data.facilities import facility_index
-    from backend.local_runtime import below_cover, latest_records
+    from backend.runtime import below_cover, latest_records
     low = {r.facility_id for r in latest_records().values() if below_cover(r)}
     return [
         {"facility_id": f.facility_id, "name": f.name, "block": f.block, "type": f.facility_type.value, "at_risk": f.facility_id in low}
@@ -128,7 +128,7 @@ def district_facilities(district_id: str, user: AuthUser = Depends(OFFICER)):
 @router.get("/facility/{facility_id}")
 def facility_detail(facility_id: str, user: AuthUser = Depends(OFFICER)):
     from ml.data.facilities import facility_index
-    from backend.local_runtime import forecast_panel, latest_stock
+    from backend.runtime import forecast_panel, latest_stock
     from ml.forecast.service import latest_forecasts
     facility = facility_index().get(facility_id)
     if facility is None:

@@ -156,10 +156,13 @@ tests/       mirrors every package above, plus frontend/tests/e2e
 - The 220 handwriting-extraction evaluation images are **programmatically rendered text**, not real
   photographs of handwritten registers (see `scripts/generate_labelled_registers.py`'s docstring). Real
   extraction accuracy needs either real photos + annotation, or a real Gemini key in cloud mode.
-- Terraform passes `terraform validate`; `plan`/`apply` need a GCP project. Cloud-mode gaps to close
-  before deploying (found while reviewing the module, not yet fixed): nothing subscribes the worker to
-  Pub/Sub in cloud mode (local mode only); BigQuery inserts use bare table names and the module creates
-  no tables; `cloudbuild.yaml` pushes to `gcr.io` (Container Registry is deprecated for Artifact Registry),
-  deploys only the backend, and sets `--no-allow-unauthenticated`, which would block Twilio's webhook.
+- Cloud deployment (AC11) is ready but not run: it needs a GCP project. Order of operations:
+  `terraform apply` in `infra/terraform/state-module` (APIs, Firestore, BigQuery tables, Pub/Sub, KMS,
+  Artifact Registry, service accounts, secret containers), add the Twilio and Gemini secret values,
+  `gcloud builds submit --config infra/cloudbuild.yaml` (see its header for the two-pass URL step),
+  `terraform apply -var backend_url=...` to turn on Pub/Sub push, then
+  `AUSHADHI_MODE=cloud python -m backend.runtime seed` to load the pilot district into Firestore.
+  Cloud code paths are tested with the Google clients faked (`tests/backend/test_cloud_mode.py`), not
+  against real services.
 - Federation ties but does not beat local-only training for the data-poor state; its value here is
   matching local accuracy without pooling raw data, not beating it.

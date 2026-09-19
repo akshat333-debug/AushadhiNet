@@ -10,7 +10,7 @@ a real Firebase Auth ID token in cloud mode. `role` is one of `facility`, `block
 |---|---|---|
 | POST | `/webhooks/twilio` | Twilio WhatsApp sandbox webhook. Signature-verified in cloud mode. Queues the message; returns in <1s. |
 | POST | `/webhooks/ivr` | Dialogflow CX fulfillment webhook for the IVR channel. |
-| POST | `/simulator/message` | Web WhatsApp simulator (project.md's demo channel). Same handler as Twilio (`publish_inbound_message`). |
+| POST | `/simulator/message` | Local mode only. Web WhatsApp simulator; same handler as Twilio (`publish_inbound_message`). |
 | GET | `/simulator/contacts` | Local mode only. Pilot-district facilities with their dev WhatsApp numbers. |
 | GET | `/simulator/outbox?phone=...` | Local mode only. Replies the system would have sent to that number. |
 
@@ -32,6 +32,12 @@ facility's pending (low-confidence) records; unregistered numbers get a refusal.
 Jurisdiction is always derived from the order's own facilities (facility directory lookup), never from
 a caller-supplied district. A cross-district order needs an officer covering both districts.
 | POST | `/agent/ask` | Ask the officer agent a question (`{"question": "..."}`). Cannot approve or send anything — see backend/agent/tools.py. |
+
+## Internal
+
+| Method | Path | Description |
+|---|---|---|
+| POST | `/internal/pubsub/ingest` | Cloud mode only. Pub/Sub push target for the ingest worker. Requires a Google OIDC token for `PUBSUB_PUSH_SERVICE_ACCOUNT` with audience `PUBSUB_PUSH_AUDIENCE`; 503 until both are configured. |
 
 ## Public (no auth)
 

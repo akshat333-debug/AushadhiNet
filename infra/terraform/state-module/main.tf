@@ -26,6 +26,12 @@ variable "state_code" {
   type        = string
 }
 
+variable "backend_url" {
+  description = "Cloud Run URL of the backend (known after the first deploy). Empty = no push subscription yet."
+  type        = string
+  default     = ""
+}
+
 variable "region" {
   description = "GCP region for this state's resources"
   type        = string
@@ -48,6 +54,10 @@ resource "google_project_service" "required" {
     "translate.googleapis.com",
     "texttospeech.googleapis.com",
     "cloudkms.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "cloudbuild.googleapis.com",
+    "identitytoolkit.googleapis.com",
+    "secretmanager.googleapis.com",
   ])
   service            = each.key
   disable_on_destroy = false
@@ -70,17 +80,123 @@ resource "google_bigquery_dataset" "history" {
 
 # Names must match backend/providers/queue_google.py: topic = the code's topic
 # string, subscription = "<topic>-sub".
+locals {
+  # Mirrors backend/domain/{stock,census,checkin}.py; nested fields are JSON strings.
+  history_tables = {
+    stock_records = [
+      ["record_id", "STRING", "REQUIRED"], ["facility_id", "STRING", "REQUIRED"], ["drug_id", "STRING", "REQUIRED"],
+      ["reported_at", "TIMESTAMP", "REQUIRED"], ["as_of_date", "DATE", "REQUIRED"], ["on_hand", "INT64", "REQUIRED"],
+      ["received", "INT64", "NULLABLE"], ["dispensed", "INT64", "NULLABLE"], ["unusable", "INT64", "NULLABLE"],
+      ["batch_no", "STRING", "NULLABLE"], ["expiry", "DATE", "NULLABLE"], ["status", "STRING", "REQUIRED"],
+      ["confidence", "STRING", "REQUIRED"], ["reporter_phone_hash", "STRING", "REQUIRED"], ["raw_message_id", "STRING", "REQUIRED"],
+    ]
+    bed_census = [
+      ["record_id", "STRING", "REQUIRED"], ["facility_id", "STRING", "REQUIRED"], ["as_of_date", "DATE", "REQUIRED"],
+      ["beds_total", "INT64", "REQUIRED"], ["beds_occupied", "INT64", "REQUIRED"], ["admissions", "INT64", "NULLABLE"],
+      ["discharges", "INT64", "NULLABLE"], ["status", "STRING", "REQUIRED"], ["confidence", "STRING", "REQUIRED"],
+      ["raw_message_id", "STRING", "REQUIRED"],
+    ]
+    checkins = [
+      ["record_id", "STRING", "REQUIRED"], ["facility_id", "STRING", "REQUIRED"], ["staff_id_hash", "STRING", "REQUIRED"],
+      ["role", "STRING", "REQUIRED"], ["at", "TIMESTAMP", "REQUIRED"], ["lat", "FLOAT64", "REQUIRED"], ["lon", "FLOAT64", "REQUIRED"],
+      ["distance_m", "FLOAT64", "REQUIRED"], ["geofence_ok", "BOOL", "REQUIRED"], ["status", "STRING", "REQUIRED"],
+      ["raw_message_id", "STRING", "REQUIRED"],
+    ]
+  }
+}
+
+resource "google_bigquery_table" "history" {
+  for_each            = local.history_tables
+  project             = var.project_id
+  dataset_id          = google_bigquery_dataset.history.dataset_id
+  table_id            = each.key
+  deletion_protection = true
+  schema              = jsonencode([for c in each.value : { name = c[0], type = c[1], mode = c[2] }])
+}
+
 resource "google_pubsub_topic" "raw_messages" {
   project    = var.project_id
   name       = "ingest.raw_message"
   depends_on = [google_project_service.required]
 }
 
+# Cloud Run has CPU only during requests, so the worker is fed by push, not a pull loop.
+# The backend verifies the OIDC token (backend/api/pubsub_push.py).
 resource "google_pubsub_subscription" "raw_messages_worker" {
   project              = var.project_id
   name                 = "ingest.raw_message-sub"
   topic                = google_pubsub_topic.raw_messages.id
   ack_deadline_seconds = 60
+
+  dynamic "push_config" {
+    for_each = var.backend_url == "" ? [] : [1]
+    content {
+      push_endpoint = "${var.backend_url}/internal/pubsub/ingest"
+      oidc_token {
+        service_account_email = google_service_account.pubsub_push.email
+        audience              = "${var.backend_url}/internal/pubsub/ingest"
+      }
+    }
+  }
+}
+
+resource "google_service_account" "pubsub_push" {
+  project      = var.project_id
+  account_id   = "pubsub-push"
+  display_name = "Signs Pub/Sub push requests to the backend"
+}
+
+resource "google_service_account" "backend" {
+  project      = var.project_id
+  account_id   = "aushadhinet-backend"
+  display_name = "AushadhiNet backend runtime"
+}
+
+resource "google_project_iam_member" "backend_roles" {
+  for_each = toset([
+    "roles/datastore.user",
+    "roles/bigquery.dataEditor",
+    "roles/bigquery.jobUser",
+    "roles/pubsub.publisher",
+    "roles/aiplatform.user",
+    "roles/speech.client",
+    "roles/cloudtranslate.user",
+  ])
+  project = var.project_id
+  role    = each.key
+  member  = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_kms_crypto_key_iam_member" "backend_signs_orders" {
+  crypto_key_id = google_kms_crypto_key.order_signing_key.id
+  role          = "roles/cloudkms.signerVerifier"
+  member        = "serviceAccount:${google_service_account.backend.email}"
+}
+
+# Secret containers only; add values with `gcloud secrets versions add` (never in Terraform state).
+resource "google_secret_manager_secret" "app" {
+  for_each  = toset(["twilio-auth-token", "gemini-api-key"])
+  project   = var.project_id
+  secret_id = each.key
+  replication {
+    auto {}
+  }
+  depends_on = [google_project_service.required]
+}
+
+resource "google_secret_manager_secret_iam_member" "backend_reads_secrets" {
+  for_each  = google_secret_manager_secret.app
+  secret_id = each.value.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_artifact_registry_repository" "images" {
+  project       = var.project_id
+  location      = var.region
+  repository_id = "aushadhinet"
+  format        = "DOCKER"
+  depends_on    = [google_project_service.required]
 }
 
 resource "google_kms_key_ring" "order_signing" {
@@ -123,4 +239,16 @@ output "signing_key_version" {
 
 output "raw_message_topic" {
   value = google_pubsub_topic.raw_messages.name
+}
+
+output "artifact_registry" {
+  value = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.images.repository_id}"
+}
+
+output "backend_service_account" {
+  value = google_service_account.backend.email
+}
+
+output "pubsub_push_service_account" {
+  value = google_service_account.pubsub_push.email
 }

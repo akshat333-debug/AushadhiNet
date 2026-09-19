@@ -11,12 +11,13 @@ from backend.domain.enums import (
     RecordStatus,
     StaffRole,
 )
-from backend.domain.facility import Drug, Facility
+from backend.domain.facility import Contact, Drug, Facility
 from backend.domain.forecast import Forecast
 from backend.domain.orders import BatchLine, TransferOrder
 from backend.domain.stock import StockRecord
 
 __all__ = [
+    "Contact",
     "AuditEvent", "BedCensus", "CheckIn", "Confidence", "ConfidenceSource",
     "FacilityType", "Grain", "OrderKind", "OrderStatus", "RecordStatus",
     "StaffRole", "Drug", "Facility", "Forecast", "BatchLine", "TransferOrder",

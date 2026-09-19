@@ -1,70 +1,61 @@
-"""Replays the redistribution solver against a status-quo monthly-indent
-policy on the synthetic frozen test window, reporting stock-out days and
-expired units (modular-plan.md §2.10, step 24, AC6). This scores the
-*solver's decision logic*, not a forecasting metric -- it answers "does
-proactive redistribution actually reduce stock-outs and waste compared to
-today's manual monthly indent cycle?"
+"""AC6: does proactive redistribution reduce stock-outs versus today's
+status quo (no lateral transfers between monthly indents)?
+
+Both arms run through eval/replay_sim.py with identical demand, outbreak
+shocks, supply delays and leakage. They share a warm-up with no transfers,
+then diverge over the frozen synthetic test window (the trailing
+`synthetic_benchmark.test_weeks` of the ledger). The solver arm calls the
+production proposer every week using only reported history and current
+on-hand. The solver's cover_weeks was chosen on the 26 weeks before the
+test window (eval/tune_replay.py), never on the test window.
 """
 from __future__ import annotations
 
-import pandas as pd
-
-from backend.domain import Grain
+import json
+import uuid
+from datetime import datetime, timezone
 
 from eval.protocol import load_protocol
-from eval.splits import for_grain
-from ml.data.panel import build as build_panel
-from ml.optimize.constraints import SolverConfig
-from ml.optimize.transfers import solve as transfers_solve
+from eval.replay_sim import build_world, compare
+from eval.run_final import REPORTS_PATH, _git_sha
+
+DEV_WEEKS = 26
 
 
-def _monthly_indent_baseline(test_panel: pd.DataFrame) -> dict:
-    """Status quo: no cross-facility redistribution during the month;
-    each facility just runs down its own stock. Stock-out days = weeks
-    where on_hand_close hit zero; expired units = sum of `unusable`."""
-    stockout_weeks = int((test_panel["on_hand_close"] <= 1e-6).sum())
-    expired_units = float(test_panel["unusable"].sum())
-    return {"policy": "monthly_indent_status_quo", "stockout_weeks": stockout_weeks, "expired_units": expired_units}
+def windows(n_weeks: int, test_weeks: int) -> dict[str, tuple[int, int]]:
+    test_start = n_weeks - test_weeks
+    return {"dev": (test_start - DEV_WEEKS, test_start), "test": (test_start, n_weeks)}
 
 
-def _solver_assisted(test_panel: pd.DataFrame, facilities_by_district: dict, cfg: SolverConfig) -> dict:
-    """Vectorized weekly replay: for every (week, drug, district) group,
-    a facility below the low-stock threshold is credited as covered if
-    ANY facility in the same district-drug-week group has surplus (more
-    than 3x the threshold) -- i.e. a transfer within the district could
-    have covered it. This approximates the operational loop (Module 5)
-    without needing the full live backend or re-solving the LP per row,
-    which was measured to be O(n^2) and impractical at 760 facilities x
-    13 drugs x 26 weeks; the district-level surplus check captures the
-    same qualitative effect (same-district redistribution resolves most
-    shortfalls) at O(n)."""
-    df = test_panel.copy()
-    df["district_id"] = df["facility_id"].map(facilities_by_district)
-    LOW_STOCK_THRESHOLD = 5.0
-
-    is_low = df["on_hand_close"] <= LOW_STOCK_THRESHOLD
-    is_surplus = df["on_hand_close"] > LOW_STOCK_THRESHOLD * 3
-    group_keys = ["week", "drug_id", "district_id"]
-    group_has_surplus = df.groupby(group_keys)["on_hand_close"].transform(lambda s: (s > LOW_STOCK_THRESHOLD * 3).any())
-
-    covered_by_transfer = is_low & group_has_surplus & df["district_id"].notna()
-    actual_stockout = (df["on_hand_close"] <= 1e-6) & ~covered_by_transfer
-
-    return {
-        "policy": "solver_assisted",
-        "stockout_weeks": int(actual_stockout.sum()),
-        "expired_units": float(df["unusable"].sum()),
-    }
+def solver_policy(world, cfg=None):
+    from ml.data.facilities import load_facilities
+    from ml.optimize.service import propose
+    facilities = load_facilities(state="Maharashtra", district="Nashik")
+    drug_ids = sorted({d for _, d in world.series})
+    return lambda observed, on_hand: propose(facilities, drug_ids, {}, on_hand, cfg=cfg, panel=observed)
 
 
-def run(states: tuple[str, ...] = (), facilities_by_district: dict | None = None) -> dict:
+def run(window: str = "test", cfg=None, world=None) -> dict:
     protocol = load_protocol()
-    panel = build_panel(Grain.FACILITY_WEEK)
-    panel_max_date = pd.to_datetime(panel["week"]).max().date()
-    split = for_grain(Grain.FACILITY_WEEK, protocol, panel_max_date=panel_max_date)
-    test_panel = panel[split.test_mask(panel)]
+    world = world or build_world(protocol.generator_seal.seed, protocol.real_benchmark.train_start, protocol.real_benchmark.test_end)
+    start, stop = windows(len(world.weeks), protocol.synthetic_benchmark.test_weeks)[window]
+    result = compare(world, start, stop, solver_policy(world, cfg))
+    return {arm: {k: float(v) for k, v in metrics.items()} for arm, metrics in result.items()}
 
-    baseline = _monthly_indent_baseline(test_panel)
-    facilities_by_district = facilities_by_district or {}
-    assisted = _solver_assisted(test_panel, facilities_by_district, SolverConfig())
-    return {"baseline": baseline, "solver_assisted": assisted}
+
+def main() -> None:
+    protocol = load_protocol()
+    result = run("test")
+    record = {
+        "run_id": str(uuid.uuid4()), "git_sha": _git_sha(), "model": "replay_solver_vs_status_quo",
+        "grain": "FACILITY_WEEK", "metrics": result,
+        "protocol_hash": protocol.generator_seal.content_hash,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    with open(REPORTS_PATH, "a") as f:
+        f.write(json.dumps(record) + "\n")
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    main()

@@ -16,7 +16,7 @@ from ml.optimize.constraints import SolverConfig
 from ml.optimize import deputation, referral, transfers
 
 
-def _surplus_deficit_from_forecasts(forecasts, stock_by_facility_drug: dict, cold_chain_by_drug: dict, cold_chain_by_facility: dict):
+def _surplus_deficit_from_forecasts(forecasts, stock_by_facility_drug: dict, cold_chain_by_drug: dict, cold_chain_by_facility: dict, cover_weeks: float | None = None):
     surplus_rows, deficit_rows = [], []
     for f in forecasts:
         on_hand = stock_by_facility_drug.get((f.entity_id, f.drug_id), 0.0)
@@ -25,6 +25,14 @@ def _surplus_deficit_from_forecasts(forecasts, stock_by_facility_drug: dict, col
             "drug_cold_chain": cold_chain_by_drug.get(f.drug_id, False),
             "has_cold_chain": cold_chain_by_facility.get(f.entity_id, False),
         }
+        if cover_weeks is not None:
+            need = f.p50 * cover_weeks - on_hand
+            spare = on_hand - f.p90 * cover_weeks
+            if need >= 1:
+                deficit_rows.append({**row_common, "needed_qty": round(need)})
+            elif spare >= 1:
+                surplus_rows.append({**row_common, "on_hand": spare, "batches": []})
+            continue
         if f.stockout_prob >= 0.5:
             deficit_rows.append({**row_common, "needed_qty": max(1, round(f.p50 - on_hand))})
         elif f.stockout_prob <= 0.1 and on_hand > f.p90:
@@ -54,7 +62,7 @@ def propose(
 
     forecasts = latest_forecasts(facility_ids, drug_ids, panel=panel, on_hand=stock_by_facility_drug)
     surplus, deficit = _surplus_deficit_from_forecasts(
-        forecasts, stock_by_facility_drug, cold_chain_by_drug, cold_chain_by_facility,
+        forecasts, stock_by_facility_drug, cold_chain_by_drug, cold_chain_by_facility, cfg.cover_weeks,
     )
     if surplus.empty or deficit.empty:
         return []

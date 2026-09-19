@@ -1,0 +1,2862 @@
+[
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 40,
+    "batch_no": "B732",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0000.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 156,
+    "batch_no": "B541",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0001.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 161,
+    "batch_no": "B433",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0002.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 92,
+    "batch_no": "B947",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0003.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 141,
+    "batch_no": "B703",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0004.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 32,
+    "batch_no": "B200",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0005.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 49,
+    "batch_no": "B981",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0006.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "ORS",
+    "on_hand": 87,
+    "batch_no": "B961",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0007.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 171,
+    "batch_no": "B974",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0008.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 75,
+    "batch_no": "B340",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0009.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 161,
+    "batch_no": "B877",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0010.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 176,
+    "batch_no": "B384",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0011.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 171,
+    "batch_no": "B659",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0012.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 130,
+    "batch_no": "B166",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0013.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 41,
+    "batch_no": "B305",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0014.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 63,
+    "batch_no": "B761",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0015.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 30,
+    "batch_no": "B487",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0016.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 108,
+    "batch_no": "B367",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0017.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 71,
+    "batch_no": "B623",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0018.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 43,
+    "batch_no": "B367",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0019.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 143,
+    "batch_no": "B739",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0020.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 43,
+    "batch_no": "B873",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0021.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 36,
+    "batch_no": "B160",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0022.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "ORS",
+    "on_hand": 43,
+    "batch_no": "B870",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0023.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 8,
+    "batch_no": "B525",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0024.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 159,
+    "batch_no": "B922",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0025.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 161,
+    "batch_no": "B405",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0026.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 63,
+    "batch_no": "B222",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0027.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Albendazole",
+    "on_hand": 81,
+    "batch_no": "B827",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0028.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 11,
+    "batch_no": "B351",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0029.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 117,
+    "batch_no": "B984",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0030.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 162,
+    "batch_no": "B139",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0031.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 94,
+    "batch_no": "B314",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0032.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 108,
+    "batch_no": "B472",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0033.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 161,
+    "batch_no": "B814",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0034.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 94,
+    "batch_no": "B628",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0035.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Albendazole",
+    "on_hand": 26,
+    "batch_no": "B168",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0036.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 96,
+    "batch_no": "B576",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0037.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 136,
+    "batch_no": "B433",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0038.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 117,
+    "batch_no": "B547",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0039.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 195,
+    "batch_no": "B484",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0040.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 57,
+    "batch_no": "B718",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0041.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 149,
+    "batch_no": "B921",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0042.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 34,
+    "batch_no": "B305",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0043.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Albendazole",
+    "on_hand": 89,
+    "batch_no": "B679",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0044.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 177,
+    "batch_no": "B282",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0045.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 185,
+    "batch_no": "B913",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0046.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 81,
+    "batch_no": "B464",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0047.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 59,
+    "batch_no": "B271",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0048.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 126,
+    "batch_no": "B898",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0049.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 182,
+    "batch_no": "B384",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0050.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 58,
+    "batch_no": "B214",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0051.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 102,
+    "batch_no": "B949",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0052.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 114,
+    "batch_no": "B172",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0053.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 156,
+    "batch_no": "B165",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0054.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "ORS",
+    "on_hand": 12,
+    "batch_no": "B928",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0055.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 141,
+    "batch_no": "B145",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0056.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 129,
+    "batch_no": "B574",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0057.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 14,
+    "batch_no": "B324",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0058.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "ORS",
+    "on_hand": 198,
+    "batch_no": "B455",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0059.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 191,
+    "batch_no": "B686",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0060.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 141,
+    "batch_no": "B321",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0061.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 143,
+    "batch_no": "B247",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0062.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 18,
+    "batch_no": "B155",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0063.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Albendazole",
+    "on_hand": 69,
+    "batch_no": "B426",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0064.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 75,
+    "batch_no": "B636",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0065.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 120,
+    "batch_no": "B641",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0066.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 81,
+    "batch_no": "B722",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0067.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 28,
+    "batch_no": "B437",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0068.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 71,
+    "batch_no": "B631",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0069.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 28,
+    "batch_no": "B181",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0070.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 114,
+    "batch_no": "B209",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0071.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 26,
+    "batch_no": "B735",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0072.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 72,
+    "batch_no": "B779",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0073.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 63,
+    "batch_no": "B757",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0074.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 42,
+    "batch_no": "B346",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0075.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Albendazole",
+    "on_hand": 57,
+    "batch_no": "B953",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0076.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 134,
+    "batch_no": "B991",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0077.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 161,
+    "batch_no": "B348",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0078.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 66,
+    "batch_no": "B163",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0079.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 7,
+    "batch_no": "B758",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0080.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 186,
+    "batch_no": "B786",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0081.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 140,
+    "batch_no": "B348",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0082.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "ORS",
+    "on_hand": 39,
+    "batch_no": "B115",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0083.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 148,
+    "batch_no": "B951",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0084.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 133,
+    "batch_no": "B729",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0085.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 121,
+    "batch_no": "B257",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0086.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 29,
+    "batch_no": "B289",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0087.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 90,
+    "batch_no": "B455",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0088.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 29,
+    "batch_no": "B344",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0089.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 176,
+    "batch_no": "B751",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0090.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 120,
+    "batch_no": "B287",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0091.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 180,
+    "batch_no": "B943",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0092.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 41,
+    "batch_no": "B983",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0093.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 93,
+    "batch_no": "B869",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0094.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 50,
+    "batch_no": "B896",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0095.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 157,
+    "batch_no": "B591",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0096.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 120,
+    "batch_no": "B275",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0097.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 160,
+    "batch_no": "B889",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0098.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 94,
+    "batch_no": "B400",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0099.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 165,
+    "batch_no": "B505",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0100.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 129,
+    "batch_no": "B583",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0101.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 191,
+    "batch_no": "B991",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0102.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 146,
+    "batch_no": "B947",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0103.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 29,
+    "batch_no": "B789",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0104.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 111,
+    "batch_no": "B963",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0105.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 74,
+    "batch_no": "B251",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0106.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 75,
+    "batch_no": "B981",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0107.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 34,
+    "batch_no": "B569",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0108.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 40,
+    "batch_no": "B508",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0109.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 117,
+    "batch_no": "B815",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0110.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 92,
+    "batch_no": "B800",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0111.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 4,
+    "batch_no": "B833",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0112.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 72,
+    "batch_no": "B306",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0113.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 93,
+    "batch_no": "B703",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0114.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 198,
+    "batch_no": "B823",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0115.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 148,
+    "batch_no": "B640",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0116.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 117,
+    "batch_no": "B496",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0117.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 47,
+    "batch_no": "B679",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0118.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 33,
+    "batch_no": "B609",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0119.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 91,
+    "batch_no": "B429",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0120.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 8,
+    "batch_no": "B716",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0121.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 138,
+    "batch_no": "B834",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0122.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 179,
+    "batch_no": "B620",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0123.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 130,
+    "batch_no": "B116",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0124.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 6,
+    "batch_no": "B666",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0125.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 40,
+    "batch_no": "B716",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0126.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 101,
+    "batch_no": "B984",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0127.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Albendazole",
+    "on_hand": 30,
+    "batch_no": "B301",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0128.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 50,
+    "batch_no": "B788",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0129.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 143,
+    "batch_no": "B795",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0130.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 53,
+    "batch_no": "B131",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0131.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 57,
+    "batch_no": "B321",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0132.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 192,
+    "batch_no": "B545",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0133.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 26,
+    "batch_no": "B881",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0134.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 196,
+    "batch_no": "B904",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0135.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Albendazole",
+    "on_hand": 58,
+    "batch_no": "B343",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0136.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 24,
+    "batch_no": "B265",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0137.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 125,
+    "batch_no": "B752",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0138.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 197,
+    "batch_no": "B926",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0139.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 199,
+    "batch_no": "B348",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0140.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 189,
+    "batch_no": "B820",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0141.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 70,
+    "batch_no": "B167",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0142.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "ORS",
+    "on_hand": 77,
+    "batch_no": "B185",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0143.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 159,
+    "batch_no": "B425",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0144.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 42,
+    "batch_no": "B472",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0145.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 112,
+    "batch_no": "B653",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0146.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 49,
+    "batch_no": "B484",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0147.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 43,
+    "batch_no": "B651",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0148.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 193,
+    "batch_no": "B964",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0149.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 94,
+    "batch_no": "B248",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0150.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 77,
+    "batch_no": "B670",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0151.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 27,
+    "batch_no": "B957",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0152.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 40,
+    "batch_no": "B182",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0153.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 30,
+    "batch_no": "B548",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0154.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "ORS",
+    "on_hand": 174,
+    "batch_no": "B896",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0155.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 104,
+    "batch_no": "B652",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0156.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 182,
+    "batch_no": "B929",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0157.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 198,
+    "batch_no": "B469",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0158.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 137,
+    "batch_no": "B747",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0159.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 156,
+    "batch_no": "B809",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0160.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 112,
+    "batch_no": "B944",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0161.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 164,
+    "batch_no": "B992",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0162.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "ORS",
+    "on_hand": 87,
+    "batch_no": "B773",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0163.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Albendazole",
+    "on_hand": 150,
+    "batch_no": "B270",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0164.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 11,
+    "batch_no": "B773",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0165.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 165,
+    "batch_no": "B953",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0166.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 114,
+    "batch_no": "B725",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0167.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 50,
+    "batch_no": "B523",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0168.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 116,
+    "batch_no": "B287",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0169.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 116,
+    "batch_no": "B965",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0170.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 25,
+    "batch_no": "B926",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0171.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 146,
+    "batch_no": "B947",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0172.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 104,
+    "batch_no": "B564",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0173.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 195,
+    "batch_no": "B283",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0174.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 178,
+    "batch_no": "B889",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0175.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 96,
+    "batch_no": "B638",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0176.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 184,
+    "batch_no": "B263",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0177.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 97,
+    "batch_no": "B543",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0178.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 26,
+    "batch_no": "B362",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0179.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 105,
+    "batch_no": "B290",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0180.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 22,
+    "batch_no": "B929",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0181.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 156,
+    "batch_no": "B112",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0182.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 161,
+    "batch_no": "B168",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0183.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Albendazole",
+    "on_hand": 91,
+    "batch_no": "B457",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0184.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 190,
+    "batch_no": "B277",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0185.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 116,
+    "batch_no": "B754",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0186.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "ORS",
+    "on_hand": 6,
+    "batch_no": "B813",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0187.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Paracetamol",
+    "on_hand": 31,
+    "batch_no": "B394",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0188.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 32,
+    "batch_no": "B879",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0189.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 2,
+    "batch_no": "B300",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0190.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Paracetamol",
+    "on_hand": 36,
+    "batch_no": "B237",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0191.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Albendazole",
+    "on_hand": 88,
+    "batch_no": "B439",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0192.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 107,
+    "batch_no": "B629",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0193.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 119,
+    "batch_no": "B131",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0194.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 37,
+    "batch_no": "B110",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0195.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Albendazole",
+    "on_hand": 195,
+    "batch_no": "B681",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0196.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 69,
+    "batch_no": "B710",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0197.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 43,
+    "batch_no": "B339",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0198.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 57,
+    "batch_no": "B977",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0199.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 115,
+    "batch_no": "B548",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0200.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 198,
+    "batch_no": "B330",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0201.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 87,
+    "batch_no": "B310",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0202.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 164,
+    "batch_no": "B987",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0203.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 90,
+    "batch_no": "B281",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0204.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Paracetamol",
+    "on_hand": 88,
+    "batch_no": "B472",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0205.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 103,
+    "batch_no": "B487",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0206.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 30,
+    "batch_no": "B232",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0207.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 109,
+    "batch_no": "B531",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0208.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 27,
+    "batch_no": "B652",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0209.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 150,
+    "batch_no": "B242",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0210.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 178,
+    "batch_no": "B622",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0211.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "Albendazole",
+    "on_hand": 175,
+    "batch_no": "B292",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0212.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "Zinc 20mg",
+    "on_hand": 111,
+    "batch_no": "B589",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0213.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "Paracetamol",
+    "on_hand": 165,
+    "batch_no": "B843",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0214.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 45,
+    "batch_no": "B739",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0215.png"
+  },
+  {
+    "script": "devanagari",
+    "drug_name": "ORS",
+    "on_hand": 40,
+    "batch_no": "B316",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0216.png"
+  },
+  {
+    "script": "tamil",
+    "drug_name": "ORS",
+    "on_hand": 112,
+    "batch_no": "B598",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0217.png"
+  },
+  {
+    "script": "bengali",
+    "drug_name": "ORS",
+    "on_hand": 3,
+    "batch_no": "B681",
+    "degraded": false,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0218.png"
+  },
+  {
+    "script": "english",
+    "drug_name": "Albendazole",
+    "on_hand": 87,
+    "batch_no": "B964",
+    "degraded": true,
+    "source": "rendered",
+    "annotators": [
+      "auto-gen-1",
+      "auto-gen-1"
+    ],
+    "image": "reg_0219.png"
+  }
+]

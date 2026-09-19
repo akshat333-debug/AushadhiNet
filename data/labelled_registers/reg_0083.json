@@ -1,0 +1,13 @@
+{
+  "script": "english",
+  "drug_name": "ORS",
+  "on_hand": 39,
+  "batch_no": "B115",
+  "degraded": true,
+  "source": "rendered",
+  "annotators": [
+    "auto-gen-1",
+    "auto-gen-1"
+  ],
+  "image": "reg_0083.png"
+}

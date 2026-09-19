@@ -1,0 +1,13 @@
+{
+  "script": "bengali",
+  "drug_name": "Paracetamol",
+  "on_hand": 195,
+  "batch_no": "B283",
+  "degraded": true,
+  "source": "rendered",
+  "annotators": [
+    "auto-gen-1",
+    "auto-gen-1"
+  ],
+  "image": "reg_0174.png"
+}

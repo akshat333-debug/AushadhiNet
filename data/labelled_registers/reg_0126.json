@@ -1,0 +1,13 @@
+{
+  "script": "bengali",
+  "drug_name": "Zinc 20mg",
+  "on_hand": 40,
+  "batch_no": "B716",
+  "degraded": false,
+  "source": "rendered",
+  "annotators": [
+    "auto-gen-1",
+    "auto-gen-1"
+  ],
+  "image": "reg_0126.png"
+}

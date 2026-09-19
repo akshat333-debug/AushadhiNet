@@ -1,0 +1,13 @@
+{
+  "script": "tamil",
+  "drug_name": "ORS",
+  "on_hand": 134,
+  "batch_no": "B991",
+  "degraded": true,
+  "source": "rendered",
+  "annotators": [
+    "auto-gen-1",
+    "auto-gen-1"
+  ],
+  "image": "reg_0077.png"
+}

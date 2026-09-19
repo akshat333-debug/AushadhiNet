@@ -1,0 +1,13 @@
+{
+  "script": "devanagari",
+  "drug_name": "Paracetamol",
+  "on_hand": 28,
+  "batch_no": "B437",
+  "degraded": false,
+  "source": "rendered",
+  "annotators": [
+    "auto-gen-1",
+    "auto-gen-1"
+  ],
+  "image": "reg_0068.png"
+}

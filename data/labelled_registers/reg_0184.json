@@ -1,0 +1,13 @@
+{
+  "script": "devanagari",
+  "drug_name": "Albendazole",
+  "on_hand": 91,
+  "batch_no": "B457",
+  "degraded": false,
+  "source": "rendered",
+  "annotators": [
+    "auto-gen-1",
+    "auto-gen-1"
+  ],
+  "image": "reg_0184.png"
+}

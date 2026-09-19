@@ -1,0 +1,13 @@
+{
+  "script": "devanagari",
+  "drug_name": "Zinc 20mg",
+  "on_hand": 195,
+  "batch_no": "B484",
+  "degraded": true,
+  "source": "rendered",
+  "annotators": [
+    "auto-gen-1",
+    "auto-gen-1"
+  ],
+  "image": "reg_0040.png"
+}

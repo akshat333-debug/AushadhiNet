@@ -1,0 +1,33 @@
+version: 1
+real_benchmark:
+  grain: DISTRICT_MONTH
+  source: HMIS M19 Stock Distributed, districts of Maharashtra/Haryana/Assam/Meghalaya,
+    FY2017-18 onward
+  train_start: 2017-04
+  train_end: 2019-02
+  validation_start: 2019-03
+  validation_end: 2019-08
+  test_start: 2019-09
+  test_end: 2020-02
+  excluded_months:
+  - 2020-03
+  held_out_district: dhule
+  held_out_district_state: mh
+federated_benchmark:
+  held_out_state: meghalaya
+  client_states:
+  - maharashtra
+  - haryana
+  - assam
+  - meghalaya
+synthetic_benchmark:
+  grain: FACILITY_WEEK
+  test_weeks: 26
+  held_out_block: trimbakeshwar
+pilot:
+  district: nashik
+  state: mh
+generator_seal:
+  seed: 20260918
+  content_hash: 15a895a0b9b79eb91a6b81c5389449e27dea76a47ea0d6b9ef728a7f6a18246c
+  sealed_at: '2026-09-18T19:40:21.787729+00:00'

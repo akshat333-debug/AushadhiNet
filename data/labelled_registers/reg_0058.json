@@ -1,0 +1,13 @@
+{
+  "script": "bengali",
+  "drug_name": "ORS",
+  "on_hand": 14,
+  "batch_no": "B324",
+  "degraded": false,
+  "source": "rendered",
+  "annotators": [
+    "auto-gen-1",
+    "auto-gen-1"
+  ],
+  "image": "reg_0058.png"
+}

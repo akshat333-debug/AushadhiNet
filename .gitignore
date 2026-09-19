@@ -1,0 +1,17 @@
+.DS_Store
+~$*
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+.next/
+data/raw/
+data/interim/
+data/synthetic/
+models/
+*.duckdb
+.code-review-graph/
+.claude/

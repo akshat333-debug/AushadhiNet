@@ -1,0 +1,13 @@
+{
+  "script": "english",
+  "drug_name": "Paracetamol",
+  "on_hand": 94,
+  "batch_no": "B628",
+  "degraded": false,
+  "source": "rendered",
+  "annotators": [
+    "auto-gen-1",
+    "auto-gen-1"
+  ],
+  "image": "reg_0035.png"
+}

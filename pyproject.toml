@@ -1,0 +1,59 @@
+[project]
+name = "aushadhinet"
+version = "0.1.0"
+description = "Federated AI for India's last-mile health resource network"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pydantic>=2.9",
+    "pydantic-settings>=2.5",
+    "pyyaml>=6.0",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pandas[ml]>=3.0.6",
+    "pypdf[ml]>=6.19.0",
+    "pyarrow[ml]>=25.0.1",
+    "statsforecast[ml]>=2.0.1",
+    "timesfm[ml]>=3.0.2",
+]
+
+[project.optional-dependencies]
+ml = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "lightgbm>=4.7",
+    "statsforecast>=1.7",
+    "ortools>=9.15",
+    "duckdb>=1.1",
+    "scikit-learn>=1.5",
+    "scipy>=1.13",
+    "pillow>=10.4",
+]
+gcp = [
+    "google-genai>=2.0",
+    "google-cloud-speech>=2.40",
+    "google-cloud-translate>=3.15",
+    "google-cloud-texttospeech>=2.16",
+    "google-cloud-firestore>=2.19",
+    "google-cloud-bigquery>=3.25",
+    "google-adk>=2.9",
+    "flwr>=1.37,<4.0",
+    "twilio>=9.0",
+    "requests>=2.32",
+    "cryptography>=43.0",
+]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend", "ml", "eval"]

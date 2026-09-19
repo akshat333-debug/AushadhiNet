@@ -1,0 +1,13 @@
+{
+  "script": "english",
+  "drug_name": "Albendazole",
+  "on_hand": 25,
+  "batch_no": "B926",
+  "degraded": false,
+  "source": "rendered",
+  "annotators": [
+    "auto-gen-1",
+    "auto-gen-1"
+  ],
+  "image": "reg_0171.png"
+}

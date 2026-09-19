@@ -1,0 +1,13 @@
+{
+  "script": "tamil",
+  "drug_name": "Paracetamol",
+  "on_hand": 133,
+  "batch_no": "B729",
+  "degraded": true,
+  "source": "rendered",
+  "annotators": [
+    "auto-gen-1",
+    "auto-gen-1"
+  ],
+  "image": "reg_0085.png"
+}

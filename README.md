@@ -6,9 +6,9 @@ Built for **Build with AI: Code for Communities** (Second Edition), Problem Stat
 
 | | |
 |---|---|
-| Live app | https://aushadhinet-frontend.onrender.com (free tier: first load can take ~1 min) |
+| Live app | [aushadhinet-frontend.onrender.com](https://aushadhinet-frontend.onrender.com) (free tier: first load can take ~1 min) |
 | API | https://aushadhinet-backend.onrender.com/healthz |
-| Demo video | [docs/pitch/AushadhiNet-demo.mp4](docs/pitch/AushadhiNet-demo.mp4) |
+| Demo video | [Watch on Google Drive](https://drive.google.com/file/d/1hv58NXTXzYdrw2FjT-09dVwV-RGRDBeq/view?usp=sharing) (also [in repo](docs/pitch/AushadhiNet-demo.mp4)) |
 | Pitch deck | [docs/pitch/AushadhiNet-pitch.pdf](docs/pitch/AushadhiNet-pitch.pdf) |
 
 ## The problem

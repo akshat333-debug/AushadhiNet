@@ -26,7 +26,7 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 | Check | Result |
 |---|---|
 | Backend, ML, eval tests | 348 passed, 1 skipped (cloud-only ARIMA) |
-| Playwright e2e, real UI sign-in | 13/13 locally, including 2 language tests |
+| Playwright e2e, real UI sign-in | 13/13 locally and 13/13 against the live Render URLs, including 2 language tests |
 | Fresh clone from GitHub (`scripts/fresh_clone_check.sh`) | passes end to end |
 | `docker compose up --build` | healthy; ledger sealed at image build |
 | `terraform validate` | passes (Terraform 1.16, google provider 5.45) |
@@ -48,7 +48,7 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 **Live (Render free tier, local mode on the sealed ledger, no GCP):**
 - Frontend: https://aushadhinet-frontend.onrender.com
 - Backend: https://aushadhinet-backend.onrender.com (health: `/healthz`)
-- Verified 2026-09-30: the full Playwright suite passes against these URLs, 11/11
+- Verified 2026-09-30 after the redesign: the full Playwright suite passes against these URLs, 13/13
   (`E2E_BASE_URL=https://aushadhinet-frontend.onrender.com npx playwright test --workers=1`).
 - Warm both before recording: free instances sleep, and the first request takes 30-60s.
 

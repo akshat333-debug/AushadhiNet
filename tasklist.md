@@ -13,11 +13,11 @@ Deadline 30 Sep 2026. Current state in `state.md`; history in `TASK.md`.
       full-district proposal returns hundreds of drafts; decide how to show it on screen.
 - [ ] Methodology and limitations slide (frozen protocol, sealed generator, what is synthetic).
 
-## Public demo link (Render, no GCP needed)
+## Public demo link (Render): done, see `state.md`
 
-- [ ] Render -> New -> Blueprint -> this repo (`render.yaml`): deploys backend + frontend free.
-- [ ] Check the frontend loads and the dashboard shows Nashik districts; warm both services
-      before recording (free instances sleep).
+- [x] Blueprint deployed; full e2e suite passes against the live URLs.
+- [ ] Before recording: open both URLs a minute early so the free instances are awake.
+- [ ] Rotate the Render API key that was pasted into chat.
 
 ## Cloud deploy (AC11), when GCP credits arrive
 

@@ -292,3 +292,8 @@ Reviewing the cloud path found more than the three gaps listed after the Terrafo
 - The backend image now builds and seals the ledger at build time (build fails on a hash mismatch) instead of on every start, and includes the gcp extra so one image serves both modes.
 - Test isolation bug: test_factory deleted google.cloud modules from sys.modules permanently, so a later Firestore import re-registered protobufs; now restored via monkeypatch.
 - Verified: 337 passed / 1 skipped; terraform validate; Docker stack rebuilt, 11/11 Playwright against it; in the container with AUSHADHI_MODE=cloud, simulator 404, unconfigured push 503, officer route without token 401.
+
+## Render deployment (2026-09-30)
+- Backend was 860 MB in memory; Render free is 512 MB. Serving now loads only served states (SERVED_STATES) and a recent-weeks slice written at seal time; facility CSV read in chunks. 312 MB startup, 374 MB peak.
+- Deployed e2e failed 5/11 twice, for two different reasons found via Render's event log and timing: (1) the platform health check hit /public/district-summary, timed out at 5s under load, and Render killed and restarted the backend twice (wiping in-memory state) -- added a no-work /healthz; (2) the NLEM drug index was built lazily on the first message (3.5s locally, minutes on the throttled CPU), so the first simulator/agent call appeared dead -- now built at startup. Both were invisible locally.
+- Result: 11/11 against the deployed URLs.

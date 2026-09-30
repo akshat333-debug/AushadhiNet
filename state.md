@@ -37,6 +37,13 @@ Snapshot as of 2026-09-20. `TASK.md` is the full build log (every bug found and 
 
 ## Deployment
 
+**Live (Render free tier, local mode on the sealed ledger, no GCP):**
+- Frontend: https://aushadhinet-frontend.onrender.com
+- Backend: https://aushadhinet-backend.onrender.com (health: `/healthz`)
+- Verified 2026-09-30: the full Playwright suite passes against these URLs, 11/11
+  (`E2E_BASE_URL=https://aushadhinet-frontend.onrender.com npx playwright test --workers=1`).
+- Warm both before recording: free instances sleep, and the first request takes 30-60s.
+
 `render.yaml` deploys both services from their Dockerfiles (Render -> New -> Blueprint).
 Serving fits a 512 MB free instance: ~312 MB at startup, ~374 MB peak while proposing
 transfers (was ~860 MB before the serving footprint was trimmed). Free instances sleep

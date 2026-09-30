@@ -35,6 +35,14 @@ Snapshot as of 2026-09-20. `TASK.md` is the full build log (every bug found and 
 | AC3 extraction accuracy | not measured | 220 eval images are rendered text, not photos; no Gemini key used locally. |
 | AC11 cloud deploy | scripted, not run | Needs a GCP project. Runbook in README "What's not done yet". |
 
+## Deployment
+
+`render.yaml` deploys both services from their Dockerfiles (Render -> New -> Blueprint).
+Serving fits a 512 MB free instance: ~312 MB at startup, ~374 MB peak while proposing
+transfers (was ~860 MB before the serving footprint was trimmed). Free instances sleep
+when idle, so the first request after a pause takes 30-60s. This runs in local mode: the
+sealed ledger, no GCP credentials. AC11 (real GCP services) is still unrun.
+
 ## Known limits
 
 - Local state (stock, orders, outbox) is in memory; restarting the backend resets it.

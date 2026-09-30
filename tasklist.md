@@ -13,6 +13,12 @@ Deadline 30 Sep 2026. Current state in `state.md`; history in `TASK.md`.
       full-district proposal returns hundreds of drafts; decide how to show it on screen.
 - [ ] Methodology and limitations slide (frozen protocol, sealed generator, what is synthetic).
 
+## Public demo link (Render, no GCP needed)
+
+- [ ] Render -> New -> Blueprint -> this repo (`render.yaml`): deploys backend + frontend free.
+- [ ] Check the frontend loads and the dashboard shows Nashik districts; warm both services
+      before recording (free instances sleep).
+
 ## Cloud deploy (AC11), when GCP credits arrive
 
 - [ ] `terraform apply` in `infra/terraform/state-module` with a real `project_id`.

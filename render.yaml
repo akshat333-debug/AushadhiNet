@@ -1,0 +1,42 @@
+# Render blueprint: backend + frontend, both from the repo's Dockerfiles.
+# Deploy with Render Dashboard -> New -> Blueprint, pointed at this repo.
+#
+# Free instances have 512 MB RAM and sleep when idle: the first request after a
+# sleep takes ~30-60s. Serving fits in ~370 MB (see state.md).
+services:
+  - type: web
+    name: aushadhinet-backend
+    runtime: docker
+    repo: https://github.com/akshat333-debug/AushadhiNet
+    branch: master
+    region: singapore
+    plan: free
+    dockerfilePath: ./infra/Dockerfile.backend
+    dockerContext: .
+    healthCheckPath: /public/district-summary
+    autoDeploy: true
+    envVars:
+      - key: AUSHADHI_MODE
+        value: local            # no GCP credentials; the demo runs on the sealed ledger
+      - key: SERVED_STATES
+        value: maharashtra
+      - key: SERVING_WEEKS
+        value: "16"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://aushadhinet-frontend.onrender.com
+
+  - type: web
+    name: aushadhinet-frontend
+    runtime: docker
+    repo: https://github.com/akshat333-debug/AushadhiNet
+    branch: master
+    region: singapore
+    plan: free
+    dockerfilePath: ./infra/Dockerfile.frontend
+    dockerContext: .
+    autoDeploy: true
+    envVars:
+      - key: NEXT_PUBLIC_API_BASE
+        value: https://aushadhinet-backend.onrender.com

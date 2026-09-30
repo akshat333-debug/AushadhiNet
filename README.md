@@ -35,6 +35,7 @@ facilities in time to act.
 | Transfer orders drafted by OR-Tools | **159** (7,251 units across 186 facilities) |
 | Forecast error vs naive baseline (WAPE, held-out window) | **0.871 vs 1.078, 19% better** |
 | Stock-out weeks in 26-week replay (simulation) | **-6.0%** |
+| Gemini register reading (206 synthetic lines, 4 scripts) | **98.1% medicine, 100% quantity** |
 | Languages supported end to end | **7** (en, hi, mr, bn, ta, te, kn) |
 | Automated tests passing | **362** (349 backend + 13 Playwright E2E, also run against the live site) |
 

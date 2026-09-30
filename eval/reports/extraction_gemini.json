@@ -1,39 +1,827 @@
 {
  "devanagari": {
-  "n": 55,
-  "drug": 0.018,
+  "n": 52,
+  "drug": 1.0,
   "qty": 1.0,
   "batch": 0.0,
   "all": 0.0
  },
  "_overall": {
-  "n": 220,
-  "drug": 0.255,
+  "n": 206,
+  "drug": 0.981,
   "qty": 1.0,
-  "batch": 0.75,
-  "all": 0.25
+  "batch": 0.748,
+  "all": 0.728
  },
  "tamil": {
-  "n": 55,
-  "drug": 0.0,
-  "qty": 1.0,
-  "batch": 1.0,
-  "all": 0.0
- },
- "bengali": {
-  "n": 55,
-  "drug": 0.0,
-  "qty": 1.0,
-  "batch": 1.0,
-  "all": 0.0
- },
- "english": {
-  "n": 55,
+  "n": 52,
   "drug": 1.0,
   "qty": 1.0,
   "batch": 1.0,
   "all": 1.0
  },
- "_failed": 0,
- "_failed_sample": []
+ "bengali": {
+  "n": 51,
+  "drug": 0.922,
+  "qty": 1.0,
+  "batch": 1.0,
+  "all": 0.922
+ },
+ "english": {
+  "n": 51,
+  "drug": 1.0,
+  "qty": 1.0,
+  "batch": 1.0,
+  "all": 1.0
+ },
+ "_failed": 14,
+ "_failed_sample": [
+  "Gemini extraction failed: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, p"
+ ],
+ "_misses": [
+  {
+   "image": "reg_0000.png",
+   "want": [
+    "paracetamol",
+    40,
+    "B732"
+   ],
+   "got": [
+    "पॅरासिटिमॉल",
+    "paracetamol",
+    40,
+    "732"
+   ]
+  },
+  {
+   "image": "reg_0004.png",
+   "want": [
+    "ors",
+    141,
+    "B703"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    141,
+    "703"
+   ]
+  },
+  {
+   "image": "reg_0008.png",
+   "want": [
+    "zinc-20mg",
+    171,
+    "B974"
+   ],
+   "got": [
+    "झिंक २० मग्रि",
+    "zinc-20mg",
+    171,
+    "974"
+   ]
+  },
+  {
+   "image": "reg_0012.png",
+   "want": [
+    "zinc-20mg",
+    171,
+    "B659"
+   ],
+   "got": [
+    "झंक २० मग्नि",
+    "zinc-20mg",
+    171,
+    "659"
+   ]
+  },
+  {
+   "image": "reg_0016.png",
+   "want": [
+    "zinc-20mg",
+    30,
+    "B487"
+   ],
+   "got": [
+    "झिंक २० मग्रि",
+    "zinc-20mg",
+    30,
+    "487"
+   ]
+  },
+  {
+   "image": "reg_0020.png",
+   "want": [
+    "ors",
+    143,
+    "B739"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    143,
+    "739"
+   ]
+  },
+  {
+   "image": "reg_0024.png",
+   "want": [
+    "ors",
+    8,
+    "B525"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    8,
+    "525"
+   ]
+  },
+  {
+   "image": "reg_0028.png",
+   "want": [
+    "albendazole-400mg",
+    81,
+    "B827"
+   ],
+   "got": [
+    "अल्बेंडाझोल",
+    "albendazole-400mg",
+    81,
+    "827"
+   ]
+  },
+  {
+   "image": "reg_0032.png",
+   "want": [
+    "zinc-20mg",
+    94,
+    "B314"
+   ],
+   "got": [
+    "झिंक २० मग्रि",
+    "zinc-20mg",
+    94,
+    ""
+   ]
+  },
+  {
+   "image": "reg_0036.png",
+   "want": [
+    "albendazole-400mg",
+    26,
+    "B168"
+   ],
+   "got": [
+    "अल्बेंडाझोल",
+    "albendazole-400mg",
+    26,
+    "168"
+   ]
+  },
+  {
+   "image": "reg_0040.png",
+   "want": [
+    "zinc-20mg",
+    195,
+    "B484"
+   ],
+   "got": [
+    "झिंक २० मग्रि",
+    "zinc-20mg",
+    195,
+    "484"
+   ]
+  },
+  {
+   "image": "reg_0042.png",
+   "want": [
+    "zinc-20mg",
+    149,
+    "B921"
+   ],
+   "got": [
+    "জড্ভিক ২০ মগিরা",
+    "vitamin-a-syrup",
+    149,
+    "B921"
+   ]
+  },
+  {
+   "image": "reg_0044.png",
+   "want": [
+    "albendazole-400mg",
+    89,
+    "B679"
+   ],
+   "got": [
+    "अल्बेंडाझोल",
+    "albendazole-400mg",
+    89,
+    "679"
+   ]
+  },
+  {
+   "image": "reg_0048.png",
+   "want": [
+    "paracetamol",
+    59,
+    "B271"
+   ],
+   "got": [
+    "पॅरासिटामॉल",
+    "paracetamol",
+    59,
+    "271"
+   ]
+  },
+  {
+   "image": "reg_0052.png",
+   "want": [
+    "ors",
+    102,
+    "B949"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    102,
+    "949"
+   ]
+  },
+  {
+   "image": "reg_0056.png",
+   "want": [
+    "paracetamol",
+    141,
+    "B145"
+   ],
+   "got": [
+    "पॅरासिटिमॉल",
+    "paracetamol",
+    141,
+    ""
+   ]
+  },
+  {
+   "image": "reg_0060.png",
+   "want": [
+    "zinc-20mg",
+    191,
+    "B686"
+   ],
+   "got": [
+    "झिंक २० मग्रि",
+    "zinc-20mg",
+    191,
+    "686"
+   ]
+  },
+  {
+   "image": "reg_0064.png",
+   "want": [
+    "albendazole-400mg",
+    69,
+    "B426"
+   ],
+   "got": [
+    "अल्बेंडाझोल",
+    "albendazole-400mg",
+    69,
+    "426"
+   ]
+  },
+  {
+   "image": "reg_0068.png",
+   "want": [
+    "paracetamol",
+    28,
+    "B437"
+   ],
+   "got": [
+    "पॅरासिटामॉल",
+    "paracetamol",
+    28,
+    ""
+   ]
+  },
+  {
+   "image": "reg_0072.png",
+   "want": [
+    "paracetamol",
+    26,
+    "B735"
+   ],
+   "got": [
+    "पॅरासिटिमॉल",
+    "paracetamol",
+    26,
+    ""
+   ]
+  },
+  {
+   "image": "reg_0076.png",
+   "want": [
+    "albendazole-400mg",
+    57,
+    "B953"
+   ],
+   "got": [
+    "अल्बेंडाझोल",
+    "albendazole-400mg",
+    57,
+    "953"
+   ]
+  },
+  {
+   "image": "reg_0080.png",
+   "want": [
+    "paracetamol",
+    7,
+    "B758"
+   ],
+   "got": [
+    "पॅरासिटिमॉल",
+    "paracetamol",
+    7,
+    "758"
+   ]
+  },
+  {
+   "image": "reg_0084.png",
+   "want": [
+    "paracetamol",
+    148,
+    "B951"
+   ],
+   "got": [
+    "पॅरासिटिमॉल",
+    "paracetamol",
+    148,
+    "951"
+   ]
+  },
+  {
+   "image": "reg_0088.png",
+   "want": [
+    "zinc-20mg",
+    90,
+    "B455"
+   ],
+   "got": [
+    "झिंक २० मिग्रि",
+    "zinc-20mg",
+    90,
+    "455"
+   ]
+  },
+  {
+   "image": "reg_0092.png",
+   "want": [
+    "ors",
+    180,
+    "B943"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    180,
+    "943"
+   ]
+  },
+  {
+   "image": "reg_0096.png",
+   "want": [
+    "zinc-20mg",
+    157,
+    "B591"
+   ],
+   "got": [
+    "झिंक २० मग्रि",
+    "zinc-20mg",
+    157,
+    "591"
+   ]
+  },
+  {
+   "image": "reg_0098.png",
+   "want": [
+    "zinc-20mg",
+    160,
+    "B889"
+   ],
+   "got": [
+    "জড্ভিক ২০ মগিরা",
+    "vitamin-a-syrup",
+    160,
+    "B889"
+   ]
+  },
+  {
+   "image": "reg_0100.png",
+   "want": [
+    "paracetamol",
+    165,
+    "B505"
+   ],
+   "got": [
+    "पॅरासिटिमॉल",
+    "paracetamol",
+    165,
+    "505"
+   ]
+  },
+  {
+   "image": "reg_0104.png",
+   "want": [
+    "zinc-20mg",
+    29,
+    "B789"
+   ],
+   "got": [
+    "झिंक २० मग्रि",
+    "zinc-20mg",
+    29,
+    "0789"
+   ]
+  },
+  {
+   "image": "reg_0108.png",
+   "want": [
+    "ors",
+    34,
+    "B569"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    34,
+    "569"
+   ]
+  },
+  {
+   "image": "reg_0112.png",
+   "want": [
+    "ors",
+    4,
+    "B833"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    4,
+    "833"
+   ]
+  },
+  {
+   "image": "reg_0116.png",
+   "want": [
+    "ors",
+    148,
+    "B640"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    148,
+    ""
+   ]
+  },
+  {
+   "image": "reg_0120.png",
+   "want": [
+    "paracetamol",
+    91,
+    "B429"
+   ],
+   "got": [
+    "पॅरासिटिमॉल",
+    "paracetamol",
+    91,
+    "429"
+   ]
+  },
+  {
+   "image": "reg_0124.png",
+   "want": [
+    "zinc-20mg",
+    130,
+    "B116"
+   ],
+   "got": [
+    "झिंक २० मग्रि",
+    "zinc-20mg",
+    130,
+    ""
+   ]
+  },
+  {
+   "image": "reg_0128.png",
+   "want": [
+    "albendazole-400mg",
+    30,
+    "B301"
+   ],
+   "got": [
+    "अल्बेंडाझोल",
+    "albendazole-400mg",
+    30,
+    "301"
+   ]
+  },
+  {
+   "image": "reg_0132.png",
+   "want": [
+    "ors",
+    57,
+    "B321"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    57,
+    "321"
+   ]
+  },
+  {
+   "image": "reg_0136.png",
+   "want": [
+    "albendazole-400mg",
+    58,
+    "B343"
+   ],
+   "got": [
+    "अल्बेंडाझोल",
+    "albendazole-400mg",
+    58,
+    "343"
+   ]
+  },
+  {
+   "image": "reg_0140.png",
+   "want": [
+    "ors",
+    199,
+    "B348"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    199,
+    ""
+   ]
+  },
+  {
+   "image": "reg_0144.png",
+   "want": [
+    "ors",
+    159,
+    "B425"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    159,
+    ""
+   ]
+  },
+  {
+   "image": "reg_0148.png",
+   "want": [
+    "ors",
+    43,
+    "B651"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    43,
+    "651"
+   ]
+  },
+  {
+   "image": "reg_0150.png",
+   "want": [
+    "zinc-20mg",
+    94,
+    "B248"
+   ],
+   "got": [
+    "জড্ভিক ২০ মগিরা",
+    "vitamin-a-syrup",
+    94,
+    "B248"
+   ]
+  },
+  {
+   "image": "reg_0152.png",
+   "want": [
+    "ors",
+    27,
+    "B957"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    27,
+    "0957"
+   ]
+  },
+  {
+   "image": "reg_0156.png",
+   "want": [
+    "paracetamol",
+    104,
+    "B652"
+   ],
+   "got": [
+    "पॅरासिटिमॉल",
+    "paracetamol",
+    104,
+    "652"
+   ]
+  },
+  {
+   "image": "reg_0160.png",
+   "want": [
+    "zinc-20mg",
+    156,
+    "B809"
+   ],
+   "got": [
+    "झिंक २० मग्रिॅ",
+    "zinc-20mg",
+    156,
+    "809"
+   ]
+  },
+  {
+   "image": "reg_0164.png",
+   "want": [
+    "albendazole-400mg",
+    150,
+    "B270"
+   ],
+   "got": [
+    "अल्बेन्डाजोल",
+    "albendazole-400mg",
+    150,
+    ""
+   ]
+  },
+  {
+   "image": "reg_0168.png",
+   "want": [
+    "zinc-20mg",
+    50,
+    "B523"
+   ],
+   "got": [
+    "झिंक २० मग्रि",
+    "zinc-20mg",
+    50,
+    "523"
+   ]
+  },
+  {
+   "image": "reg_0172.png",
+   "want": [
+    "paracetamol",
+    146,
+    "B947"
+   ],
+   "got": [
+    "पॅरासिटामॉल",
+    "paracetamol",
+    146,
+    ""
+   ]
+  },
+  {
+   "image": "reg_0176.png",
+   "want": [
+    "paracetamol",
+    96,
+    "B638"
+   ],
+   "got": [
+    "पॅरासिटिमॉल",
+    "paracetamol",
+    96,
+    "638"
+   ]
+  },
+  {
+   "image": "reg_0180.png",
+   "want": [
+    "paracetamol",
+    105,
+    "B290"
+   ],
+   "got": [
+    "पॅरासिटामॉल",
+    "paracetamol",
+    105,
+    ""
+   ]
+  },
+  {
+   "image": "reg_0184.png",
+   "want": [
+    "albendazole-400mg",
+    91,
+    "B457"
+   ],
+   "got": [
+    "अल्बेंडाजोल",
+    "albendazole-400mg",
+    91,
+    "457"
+   ]
+  },
+  {
+   "image": "reg_0188.png",
+   "want": [
+    "paracetamol",
+    31,
+    "B394"
+   ],
+   "got": [
+    "पॅरासिटामॉल",
+    "paracetamol",
+    31,
+    "394"
+   ]
+  },
+  {
+   "image": "reg_0192.png",
+   "want": [
+    "albendazole-400mg",
+    88,
+    "B439"
+   ],
+   "got": [
+    "अल्बेंडाझोल",
+    "albendazole-400mg",
+    88,
+    "439"
+   ]
+  },
+  {
+   "image": "reg_0194.png",
+   "want": [
+    "zinc-20mg",
+    119,
+    "B131"
+   ],
+   "got": [
+    "জড্ভিক ২০ মগিরা",
+    "vitamin-a-syrup",
+    119,
+    "B131"
+   ]
+  },
+  {
+   "image": "reg_0196.png",
+   "want": [
+    "albendazole-400mg",
+    195,
+    "B681"
+   ],
+   "got": [
+    "अल्बेंडाझोल",
+    "albendazole-400mg",
+    195,
+    "681"
+   ]
+  },
+  {
+   "image": "reg_0200.png",
+   "want": [
+    "zinc-20mg",
+    115,
+    "B548"
+   ],
+   "got": [
+    "झिंक २० मग्रि",
+    "zinc-20mg",
+    115,
+    "548"
+   ]
+  },
+  {
+   "image": "reg_0204.png",
+   "want": [
+    "ors",
+    90,
+    "B281"
+   ],
+   "got": [
+    "ओआरएस",
+    "ors",
+    90,
+    "281"
+   ]
+  }
+ ]
 }

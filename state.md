@@ -40,7 +40,7 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 | AC6 stock-out replay, synthetic test window | stock-out weeks 10,774 → 10,131 (-6.0%) | Unmet units +0.25%: rebalances scarcity, adds no supply. ~570 transfers/week. |
 | AC9 federation, Meghalaya validation | local 0.993, federated 0.996, centralised 1.000 | Ties local-only (all ~21% better than naive). Value is privacy, not accuracy. |
 | App forecasts, facility-week | lag-1 naive kept | Beats best LightGBM variant 0.220 vs 0.239 on the last 13 train weeks. |
-| AC3 extraction accuracy | partial | Gemini (gemini-3.1-flash-lite, AI Studio key) read on-hand quantity correctly on 220/220 rendered (not photographed) register lines across 4 scripts; English lines fully correct. Non-Latin drug names were read correctly but the offline name matcher mapped them wrongly (25.5% drug match); the Gemini-embedding matcher could not run under the free-tier 100 req/min cap. Report: eval/reports/extraction_gemini.json. Still no real-photo number. |
+| AC3 extraction accuracy | measured on synthetic renders | Gemini (gemini-3.1-flash-lite) on 206 of 220 rendered register lines (14 hit free-tier 429s), 4 scripts: medicine 98.1% (Bengali 92.2%, others 100%), quantity 100%, batch 100% outside Devanagari. Devanagari batch scores 0% because the render font has no Latin "B" (drawn as a box), so the label is unreadable in the image itself: an eval-data bug, not a read error. Images are rendered text, not photographs; no real-photo number yet. Report: eval/reports/extraction_gemini.json. |
 | AC11 cloud deploy | scripted, not run | Needs a GCP project. Runbook in README "What's not done yet". |
 
 ## Deployment

@@ -1,0 +1,39 @@
+{
+ "devanagari": {
+  "n": 55,
+  "drug": 0.018,
+  "qty": 1.0,
+  "batch": 0.0,
+  "all": 0.0
+ },
+ "_overall": {
+  "n": 220,
+  "drug": 0.255,
+  "qty": 1.0,
+  "batch": 0.75,
+  "all": 0.25
+ },
+ "tamil": {
+  "n": 55,
+  "drug": 0.0,
+  "qty": 1.0,
+  "batch": 1.0,
+  "all": 0.0
+ },
+ "bengali": {
+  "n": 55,
+  "drug": 0.0,
+  "qty": 1.0,
+  "batch": 1.0,
+  "all": 0.0
+ },
+ "english": {
+  "n": 55,
+  "drug": 1.0,
+  "qty": 1.0,
+  "batch": 1.0,
+  "all": 1.0
+ },
+ "_failed": 0,
+ "_failed_sample": []
+}

@@ -118,9 +118,13 @@ def district_facilities(district_id: str, user: AuthUser = Depends(OFFICER)):
     check_jurisdiction(user, district_id)
     from ml.data.facilities import served_facility_index as facility_index
     from backend.runtime import below_cover, latest_records
-    low = {r.facility_id for r in latest_records().values() if below_cover(r)}
+    short: dict[str, int] = {}
+    for r in latest_records().values():
+        if below_cover(r):
+            short[r.facility_id] = short.get(r.facility_id, 0) + 1
     return [
-        {"facility_id": f.facility_id, "name": f.name, "block": f.block, "type": f.facility_type.value, "at_risk": f.facility_id in low}
+        {"facility_id": f.facility_id, "name": f.name, "block": f.block, "type": f.facility_type.value,
+         "lat": f.lat, "lon": f.lon, "at_risk": f.facility_id in short, "short_count": short.get(f.facility_id, 0)}
         for f in facility_index().values() if f.district_id == district_id
     ]
 

@@ -21,6 +21,7 @@ class SimulatorMessage(BaseModel):
     media_base64: str | None = None
     media_content_type: str | None = None
     message_id: str
+    lang: str | None = None  # the simulator's UI language; real contacts carry their own
 
 
 @router.post("/message")
@@ -33,7 +34,7 @@ def simulator_message(msg: SimulatorMessage) -> dict:  # sync: runs in a worker 
     publish_inbound_message(
         from_=msg.from_phone, body=msg.body, num_media=1 if media_url else 0,
         media_url=media_url, media_content_type=msg.media_content_type,
-        message_sid=msg.message_id,
+        message_sid=msg.message_id, lang=msg.lang,
     )
     return {"status": "queued"}
 

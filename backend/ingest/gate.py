@@ -19,7 +19,7 @@ class GateDecision:
     card: ConfirmationCard | None
 
 
-def apply(records: list, threshold: float) -> GateDecision:
+def apply(records: list, threshold: float, lang: str = "en") -> GateDecision:
     confirmed, pending = [], []
     card: ConfirmationCard | None = None
 
@@ -29,7 +29,7 @@ def apply(records: list, threshold: float) -> GateDecision:
             record.status = RecordStatus.PENDING
             pending.append(record)
             if card is None:  # one card per gate call; the caller sends it once, covering all pending records
-                card = build_card(record, low_fields)
+                card = build_card(record, low_fields, lang)
         else:
             record.status = RecordStatus.CONFIRMED
             confirmed.append(record)

@@ -45,7 +45,7 @@ def handle_stock_message(payload: dict, facility_id: str):
     else:
         result = from_text(payload.get("body") or "", facility_id, payload["reporter_phone_hash"])
 
-    decision = gate_apply(result.records, settings.confidence_threshold)
+    decision = gate_apply(result.records, settings.confidence_threshold, payload.get("lang", "en"))
 
     for record in decision.confirmed:
         live_store.put("stock_records", record.record_id, record)

@@ -12,6 +12,21 @@ from fastapi import APIRouter
 router = APIRouter(prefix="/public", tags=["public"])
 
 
+@router.get("/drug-names")
+def drug_names() -> dict[str, dict[str, str]]:
+    """Localized display names for every tracked medicine, keyed by drug id then language."""
+    from backend.i18n import DRUG_NAMES
+    return DRUG_NAMES
+
+
+@router.get("/facility-points")
+def facility_points(district_id: str = "mh/nashik") -> list[list[float]]:
+    """[lat, lon] of each facility in a district: locations from the public government
+    directory only, no ids, names or stock, so it reveals nothing the registry doesn't."""
+    from ml.data.facilities import served_facility_index
+    return [[f.lat, f.lon] for f in served_facility_index().values() if f.district_id == district_id]
+
+
 @router.get("/district-summary")
 def district_summary() -> list[dict]:
     """One row per district: facilities reporting, facilities with any drug

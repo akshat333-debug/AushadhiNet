@@ -7,7 +7,7 @@ test.describe("WhatsApp simulator", () => {
     await expect(page.getByTestId("sim-phone")).not.toHaveValue("");
     await page.getByTestId("sim-input").fill("ORS 7");
     await page.getByTestId("sim-send").click();
-    await expect(page.getByTestId("sim-messages")).toContainText("ors 7", { timeout: 30_000 });
+    await expect(page.getByTestId("sim-messages")).toContainText("ORS 7", { timeout: 30_000 });
     await page.getByTestId("sim-input").fill("hello");
     await page.getByTestId("sim-send").click();
     await expect(page.getByTestId("sim-messages")).toContainText("Could not read that");
@@ -23,7 +23,7 @@ test.describe("WhatsApp simulator", () => {
 
     await signIn(page, "District officer, Nashik");
     await page.goto(`/facility/${facilityId}`);
-    const row = page.getByTestId("facility-stock").locator("tr", { hasText: "zinc-20mg" });
+    const row = page.getByTestId("facility-stock").locator("tr", { hasText: "Zinc 20 mg tablet" });
     await expect(row.locator("td").nth(1)).toHaveText("3", { timeout: 30_000 });
   });
 });

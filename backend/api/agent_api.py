@@ -15,8 +15,9 @@ router = APIRouter(prefix="/agent", tags=["agent"])
 
 class AskRequest(BaseModel):
     question: str
+    lang: str = "en"
 
 
 @router.post("/ask")
 def agent_ask(body: AskRequest, user: AuthUser = Depends(require_role("block", "district", "state"))) -> AgentAnswer:
-    return ask(body.question, OfficerCtx(uid=user.uid, jurisdiction=user.jurisdiction))
+    return ask(body.question, OfficerCtx(uid=user.uid, jurisdiction=user.jurisdiction), body.lang)

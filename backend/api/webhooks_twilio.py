@@ -27,7 +27,7 @@ def _phone_hash(raw_from: str) -> str:
 
 def publish_inbound_message(
     from_: str, body: str | None, num_media: int, media_url: str | None,
-    media_content_type: str | None, message_sid: str,
+    media_content_type: str | None, message_sid: str, lang: str | None = None,
 ) -> None:
     """The single queue-publish call every inbound channel uses."""
     payload = {
@@ -39,6 +39,8 @@ def publish_inbound_message(
         "media_content_type": media_content_type,
         "message_sid": message_sid,
     }
+    if lang:
+        payload["lang"] = lang
     factory.get("queue").publish("ingest.raw_message", payload)
 
 

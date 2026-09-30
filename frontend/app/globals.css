@@ -1,3 +1,47 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Design rules (one of each, used everywhere):
+ *   accent  teal-700 light / teal-400 dark. Red and amber mean stock-out risk, nothing else.
+ *   radius  cards 12px (rounded-xl), controls 8px (rounded-lg), chips full.
+ *   neutral zinc. Numbers use tabular figures.
+ */
+@layer base {
+  html { -webkit-font-smoothing: antialiased; color-scheme: light; }
+  html.dark { color-scheme: dark; }
+  button, a, select, input { touch-action: manipulation; }
+  body { @apply bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100; font-feature-settings: "tnum" 1; }
+  :focus-visible { @apply outline-none ring-2 ring-teal-600 ring-offset-2 ring-offset-zinc-50 dark:ring-teal-400 dark:ring-offset-zinc-950; }
+}
+
+@layer components {
+  .card { @apply rounded-xl border border-zinc-200/80 bg-white shadow-card dark:border-zinc-800 dark:bg-zinc-900; }
+  .btn { @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-medium transition active:translate-y-px disabled:pointer-events-none disabled:opacity-50; }
+  .btn-primary { @apply btn bg-teal-700 text-white hover:bg-teal-800 dark:bg-teal-500 dark:text-zinc-950 dark:hover:bg-teal-400; }
+  .btn-secondary { @apply btn border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800; }
+  .btn-danger { @apply btn border border-rose-300 bg-white text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:bg-zinc-900 dark:text-rose-300 dark:hover:bg-rose-950; }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-full border border-zinc-300 bg-white px-3 py-1 text-sm text-zinc-700 transition hover:border-teal-600 hover:text-teal-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-teal-400 dark:hover:text-teal-300; }
+  .field { @apply w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-400; }
+  .label { @apply text-xs font-medium text-zinc-600 dark:text-zinc-400; }
+  .muted { @apply text-zinc-600 dark:text-zinc-400; }
+  .h1 { @apply text-balance text-2xl font-semibold tracking-tight md:text-3xl; }
+  .h2 { @apply text-base font-semibold tracking-tight; }
+}
+
+/* Leaflet: match the card surface and theme. */
+.leaflet-container { font: inherit; background: rgb(244 244 245); }
+.dark .leaflet-container { background: rgb(24 24 27); }
+.leaflet-control-attribution { font-size: 10px; }
+.map-tiles { filter: grayscale(1) contrast(0.85) brightness(1.06); }
+.dark .leaflet-control-attribution { background: rgb(24 24 27 / 0.8); color: rgb(161 161 170); }
+.dark .leaflet-control-attribution a { color: rgb(94 234 212); }
+.dark .leaflet-bar a { background: rgb(39 39 42); color: rgb(244 244 245); border-color: rgb(63 63 70); }
+.dark .leaflet-bar a:hover { background: rgb(63 63 70); }
+.dark .map-tiles { filter: grayscale(1) invert(1) brightness(0.78) contrast(0.9); }
+.leaflet-tooltip { @apply rounded-lg border-zinc-200 px-2 py-1 text-xs shadow-card dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

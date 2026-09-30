@@ -20,8 +20,6 @@ from backend.providers import factory
 log = logging.getLogger(__name__)
 PILOT_DISTRICT = "mh/nashik"
 SYNTHETIC_STOCK = pathlib.Path(__file__).resolve().parents[1] / "data" / "synthetic" / "stock.parquet"
-_CONFIRM_WORDS = {"YES", "CONFIRM", "Y", "हो", "हां"}
-_HELP = "Send stock as '<medicine> <quantity>', one per line, e.g. 'ORS 50'. Or send a photo of the register."
 
 
 @lru_cache(maxsize=1)
@@ -69,6 +67,15 @@ def phone_for_facility(facility_id: str) -> str:
 def facility_for_phone(phone: str) -> str | None:
     contact = factory.get("store_live").get("contacts", phone)
     return contact.facility_id if contact else None
+
+
+def reply_lang(payload: dict) -> str:
+    """Message's own language if the channel sent one, else the contact's preference."""
+    from backend.i18n import norm_lang
+    if payload.get("lang"):
+        return norm_lang(payload["lang"])
+    contact = factory.get("store_live").get("contacts", payload["from"])
+    return norm_lang(contact.lang if contact else None)
 
 
 def seed_contacts() -> int:
@@ -148,31 +155,34 @@ def replace_drafts(district_id: str, drafts: list) -> list:
 
 def handle_inbound(payload: dict) -> None:
     from backend.api.worker import handle_stock_message
+    from backend.i18n import CONFIRM_WORDS, drug_name, msg
     from backend.ingest.cards import apply_reply
     messaging = factory.get("messaging")
     sender = payload["from"]
+    lang = reply_lang(payload)
+    payload = {**payload, "lang": lang}
     facility_id = facility_for_phone(sender)
     if facility_id is None:
-        messaging.send_text(sender, "This number is not registered to a facility.")
+        messaging.send_text(sender, msg(lang, "not_registered"))
         return
 
     body = (payload.get("body") or "").strip()
-    if not payload.get("num_media") and body.upper() in _CONFIRM_WORDS:
+    if not payload.get("num_media") and body.upper() in CONFIRM_WORDS:
         live = factory.get("store_live")
         pending = live.query("stock_records", {"facility_id": facility_id, "status": RecordStatus.PENDING})
         for record in pending:
             confirmed = apply_reply(record, {})
             live.put("stock_records", confirmed.record_id, confirmed)
             factory.get("store_history").insert("stock_records", [confirmed.model_dump(mode="json")])
-        messaging.send_text(sender, f"Confirmed {len(pending)} record(s)." if pending else "Nothing waiting for confirmation.")
+        messaging.send_text(sender, msg(lang, "confirmed_n", n=len(pending)) if pending else msg(lang, "nothing_pending"))
         return
 
     decision = handle_stock_message(payload, facility_id)
     if decision.confirmed:
-        lines = ", ".join(f"{r.drug_id} {r.on_hand}" for r in decision.confirmed)
-        messaging.send_text(sender, f"Recorded for {facility_id}: {lines}.")
+        items = ", ".join(f"{drug_name(r.drug_id, lang)} {r.on_hand}" for r in decision.confirmed)
+        messaging.send_text(sender, msg(lang, "recorded", facility=facility_id, items=items))
     elif decision.card is None:
-        messaging.send_text(sender, f"Could not read that. {_HELP}")
+        messaging.send_text(sender, msg(lang, "unreadable"))
 
 
 def start() -> None:

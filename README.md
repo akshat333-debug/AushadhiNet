@@ -52,6 +52,12 @@ synthetic ledger and gives each a dev WhatsApp number. Demo walkthrough at `http
 
 `/public` is the no-login transparency view (district counts only).
 
+**Languages:** English, हिन्दी, मराठी, বাংলা, தமிழ், తెలుగు, ಕನ್ನಡ (switcher in the top bar). The whole UI,
+medicine names, dates, WhatsApp replies, confirmation cards and local-mode agent answers follow
+the chosen language, and reports can be typed in any of these scripts (`ओआरएस 50`, `झिंक ५`).
+Translations were written for this project and should be reviewed by native speakers before a
+real rollout. Ambiguous names such as "IFA" (four products) always get a confirmation card.
+
 ### Docker
 
 `infra/docker-compose.yml` runs the same two services in containers (backend on locked

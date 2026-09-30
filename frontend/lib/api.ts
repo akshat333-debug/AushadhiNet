@@ -77,7 +77,10 @@ export interface FacilitySummary {
   name: string;
   block: string | null;
   type: string;
+  lat: number;
+  lon: number;
   at_risk: boolean;
+  short_count: number;
 }
 
 export interface StockRow {
@@ -112,12 +115,14 @@ export const api = {
   districtFacilities: (districtId: string) => request<FacilitySummary[]>(`/officer/districts/${districtId}/facilities`),
   facilityDetail: (facilityId: string) => request<FacilityDetail>(`/officer/facility/${encodeURIComponent(facilityId)}`),
   simulatorContacts: () => request<Contact[]>("/simulator/contacts"),
+  drugNames: () => request<Record<string, Record<string, string>>>("/public/drug-names"),
+  facilityPoints: (districtId: string) => request<[number, number][]>(`/public/facility-points?district_id=${encodeURIComponent(districtId)}`),
   simulatorOutbox: (phone: string) => request<OutboxMessage[]>(`/simulator/outbox?phone=${encodeURIComponent(phone)}`),
   districtSummary: () => request<DistrictSummaryRow[]>("/public/district-summary"),
-  simulatorSend: (payload: { from_phone: string; body?: string; media_base64?: string; media_content_type?: string; message_id: string }) =>
+  simulatorSend: (payload: { from_phone: string; body?: string; media_base64?: string; media_content_type?: string; message_id: string; lang?: string }) =>
     request<{ status: string }>("/simulator/message", { method: "POST", body: JSON.stringify(payload) }),
-  askAgent: (question: string) => request<{ text: string; cited_ids: string[]; draft_order_id: string | null }>("/agent/ask", {
+  askAgent: (question: string, lang = "en") => request<{ text: string; cited_ids: string[]; draft_order_id: string | null }>("/agent/ask", {
     method: "POST",
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, lang }),
   }),
 };

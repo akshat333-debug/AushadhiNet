@@ -69,3 +69,4 @@ class Contact(BaseModel):
 
     phone: str
     facility_id: str
+    lang: str = "en"  # language replies are sent in (backend/i18n.py LANGS)

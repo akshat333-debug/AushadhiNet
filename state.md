@@ -13,12 +13,20 @@ Snapshot as of 2026-09-20. `TASK.md` is the full build log (every bug found and 
 - **Pilot data:** Nashik, 760 facilities × 16 HMIS M19 items, from the sealed synthetic ledger
   (hash `5268c2a1…`, contents-based so it matches across macOS and Linux).
 
+## UI and languages
+
+Redesigned frontend: Geist + Noto Sans script fonts, one teal accent (red and amber mean risk only),
+light and dark themes, Phosphor icons, reduced-motion aware. Facility map on OpenStreetMap
+tiles coloured by how many medicines each facility is short of (officers only; the public map
+shows locations only). Seven languages end to end (UI, medicine names, dates, WhatsApp replies,
+agent answers, native-script reports). Audited against the Vercel web interface guidelines.
+
 ## Verification (latest)
 
 | Check | Result |
 |---|---|
-| Backend, ML, eval tests | 337 passed, 1 skipped (cloud-only ARIMA) |
-| Playwright e2e, real UI sign-in | 11/11, against both dev servers and the Docker stack |
+| Backend, ML, eval tests | 348 passed, 1 skipped (cloud-only ARIMA) |
+| Playwright e2e, real UI sign-in | 13/13 locally, including 2 language tests |
 | Fresh clone from GitHub (`scripts/fresh_clone_check.sh`) | passes end to end |
 | `docker compose up --build` | healthy; ledger sealed at image build |
 | `terraform validate` | passes (Terraform 1.16, google provider 5.45) |

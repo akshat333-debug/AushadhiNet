@@ -17,15 +17,15 @@ class ConfirmationCard:
     low_fields: list[str]
 
 
-def build(record, low_fields: list[str]) -> ConfirmationCard:
-    labels = {"drug_id": "which medicine this is", "on_hand": "the quantity", "expiry": "the expiry date", "batch_no": "the batch number"}
-    field_list = ", ".join(labels.get(f, f) for f in low_fields)
-    text = (
-        f"Please confirm for {getattr(record, 'drug_id', 'this record')}: "
-        f"we're not fully sure about {field_list}. Reply YES to confirm as read, "
-        f"or send the correct value."
+def build(record, low_fields: list[str], lang: str = "en") -> ConfirmationCard:
+    from backend.i18n import MESSAGES, drug_name, msg
+    field_list = ", ".join(msg(lang, f"field_{f}") if f"field_{f}" in MESSAGES["en"] else f for f in low_fields)
+    drug = drug_name(getattr(record, "drug_id", ""), lang) or "this record"
+    return ConfirmationCard(
+        text=msg(lang, "card", drug=drug, fields=field_list),
+        buttons=[msg(lang, "btn_confirm"), msg(lang, "btn_correct")],
+        record_id=record.record_id, low_fields=low_fields,
     )
-    return ConfirmationCard(text=text, buttons=["Confirm", "Correct"], record_id=record.record_id, low_fields=low_fields)
 
 
 def apply_reply(record, reply: dict):

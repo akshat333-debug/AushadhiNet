@@ -297,3 +297,9 @@ Reviewing the cloud path found more than the three gaps listed after the Terrafo
 - Backend was 860 MB in memory; Render free is 512 MB. Serving now loads only served states (SERVED_STATES) and a recent-weeks slice written at seal time; facility CSV read in chunks. 312 MB startup, 374 MB peak.
 - Deployed e2e failed 5/11 twice, for two different reasons found via Render's event log and timing: (1) the platform health check hit /public/district-summary, timed out at 5s under load, and Render killed and restarted the backend twice (wiping in-memory state) -- added a no-work /healthz; (2) the NLEM drug index was built lazily on the first message (3.5s locally, minutes on the throttled CPU), so the first simulator/agent call appeared dead -- now built at startup. Both were invisible locally.
 - Result: 11/11 against the deployed URLs.
+
+## UI redesign + multilingual (2026-09-30)
+- Frontend rebuilt: tokens in globals.css, Geist + Noto script fonts, Phosphor icons, light/dark, Leaflet map, phone-frame WhatsApp simulator, chat agent, paged orders.
+- 7 languages: frontend dictionaries type-checked against English; backend/i18n.py holds WhatsApp replies, cards, agent templates and medicine/place names. Text parser accepted only Latin letters -- now any script and native digits. A script checked every language's example report, confirm word and agent questions against the real backend.
+- Bugs found while doing it: CARTO basemaps now need an API key (switched to OSM + CSS filters); a scroll effect returned a Promise in newer Chromium and crashed the agent page; order cards' exit animation left stale, clickable Approve buttons after a re-propose (the e2e test caught it approving an expired order); Leaflet panes would cover the sticky header.
+- Guidelines audit fixes: decorative icons aria-hidden, skip link, aria-live threads, color-scheme, localized dates, paged drill-down, two-step reject.

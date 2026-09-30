@@ -7,9 +7,10 @@ test.describe("Languages", () => {
     await page.getByTestId("lang-switcher").selectOption("mr");
     await expect(page.locator("h1")).toHaveText("व्हॉट्सॲप सिम्युलेटर");
     await expect(page.locator("html")).toHaveAttribute("lang", "mr");
-    await page.getByTestId("sim-input").fill("ओआरएस 12");
+    const qty = 100 + (Date.now() % 800);
+    await page.getByTestId("sim-input").fill(`ओआरएस ${qty}`);
     await page.getByTestId("sim-send").click();
-    await expect(page.getByTestId("sim-messages")).toContainText("साठी नोंद केली: ओआरएस 12", { timeout: 30_000 });
+    await expect(page.getByTestId("sim-messages")).toContainText(`साठी नोंद केली: ओआरएस ${qty}`, { timeout: 30_000 });
   });
 
   test("the choice persists and the agent answers in Hindi", async ({ page }) => {

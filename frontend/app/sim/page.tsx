@@ -55,8 +55,11 @@ export default function SimulatorPage() {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
   }, [sent, replies]);
 
-  async function send(text: string) {
+  async function send(text: string, fromInput = false) {
     if (!text.trim() || !phone) return;
+    // Clear the box as the message leaves, not when the reply lands: anything typed while
+    // a send is in flight must survive (on slow hosting a finally-clear wiped it).
+    if (fromInput) setBody("");
     setSending(true);
     setError(null);
     const id = `sim-${Date.now()}`;
@@ -69,7 +72,6 @@ export default function SimulatorPage() {
       setError((err as Error).message);
     } finally {
       setSending(false);
-      setBody("");
     }
   }
 
@@ -195,7 +197,7 @@ export default function SimulatorPage() {
               className="flex items-center gap-2 bg-[#f0f2f5] px-2.5 py-2.5 dark:bg-zinc-800"
               onSubmit={(e) => {
                 e.preventDefault();
-                send(body);
+                send(body, true);
               }}
             >
               <label htmlFor="sim-input" className="sr-only">{t("sim_placeholder")}</label>

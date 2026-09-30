@@ -20,6 +20,18 @@ from ml.generator.cli import OUTPUT_DIR, build
 
 LOCK_PATH = pathlib.Path(__file__).resolve().parent / "protocol.lock"
 OUTPUT_FILES = ("stock.parquet", "beds.parquet", "attendance.parquet")
+# Serving slice: the API reads only recent weeks, and the full ledger costs ~260 MB to
+# decode. Derived from stock.parquet, so it is not part of the sealed content hash.
+RECENT_FILE = "stock_recent.parquet"
+RECENT_WEEKS = 16
+
+
+def write_recent_slice(output_dir: pathlib.Path = OUTPUT_DIR) -> int:
+    import pandas as pd
+    stock = pd.read_parquet(output_dir / "stock.parquet")
+    recent = stock[stock["week"] > stock["week"].max() - pd.Timedelta(weeks=RECENT_WEEKS)]
+    recent.to_parquet(output_dir / RECENT_FILE, index=False)
+    return len(recent)
 
 
 def compute_content_hash(output_dir: pathlib.Path = OUTPUT_DIR) -> str:
@@ -49,6 +61,7 @@ def seal(force: bool = False) -> str:
 
     if seal_block["content_hash"] is not None:
         if new_hash == seal_block["content_hash"]:
+            write_recent_slice(OUTPUT_DIR)
             print("generator output unchanged; hash already sealed, nothing to do.")
             return new_hash
         if not force:
@@ -60,6 +73,7 @@ def seal(force: bool = False) -> str:
                 "that every eval/reports/ run under the old hash is now stale."
             )
 
+    write_recent_slice(OUTPUT_DIR)
     seal_block["content_hash"] = new_hash
     seal_block["sealed_at"] = datetime.now(timezone.utc).isoformat()
     raw["generator_seal"] = seal_block

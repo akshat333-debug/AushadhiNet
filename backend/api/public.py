@@ -18,7 +18,7 @@ def district_summary() -> list[dict]:
     under one week of cover (latest report per drug), and the same count per
     drug. Never emits a facility ID, name or address."""
     from backend.runtime import below_cover, latest_records
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     index = facility_index()
 
     latest = latest_records()

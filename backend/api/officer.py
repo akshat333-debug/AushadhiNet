@@ -27,7 +27,7 @@ OFFICER = require_role("block", "district", "state")
 
 
 def _order_districts(order: TransferOrder) -> set[str]:
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     index = facility_index()
     districts = set()
     for fid in (order.from_facility_id, order.to_facility_id):
@@ -76,7 +76,7 @@ def approve_order(order_id: str, user: AuthUser = Depends(OFFICER)):
     live.put("orders", order_id, signed)
     _audit(user, "approve_order", signed)
 
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     from backend.runtime import phone_for_facility
     index = facility_index()
     send_transfer_alerts(
@@ -116,7 +116,7 @@ def run_escalation(user: AuthUser = Depends(require_role("state"))):
 @router.get("/districts/{district_id:path}/facilities")
 def district_facilities(district_id: str, user: AuthUser = Depends(OFFICER)):
     check_jurisdiction(user, district_id)
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     from backend.runtime import below_cover, latest_records
     low = {r.facility_id for r in latest_records().values() if below_cover(r)}
     return [
@@ -127,7 +127,7 @@ def district_facilities(district_id: str, user: AuthUser = Depends(OFFICER)):
 
 @router.get("/facility/{facility_id}")
 def facility_detail(facility_id: str, user: AuthUser = Depends(OFFICER)):
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     from backend.runtime import forecast_panel, latest_stock
     from ml.forecast.service import latest_forecasts
     facility = facility_index().get(facility_id)

@@ -49,7 +49,7 @@ def get_forecast(facility_id: str, drug_id: str) -> list:
 
 
 def list_orders(district_id: str) -> list:
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     index = facility_index()
     return [
         o for o in factory.get("store_live").query("orders", {})
@@ -60,7 +60,7 @@ def list_orders(district_id: str) -> list:
 def list_at_risk(district_id: str, limit: int = 10) -> list[dict]:
     """Facility x drug pairs under one week of cover in a district, lowest stock first."""
     from backend.runtime import below_cover, latest_records, weekly_demand
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     index = facility_index()
     demand = weekly_demand()
     rows = [
@@ -115,7 +115,7 @@ def _check_scope(jurisdiction: str, kwargs: dict) -> None:
     """Tools act for one officer: every facility/district argument must be inside their jurisdiction."""
     from fastapi import HTTPException
     from backend.deps import AuthUser, check_jurisdiction
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     user = AuthUser(uid="agent", role="district", jurisdiction=jurisdiction)
     districts = []
     if "facility_id" in kwargs:

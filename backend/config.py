@@ -30,6 +30,11 @@ class Settings(BaseSettings):
 
     duckdb_path: str = Field(":memory:", validation_alias="DUCKDB_PATH")
 
+    # Serving footprint: the API only needs the states it serves and recent ledger weeks.
+    # Evaluation code loads the full directory/panel directly and ignores these.
+    served_states: str = Field("maharashtra", validation_alias="SERVED_STATES")
+    serving_weeks: int = Field(16, validation_alias="SERVING_WEEKS")
+
     confidence_threshold: float = Field(0.85, validation_alias="CONFIDENCE_THRESHOLD")
     geofence_radius_m: float = Field(200.0, validation_alias="GEOFENCE_RADIUS_M")
     max_upload_mb: int = Field(10, validation_alias="MAX_UPLOAD_MB")
@@ -41,6 +46,10 @@ class Settings(BaseSettings):
     cors_allowed_origins: str = Field(
         "http://localhost:3000,http://127.0.0.1:3000", validation_alias="CORS_ALLOWED_ORIGINS"
     )
+
+    @property
+    def served_states_list(self) -> list[str]:
+        return [x.strip() for x in self.served_states.split(",") if x.strip()]
 
     @property
     def cors_allowed_origins_list(self) -> list[str]:

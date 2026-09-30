@@ -50,7 +50,7 @@ def simulator_contacts(limit: int = 25) -> list[dict]:
     """Pilot-district facilities with their dev WhatsApp numbers, for the simulator's sender picker."""
     _local_only()
     from backend.runtime import PILOT_DISTRICT, phone_for_facility
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     facilities = [f for f in facility_index().values() if f.district_id == PILOT_DISTRICT][:limit]
     return [{"facility_id": f.facility_id, "name": f.name, "phone": phone_for_facility(f.facility_id)} for f in facilities]
 

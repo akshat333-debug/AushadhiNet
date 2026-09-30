@@ -8,6 +8,7 @@ Pub/Sub pushes each message to backend/api/pubsub_push.py.
 from __future__ import annotations
 
 import logging
+import pathlib
 from datetime import datetime, timezone
 from functools import lru_cache
 
@@ -18,14 +19,27 @@ from backend.providers import factory
 
 log = logging.getLogger(__name__)
 PILOT_DISTRICT = "mh/nashik"
+SYNTHETIC_STOCK = pathlib.Path(__file__).resolve().parents[1] / "data" / "synthetic" / "stock.parquet"
 _CONFIRM_WORDS = {"YES", "CONFIRM", "Y", "हो", "हां"}
 _HELP = "Send stock as '<medicine> <quantity>', one per line, e.g. 'ORS 50'. Or send a photo of the register."
 
 
 @lru_cache(maxsize=1)
 def forecast_panel() -> pd.DataFrame:
+    """Recent ledger weeks only (backend.config.serving_weeks): forecasts read the last
+    8 weeks and seeding the last one, so the API never needs the full 1.8M-row panel."""
+    from backend.config import get_settings
     from ml.data.panel import build
-    return build(Grain.FACILITY_WEEK)
+    recent = SYNTHETIC_STOCK.with_name("stock_recent.parquet")
+    if recent.exists():
+        panel = pd.read_parquet(recent)  # written by eval/seal_generator.py
+    else:
+        last_week = pd.read_parquet(SYNTHETIC_STOCK, columns=["week"])["week"].max()
+        since = (last_week - pd.Timedelta(weeks=get_settings().serving_weeks)).date()
+        panel = build(Grain.FACILITY_WEEK, since=since)
+    for col in ("facility_id", "drug_id"):
+        panel[col] = panel[col].astype("category")
+    return panel
 
 
 @lru_cache(maxsize=1)
@@ -59,7 +73,7 @@ def facility_for_phone(phone: str) -> str | None:
 
 def seed_contacts() -> int:
     from backend.domain import Contact
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     live = factory.get("store_live")
     pilot = [f for f in facility_index().values() if f.district_id == PILOT_DISTRICT]
     for f in pilot:
@@ -105,7 +119,7 @@ def latest_stock(facility_ids: set[str]) -> dict[tuple[str, str], float]:
 
 
 def propose_for_district(district_id: str) -> list:
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     from ml.optimize.service import propose
     facilities = [f for f in facility_index().values() if f.district_id == district_id]
     panel = forecast_panel()
@@ -120,7 +134,7 @@ def replace_drafts(district_id: str, drafts: list) -> list:
     """Stores a fresh solver run as the district's drafts; earlier unactioned
     solver drafts for the district are marked expired so proposals don't pile up."""
     from backend.domain import OrderStatus
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     index = facility_index()
     live = factory.get("store_live")
     for old in live.query("orders", {"status": OrderStatus.DRAFT}):
@@ -162,7 +176,7 @@ def handle_inbound(payload: dict) -> None:
 
 
 def start() -> None:
-    from ml.data.facilities import facility_index
+    from ml.data.facilities import served_facility_index as facility_index
     facility_index()  # national directory load takes seconds; pay it at startup, not on the first request
     seed_contacts()
     factory.get("queue").subscribe("ingest.raw_message", handle_inbound)

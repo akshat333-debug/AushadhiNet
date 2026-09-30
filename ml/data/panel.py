@@ -52,17 +52,22 @@ def build(
     states: list[str] | None = None,
     cutoff: date | None = None,
     synthetic_dir: pathlib.Path = SYNTHETIC_DIR,
+    since: date | None = None,
 ) -> pd.DataFrame:
     """Assemble the panel for `grain`. `cutoff` (inclusive), if given,
     drops every row dated after it -- the mechanism a training-only caller
     (e.g. eval/run_backtest.py) uses to guarantee it never sees the test
-    window (architecture.md §5)."""
+    window (architecture.md §5).
+
+    `since` (exclusive) is the opposite end, pushed down into the parquet read
+    so a serving process never materialises the whole ledger."""
     if grain == Grain.DISTRICT_MONTH:
         df = load_m19(states=states)
         service = load_service_indicators(states=states)
         df = df.merge(service, on=["state_code", "district_id", "month"], how="left")
     elif grain == Grain.FACILITY_WEEK:
-        df = pd.read_parquet(synthetic_dir / "stock.parquet")
+        filters = [("week", ">", pd.Timestamp(since))] if since is not None else None
+        df = pd.read_parquet(synthetic_dir / "stock.parquet", filters=filters, columns=list(REQUIRED_COLUMNS[grain]))
     else:
         raise ValueError(f"unknown grain: {grain}")
 

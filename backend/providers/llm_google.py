@@ -8,6 +8,24 @@ from backend.config import get_settings
 from backend.providers.base import LLMResponse, Media, ProviderError
 
 
+_CONFIDENCE_FIELDS = ("on_hand", "received", "dispensed", "batch_no", "expiry")
+
+
+def _gemini_json_schema(schema: type) -> dict:
+    """The Developer API rejects `additionalProperties`, which is how pydantic renders
+    `dict[str, float]`; spell the confidence map out as fixed optional fields instead."""
+    def walk(node):
+        if isinstance(node, dict):
+            if "additionalProperties" in node:
+                node = {k: v for k, v in node.items() if k != "additionalProperties"}
+                node["properties"] = {f: {"type": "number"} for f in _CONFIDENCE_FIELDS}
+            return {k: walk(v) for k, v in node.items()}
+        if isinstance(node, list):
+            return [walk(v) for v in node]
+        return node
+    return walk(schema.model_json_schema())
+
+
 class GoogleLLMProvider:
     def __init__(self):
         from google import genai
@@ -25,21 +43,23 @@ class GoogleLLMProvider:
                 model=self._model,
                 contents=[prompt, *parts],
                 config=types.GenerateContentConfig(
-                    response_mime_type="application/json", response_schema=schema,
+                    response_mime_type="application/json", response_json_schema=_gemini_json_schema(schema),
                 ),
             )
         except Exception as e:  # noqa: BLE001
             raise ProviderError(f"Gemini extraction failed: {e}") from e
 
-        if response.parsed is None:
-            raise ProviderError("Gemini did not return a schema-conformant response")
+        try:
+            parsed = schema.model_validate_json(response.text or "")
+        except ValueError as e:
+            raise ProviderError("Gemini did not return a schema-conformant response") from e
         # Gemini structured output does not natively return per-field
         # confidence; a fixed prompt convention asks for a sibling
         # "<field>_confidence" object, defaulted to 1.0 when absent.
         confidence = getattr(response, "field_confidence", None) or {
             field: 1.0 for field in schema.model_fields
         }
-        return response.parsed, confidence
+        return parsed, confidence
 
     def generate(self, prompt: str, tools: list[dict] | None = None) -> LLMResponse:
         try:

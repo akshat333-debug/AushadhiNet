@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     mode: str = Field("local", validation_alias="AUSHADHI_MODE")  # local | cloud
     gcp_project: str = Field("REPLACE_ME", validation_alias="GCP_PROJECT")
     gemini_api_key: str = Field("REPLACE_ME", validation_alias="GEMINI_API_KEY")
-    gemini_model: str = Field("gemini-2.0-flash", validation_alias="GEMINI_MODEL")
+    gemini_model: str = Field("gemini-3.1-flash-lite", validation_alias="GEMINI_MODEL")
     twilio_account_sid: str = Field("REPLACE_ME", validation_alias="TWILIO_ACCOUNT_SID")
     twilio_auth_token: str = Field("REPLACE_ME", validation_alias="TWILIO_AUTH_TOKEN")
     twilio_whatsapp_from: str = Field("whatsapp:+14155238886", validation_alias="TWILIO_WHATSAPP_FROM")

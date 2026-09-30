@@ -24,7 +24,7 @@ class SimulatorMessage(BaseModel):
 
 
 @router.post("/message")
-async def simulator_message(msg: SimulatorMessage) -> dict:
+def simulator_message(msg: SimulatorMessage) -> dict:  # sync: runs in a worker thread, not on the event loop
     _local_only()  # in cloud mode this would let anyone post reports as any number
     media_url = None
     if msg.media_base64:

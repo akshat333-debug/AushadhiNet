@@ -9,7 +9,7 @@ services:
     environment:
       - AUSHADHI_MODE=local
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/public/district-summary')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
       interval: 10s
       timeout: 30s
       retries: 30

@@ -75,3 +75,10 @@ def test_second_proposal_supersedes_earlier_drafts():
         drafts = [o for o in client.get("/officer/orders/mh/nashik", headers=OFFICER).json() if o["status"] == "draft"]
         assert len(drafts) == len(second)
         assert factory.get("store_live").get("orders", first[0]["order_id"]).status.value == "expired"
+
+
+def test_healthz_is_instant_and_does_no_work():
+    """Regression: the platform health check pointed at a real endpoint, timed out under load
+    on a small instance, and the instance was killed and restarted (wiping in-memory state)."""
+    response = TestClient(create_app()).get("/healthz")
+    assert response.status_code == 200 and response.json() == {"status": "ok"}

@@ -40,6 +40,12 @@ def create_app() -> FastAPI:
         allow_methods=["*"], allow_headers=["*"],
     )
 
+    @app.get("/healthz")
+    async def healthz() -> dict:
+        # Does no work on purpose: platform health checks time out in seconds, and a
+        # slow real endpoint would get a busy instance killed and restarted.
+        return {"status": "ok"}
+
     @app.exception_handler(ProviderError)
     async def _provider_error_handler(request: Request, exc: ProviderError):
         return JSONResponse(status_code=502, content={"detail": str(exc)})

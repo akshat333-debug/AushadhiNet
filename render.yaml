@@ -13,7 +13,7 @@ services:
     plan: free
     dockerfilePath: ./infra/Dockerfile.backend
     dockerContext: .
-    healthCheckPath: /public/district-summary
+    healthCheckPath: /healthz
     autoDeploy: true
     envVars:
       - key: AUSHADHI_MODE

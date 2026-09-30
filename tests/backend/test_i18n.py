@@ -69,3 +69,11 @@ def test_public_facility_points_carry_no_identifiers():
         points = client.get("/public/facility-points").json()
         assert len(points) == 760 and all(len(p) == 2 for p in points)
         assert "MH-" not in client.get("/public/facility-points").text
+
+
+def test_nlem_matches_indic_script_reads():
+    from backend.ingest.nlem import match
+
+    assert match("ஓஆர்எஸ்", 1)[0].drug_id == "ors"
+    assert match("पॅरासिटिमॉल", 1)[0].drug_id == "paracetamol"  # misspelled read, still closest
+    assert match("झंक २० मगि्र", 1)[0].drug_id == "zinc-20mg"

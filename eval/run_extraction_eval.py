@@ -107,7 +107,7 @@ def evaluate_gemini(labelled_dir: pathlib.Path = LABELLED_DIR, limit: int | None
     from backend.ingest.nlem import match
 
     manifest = json.loads((labelled_dir / "manifest.json").read_text())[:limit]
-    rows, failed = defaultdict(list), []
+    rows, failed, misses = defaultdict(list), [], []
     for entry in manifest:
         try:
             pred = gemini_predictor((labelled_dir / entry["image"]).read_bytes(), entry)
@@ -118,10 +118,14 @@ def evaluate_gemini(labelled_dir: pathlib.Path = LABELLED_DIR, limit: int | None
         ok = {"drug": pred["drug_name"] == want, "qty": pred["on_hand"] == entry["on_hand"],
               "batch": pred["batch_no"].strip().upper() == entry["batch_no"].upper()}
         ok["all"] = all(ok.values())
+        if not ok["all"]:
+            misses.append({"image": entry["image"], "want": [want, entry["on_hand"], entry["batch_no"]],
+                           "got": [pred["raw_drug_name"], pred["drug_name"], pred["on_hand"], pred["batch_no"]]})
         rows[entry["script"]].append(ok)
         rows["_overall"].append(ok)
     report = {k: {"n": len(v), **{f: round(sum(r[f] for r in v) / len(v), 3) for f in ("drug", "qty", "batch", "all")}}
               for k, v in rows.items()}
     report["_failed"] = len(failed)
     report["_failed_sample"] = failed[:1]
+    report["_misses"] = misses
     return report

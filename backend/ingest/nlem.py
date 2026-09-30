@@ -44,6 +44,10 @@ class NLEMIndex:
         key = raw_name.strip().lower()
         if key in self.alias_to_id:
             return [DrugMatch(drug_id=self.alias_to_id[key], score=1.0)]
+        if not raw_name.isascii():
+            local = _local_script_match(raw_name)
+            if local:
+                return [local]
         if len(self._alias_owner) == 0:
             return []
 
@@ -57,6 +61,29 @@ class NLEMIndex:
 
         ranked = sorted(best_per_drug.items(), key=lambda item: -item[1])[:k]
         return [DrugMatch(drug_id=drug_id, score=score) for drug_id, score in ranked]
+
+
+def _local_script_match(raw_name: str) -> DrugMatch | None:
+    """Indic-script names (from a Gemini read or a WhatsApp text) against the localized
+    names in backend/i18n.py: exact containment, else the closest spelling. The English
+    alias embeddings cannot relate "ஓஆர்எஸ்" to ORS."""
+    import difflib
+
+    from backend.i18n import LOCAL_ALIASES, find_local_drug
+
+    exact = find_local_drug(raw_name)
+    if exact:
+        return DrugMatch(drug_id=exact, score=1.0)
+    text = raw_name.strip().lower()
+    best, score = None, 0.0
+    for alias, drug_id in LOCAL_ALIASES.items():
+        # Compare against the same-length prefix too: reads often carry a strength ("२० मगि्र").
+        s = max(difflib.SequenceMatcher(None, text, alias).ratio(),
+                difflib.SequenceMatcher(None, text[:len(alias)], alias).ratio())
+        if s > score:
+            best, score = drug_id, s
+    # A near-miss spelling is a guess: keep it under the 0.85 trust gate so it gets a confirm card.
+    return DrugMatch(drug_id=best, score=round(min(score, 0.8), 3)) if best and score >= 0.6 else None
 
 
 @functools.lru_cache(maxsize=1)

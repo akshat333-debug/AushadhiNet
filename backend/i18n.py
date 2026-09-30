@@ -224,12 +224,19 @@ def drug_name(drug_id: str, lang: str | None) -> str:
     return names.get(norm_lang(lang)) or names["en"]
 
 
+# Common medicines outside the 16-item pilot catalogue that nurses still write down;
+# names only (for matching reads), not shown in the UI.
+EXTRA_LOCAL_NAMES: dict[str, dict[str, str]] = {
+    "paracetamol": {"hi": "पैरासिटामोल", "mr": "पॅरासिटामॉल", "bn": "প্যারাসিটামল", "ta": "பாராசிட்டமால்", "te": "పారాసిటమాల్", "kn": "ಪ್ಯಾರಸಿಟಮಾಲ್"},
+}
+
+
 def _local_aliases() -> dict[str, str]:
     """Localized name -> drug id, plus each name's first word when that word is unambiguous
     (so "झिंक" finds zinc, but "आयएफए" alone, shared by four IFA products, finds nothing)."""
     aliases: dict[str, str] = {}
     first_words: dict[str, set[str]] = {}
-    for drug_id, names in DRUG_NAMES.items():
+    for drug_id, names in {**DRUG_NAMES, **EXTRA_LOCAL_NAMES}.items():
         for lang, name in names.items():
             if lang == "en":
                 continue

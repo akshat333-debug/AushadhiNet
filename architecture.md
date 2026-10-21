@@ -15,7 +15,7 @@ Requirements: `project.md`. Data: `data/README.md`. Layer diagram: `docs/review1
 | Speech | `google-cloud-speech` v2, Chirp 2 model | Marathi, Hindi and English voice notes |
 | Translation / TTS | Cloud Translation v3, Cloud Text-to-Speech | Local-language alerts |
 | Embeddings | Vertex AI text embeddings + Vector Search (numpy cosine search locally) | NLEM drug-name normalisation |
-| Forecasting | `lightgbm` 4.7, `timesfm` 3.0, `statsforecast` (Croston/SBA, seasonal naive), BigQuery ML ARIMA_PLUS | Ensemble plus baselines |
+| Forecasting | `lightgbm` 4.7 plus naive baselines | LightGBM (offline eval), lag-1 naive (served) |
 | Optimisation | `ortools` 9.15 (`SimpleMinCostFlow`, CP-SAT for deputation) | Fast, exact, and Google's own solver |
 | Agent | `google-adk` 2.x | Gemini function calling with tool governance |
 | Federation | `flwr` 1.37 (FedProx strategy) + a DP clipping/noise wrapper | Standard, runs locally and on Vertex |
@@ -46,7 +46,7 @@ backend/            FastAPI app
 ml/
   generator/        SEALED synthetic ledger (stock/beds/attendance) — nothing else may import it
   data/             HMIS parsers (M19 stock flows, M10/M11 disease), facility graph, weather
-  forecast/         baselines, croston, lgbm, timesfm, ensemble, calibration, reconcile
+  forecast/         baselines, features, lgbm, stockout, service
   optimize/         min-cost-flow transfers, deputation, referral
   federated/        flower client/server, fedprox + DP, experiments
 eval/               protocol.lock (splits, seeds, generator hash), tuning (val/dev only), scoring runners, replay simulator, reports

@@ -69,7 +69,7 @@ Google OR-Tools, Gemini (google-genai, AI Studio key), LightGBM, FastAPI, Next.j
 Leaflet + OpenStreetMap, Playwright. Local/Google provider seam: every Google service has a local
 twin, so the whole app runs with zero cloud credentials. Deployed on Render via `render.yaml`.
 
-Docs: [project.md](project.md) (requirements), [architecture.md](architecture.md), [state.md](state.md) (status and results), [TASK.md](TASK.md) (build log).
+Docs: [project.md](project.md) (requirements), [architecture.md](architecture.md), [state.md](state.md) (status and results), [docs/build-log.md](docs/build-log.md) (build log).
 
 ## What it does
 
@@ -157,7 +157,7 @@ uv run python -m eval.run_federated_eval  # local-only vs federated vs centralis
 ```
 
 Every run appends to `eval/reports/runs.jsonl` — nothing is ever overwritten, so the full history of
-every scored attempt is auditable. **Current honest results** (see TASK.md for full detail and the real
+every scored attempt is auditable. **Current honest results** (see docs/build-log.md for full detail and the real
 numbers behind these headlines):
 
 - Forecasting (real HMIS, Maharashtra, frozen test Sep 2019 – Feb 2020, 2,501 district-drug-months):
@@ -214,18 +214,17 @@ tests/       mirrors every package above, plus frontend/tests/e2e
 - **The officer agent structurally cannot approve or send anything.** Its tool registry has no such
   tool at all — verified by name inspection and a real prompt-injection test, not by asking the model
   nicely.
-- **Real, honest results are reported even when they're not flattering.** See TASK.md for a full list
+- **Real, honest results are reported even when they're not flattering.** See docs/build-log.md for a full list
   of bugs found and fixed along the way, and the current forecasting/federation results above.
 
 ## What's not done yet
 
 - Local-mode state (stock, orders, outbox) is in memory and resets when the backend restarts.
-- Built and tested but not called by the app: the Croston/ensemble forecasters, calibration,
-  and hierarchical reconciliation.
 
 - The 220 handwriting-extraction evaluation images are **programmatically rendered text**, not real
-  photographs of handwritten registers (see `scripts/generate_labelled_registers.py`'s docstring). Real
-  extraction accuracy needs either real photos + annotation, or a real Gemini key in cloud mode.
+  photographs of handwritten registers (see `scripts/generate_labelled_registers.py`'s docstring).
+  Gemini scores 98.1% medicine / 100% quantity on them (`state.md`); a real-photo number still needs
+  real register photos.
 - Cloud deployment (AC11) is ready but not run: it needs a GCP project. Order of operations:
   `terraform apply` in `infra/terraform/state-module` (APIs, Firestore, BigQuery tables, Pub/Sub, KMS,
   Artifact Registry, service accounts, secret containers), add the Twilio and Gemini secret values,

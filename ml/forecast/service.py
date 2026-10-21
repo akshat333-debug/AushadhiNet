@@ -25,7 +25,7 @@ def latest_forecasts(
     """Next-week facility x drug demand forecasts at FACILITY_WEEK grain,
     using lag-1 naive. LightGBM wins at DISTRICT_MONTH grain but loses here
     (last 13 train weeks: naive 0.220 WAPE, best LightGBM variant 0.239),
-    see TASK.md. `on_hand` overrides the ledger's closing stock with live
+    see docs/build-log.md. `on_hand` overrides the ledger's closing stock with live
     reports when given, so a new WhatsApp report changes the risk.
     """
     panel = panel if panel is not None else build_panel(Grain.FACILITY_WEEK)

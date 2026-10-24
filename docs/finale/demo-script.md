@@ -1,16 +1,18 @@
 # Finale demo script (5 minutes)
 
-Live site: https://aushadhinet-frontend.onrender.com. Fallback: the recorded video
+Live site (Google Cloud Run): https://aushadhinet-frontend-449585498230.asia-south1.run.app. Backup: https://aushadhinet-frontend.onrender.com. Fallback: the recorded video
 (https://drive.google.com/file/d/1hv58NXTXzYdrw2FjT-09dVwV-RGRDBeq/view?usp=sharing).
 
 ## Before the slot
 
-- 5 minutes before: open the frontend and https://aushadhinet-backend.onrender.com/healthz (free
-  instances sleep; first load takes 30-60 s). Load `/sim` once so the drug index is warm.
+- 5 minutes before: open the frontend and https://aushadhinet-backend-449585498230.asia-south1.run.app/health (instances scale to
+  zero; first load takes ~30 s). On finale day keep one warm: `gcloud run services update
+  aushadhinet-backend --min-instances=1 --region asia-south1 --project aushadhinet` (about Rs 5 an
+  hour); set it back to 0 afterwards. Load `/sim` once so the drug index is warm.
 - Have a handwritten stock list ready on paper (3 lines, e.g. "ORS 45 / Zinc 20mg 120 /
   Albendazole 18"), or its photo on the laptop.
 - Have the recorded video open in a tab. If the live site errors twice, switch to it without apology.
-- Check that `GEMINI_API_KEY` is set on Render (send one photo in the simulator the day before).
+- Send one photo in the simulator the day before (the Gemini key is in Secret Manager on Cloud Run).
 
 ## Script
 

@@ -46,6 +46,18 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 
 ## Deployment
 
+**Live on Google Cloud (2026-10-24, project `aushadhinet`, asia-south1, cloud mode + `DEMO_MODE`):**
+- Frontend: https://aushadhinet-frontend-449585498230.asia-south1.run.app
+- Backend: https://aushadhinet-backend-449585498230.asia-south1.run.app (health: `/health`; Cloud Run reserves `/healthz`)
+- Real services: Firestore (760 contacts, 12,160 stock rows seeded with BulkWriter), BigQuery
+  history, Pub/Sub push, KMS order signing, Secret Manager, Vertex AI embeddings, Gemini photos.
+- Verified: Playwright 14/14 against the Cloud Run URLs; a 3-line register photo read correctly.
+- Limits: backend max 1 instance (in-memory simulator outbox; caps cost), frontend max 2, both scale
+  to zero. Budget alert Rs 850/month (alerts only).
+- Not configured: Firebase Auth and Twilio (demo sign-in and the simulator stand in), Maps
+  (straight-line travel time).
+
+
 **Live (Render free tier, local mode on the sealed ledger, no GCP):**
 - Frontend: https://aushadhinet-frontend.onrender.com
 - Backend: https://aushadhinet-backend.onrender.com (health: `/healthz`)

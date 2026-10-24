@@ -18,16 +18,18 @@ Nothing moves without an officer approving it, and every forecast shows a range 
 probability, not a single number. The served forecast is lag-1 naive because it beat LightGBM on
 the most recent weeks; we pick the model by measurement, not by preference.
 
-**Why is it on Render and not Google Cloud?**
-No hackathon credits, and GCP billing could not be enabled on our account. The Cloud Run, Firestore,
-BigQuery, Pub/Sub and KMS deployment is fully scripted in Terraform and Cloud Build, and every
-Google service has a local twin behind one interface, so switching is a configuration change
-(`AUSHADHI_MODE=cloud`). Gemini runs live in the hosted demo today.
+**Is it really on Google Cloud?**
+Yes: Cloud Run in Mumbai, with Firestore for live stock, BigQuery for history, Pub/Sub carrying
+WhatsApp messages to the backend, Cloud KMS signing every transfer order, Secret Manager for the
+Gemini key and Vertex AI embeddings for medicine names, all provisioned with Terraform. For the demo,
+sign-in is a demo picker and WhatsApp is the in-app simulator; Firebase Auth and Twilio are wired
+in the code and are the next configuration step for a pilot.
 
 **Where is Google AI used?**
-Gemini reads register photos (live). OR-Tools solves the transfers (live). Gemini function-calling
-for the agent, Chirp for voice notes, and Google embeddings for medicine names are implemented
-behind the provider interface and run in cloud mode.
+Gemini reads register photos (live), Vertex AI embeds medicine names in 7 scripts (live), OR-Tools
+solves the transfers (live). Chirp for voice notes and Cloud Translate / Text-to-Speech for alerts
+are wired in cloud mode; the agent is rule-based over the same tools, so it can never be talked
+into an action.
 
 **Can the AI approve or send anything?**
 No. The agent's tool list has no approve or send tool; we test this by name inspection and with a

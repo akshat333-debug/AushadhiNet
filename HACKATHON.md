@@ -36,13 +36,14 @@ about 25% of the score (see `docs/review1/`).
 | GitHub (public) | https://github.com/akshat333-debug/AushadhiNet |
 | Demo video | https://drive.google.com/file/d/1hv58NXTXzYdrw2FjT-09dVwV-RGRDBeq/view?usp=sharing |
 | Deck (PDF, under 5 MB) | `docs/pitch/AushadhiNet-pitch.pdf` |
-| Working prototype | https://aushadhinet-frontend.onrender.com |
+| Working prototype | https://aushadhinet-frontend.onrender.com (as submitted); now also on Google Cloud Run: https://aushadhinet-frontend-449585498230.asia-south1.run.app |
 | Description | 981-character summary (see the README "How AushadhiNet solves it" section) |
 
 ## Constraints we hit
 
-- No GCP credits from the organisers; GCP billing could not be enabled on our project, so the live
-  demo runs on Render in local mode.
+- No GCP credits from the organisers. On 2026-10-24 the team's own GCP free trial ($300 credit)
+  was enabled; the app now runs on Cloud Run with Firestore, BigQuery, Pub/Sub, KMS and Vertex AI
+  (project `aushadhinet`, budget alert at Rs 850/month). Render stays as a backup.
 - Free Gemini tier rate limits (100 embedding calls a minute; occasional 429/503 on generation).
 
 ## Unknown, to confirm

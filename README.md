@@ -6,8 +6,9 @@ Built for **Build with AI: Code for Communities** (Second Edition), Problem Stat
 
 | | |
 |---|---|
-| Live app | [aushadhinet-frontend.onrender.com](https://aushadhinet-frontend.onrender.com) (free tier: first load can take ~1 min) |
-| API | https://aushadhinet-backend.onrender.com/healthz |
+| Live app (Google Cloud Run) | [aushadhinet-frontend-449585498230.asia-south1.run.app](https://aushadhinet-frontend-449585498230.asia-south1.run.app) (scales to zero: first load can take ~30 s) |
+| API (Cloud Run) | https://aushadhinet-backend-449585498230.asia-south1.run.app/health |
+| Backup (Render, local mode) | [aushadhinet-frontend.onrender.com](https://aushadhinet-frontend.onrender.com) |
 | Demo video | [Watch on Google Drive](https://drive.google.com/file/d/1hv58NXTXzYdrw2FjT-09dVwV-RGRDBeq/view?usp=sharing) (also [in repo](docs/pitch/AushadhiNet-demo.mp4)) |
 | Pitch deck | [docs/pitch/AushadhiNet-pitch.pdf](docs/pitch/AushadhiNet-pitch.pdf) |
 
@@ -70,6 +71,15 @@ Leaflet + OpenStreetMap, Playwright. Local/Google provider seam: every Google se
 twin, so the whole app runs with zero cloud credentials. Deployed on Render via `render.yaml`.
 
 Docs: [project.md](project.md) (requirements), [architecture.md](architecture.md), [state.md](state.md) (status and results), [docs/build-log.md](docs/build-log.md) (build log).
+
+
+**Running on Google Cloud** (project `aushadhinet`, region asia-south1): Cloud Run (backend and
+frontend), Firestore (live stock, contacts, orders), BigQuery (stock history), Pub/Sub (WhatsApp
+message queue, push to the backend), Cloud KMS (signed transfer orders), Secret Manager (Gemini
+key), Vertex AI (multilingual embeddings for medicine names), Gemini (register photos), Artifact
+Registry and Cloud Build. Provisioned with Terraform (`infra/terraform/state-module`).
+`DEMO_MODE` keeps demo sign-in and the WhatsApp simulator for judges; a real rollout uses Firebase
+Auth and Twilio, which are wired but not configured.
 
 ## What it does
 

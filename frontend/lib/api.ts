@@ -87,6 +87,7 @@ export interface StockRow {
   drug_id: string;
   on_hand: number;
   as_of_date: string;
+  reported_at: string;
   status: string;
   reporter_phone_hash: string;
 }

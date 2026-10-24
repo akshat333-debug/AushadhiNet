@@ -53,7 +53,9 @@ export default function FacilityPage({ params }: { params: Promise<{ id: string 
   const latest = new Map<string, FacilityDetail["stock"][number]>();
   for (const s of detail.stock) {
     const prev = latest.get(s.drug_id);
-    if (!prev || s.as_of_date >= prev.as_of_date) latest.set(s.drug_id, s);
+    // Same-day reports tie on as_of_date; the later report wins (Firestore returns no fixed order).
+    const newer = !prev || s.as_of_date > prev.as_of_date || (s.as_of_date === prev.as_of_date && s.reported_at > prev.reported_at);
+    if (newer) latest.set(s.drug_id, s);
   }
   const forecast = new Map(detail.forecasts.map((f) => [f.drug_id, f]));
   const rows = Array.from(latest.values()).sort((a, b) => (forecast.get(b.drug_id)?.stockout_prob ?? 0) - (forecast.get(a.drug_id)?.stockout_prob ?? 0));

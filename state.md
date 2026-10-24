@@ -1,6 +1,6 @@
 # AushadhiNet — current state
 
-Snapshot as of 2026-10-21. Team **Visible** is a top-10 finalist in Track 3 (see `HACKATHON.md`).
+Snapshot as of 2026-10-24. Team **Visible** is a top-10 finalist in Track 3 (see `HACKATHON.md`).
 `PROGRESS.md` is what is done and why; `tasklist.md` is what is left; `docs/build-log.md` is the full
 build log (every bug found and how it was fixed). Requirements: `project.md`; design: `architecture.md`.
 
@@ -26,8 +26,8 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 
 | Check | Result |
 |---|---|
-| Backend, ML, eval tests | 321 passed, 1 skipped without the gcp extra (2026-10-21, after removing unused forecasters) |
-| Playwright e2e, real UI sign-in | 13/13 locally and 13/13 against the live Render URLs, including 2 language tests |
+| Backend, ML, eval tests | 333 passed (2026-10-24, with the gcp extra) |
+| Playwright e2e, real UI sign-in | 14/14 locally (adds the photo test); 13/13 on the live URLs before the photo feature |
 | Fresh clone from GitHub (`scripts/fresh_clone_check.sh`) | passes end to end |
 | `docker compose up --build` | healthy; ledger sealed at image build |
 | `terraform validate` | passes (Terraform 1.16, google provider 5.45) |
@@ -63,8 +63,10 @@ sealed ledger, no GCP credentials. AC11 (real GCP services) is still unrun.
 
 - Local state (stock, orders, outbox) is in memory; restarting the backend resets it.
 - Agent in local mode is keyword dispatch over the same tools; the Gemini function-calling path is
-  cloud-only and untested against the real API. Gemini extraction is tested against the real
-  Developer API (AI Studio key); the live Render demo does not call Gemini yet.
+  cloud-only and untested against the real API.
+- Register photos: Gemini reads every line (checked against the real Developer API through the
+  simulator UI). On Render this needs `GEMINI_API_KEY` set in the dashboard; without it a photo
+  gets a "please type it" reply. Every photo read waits for the nurse's YES.
 - Free Gemini tier: 100 embedding calls a minute, so NLEM name matching uses the offline matcher
   (with Indic-script names from `backend/i18n.py`) rather than Gemini embeddings.
 - Proposals run on demand (Orders button or agent), not on a schedule.

@@ -5,17 +5,17 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
 
 ## Finale prep (highest value first)
 
-- [ ] **Show Gemini live on the deployed app** (judged on "use of Google AI"). Set `GEMINI_API_KEY`
-      as a Render environment variable (never in the repo); Gemini reads photos sent in the
-      WhatsApp simulator and answers officer-agent questions, with the local path as a fallback when
-      the free tier rate-limits.
+- [x] **Gemini reads register photos in the deployed app** (code done 2026-10-24): camera button in
+      the WhatsApp simulator, every line read, always confirmed by the nurse, local fallback on 429/503.
+- [ ] **Set `GEMINI_API_KEY` in the Render dashboard** (backend service → Environment). Until then
+      the live app answers photos with "please type it". Rotate the key first (it was in chat).
+- [ ] Gemini for the officer agent's answers (still keyword dispatch locally).
 - [ ] **Real register photos (needs the team):** 15-50 phone photos of handwritten stock lists
       (Hindi/Marathi), no personal data, with a written answer key. Run
       `eval/run_extraction_eval.py`'s `evaluate_gemini` on them for the first real-photo number.
 - [ ] **Finale format:** wait for the organisers' email (slot length, live vs recorded demo).
-- [ ] **Live demo script** (5 min) with the recorded video as a fallback; warm both Render
-      URLs 2 minutes before the slot.
-- [ ] **Q&A sheet:** real data?, why not Cloud Run?, forecast wrong?, privacy?, cost to scale?
+- [x] **Live demo script** and **Q&A sheet**: `docs/finale/` (2026-10-24).
+- [ ] Rehearse the demo twice against the live site; warm both Render URLs 2 minutes before the slot.
 - [ ] **Deck refresh:** extraction result (synthetic, labelled), live Gemini slide, rollout and cost.
 - [ ] Native Marathi and Hindi speakers review the translations.
 
@@ -38,5 +38,4 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
 - [ ] Persist local-mode state (e.g. DuckDB) so restarts keep the demo data.
 - [ ] Cut AC6 transfer volume: minimum transfer size or route batching.
 - [ ] Scheduled proposals (Cloud Scheduler → propose endpoint) instead of on-demand only.
-- [ ] Multi-row register extraction: the schema returns one row per photo.
 - [ ] Fix the eval render font so Devanagari images show the Latin batch prefix.

@@ -1,6 +1,6 @@
 # AushadhiNet — what is done and the decisions behind it
 
-Updated 2026-10-21. Status and numbers: `state.md`. Pending work: `tasklist.md`. Every bug found and
+Updated 2026-10-24. Status and numbers: `state.md`. Pending work: `tasklist.md`. Every bug found and
 fixed during the build: `docs/build-log.md`.
 
 ## Timeline
@@ -14,6 +14,7 @@ fixed during the build: `docs/build-log.md`.
 | 2026-09-30 | Frontend redesign; 7 languages end to end; live e2e 13/13; demo video (Sarvam voice-over) and pitch deck; submitted. |
 | 2026-10-01 | Gemini Developer API path fixed and measured; Indic-script medicine matching; service-worker fix; MIT license. |
 | 2026-10-21 | Team Visible named a top-10 finalist, Track 3. Repo cleanup: unused forecasting modules removed. |
+| 2026-10-24 | Register photos read by Gemini in the hosted app (every line, always confirmed); finale demo script and Q&A. |
 
 ## What is built
 
@@ -63,7 +64,11 @@ fixed during the build: `docs/build-log.md`.
 14. **Removed unused forecasters** (Croston, ensemble, TimesFM, BQML ARIMA, calibration,
     reconciliation) on 2026-10-21: built and tested but never called by the app, so they overstated
     what runs. Recoverable from git history.
-15. **Facts verified against primary sources** before use (HDI 2022-23 facility counts, eVIN study);
+15. **Every photo read needs the nurse's YES**, even when Gemini is confident: a model reading a
+    photo can be confidently wrong, and a wrong stock count drives a wrong transfer.
+16. **Gemini in local mode when a key is present**, falling back to the local provider: the hosted
+    demo shows real Google AI without needing GCP billing, and never breaks on a rate limit.
+17. **Facts verified against primary sources** before use (HDI 2022-23 facility counts, eVIN study);
     an unverified "29% → 75%" claim was removed.
 
 ## Measured results

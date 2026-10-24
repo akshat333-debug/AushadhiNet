@@ -10,11 +10,11 @@ from datetime import date, datetime, timezone
 
 from backend.domain import Confidence, ConfidenceSource, RecordStatus, StockRecord
 from backend.providers import factory
-from backend.providers.base import Media
+from backend.providers.base import Media, ProviderError
 
 from backend.ingest.nlem import match as nlem_match
 from backend.ingest.prompts import STOCK_REGISTER_PROMPT, STOCK_VOICE_PROMPT
-from backend.ingest.schemas import StockExtraction
+from backend.ingest.schemas import StockExtraction, StockPage
 
 
 @dataclass
@@ -38,15 +38,20 @@ def _to_stock_record(extraction: StockExtraction, facility_id: str, reporter_pho
 
 
 def from_image(image: bytes, mime: str, facility_id: str, reporter_phone_hash: str) -> ExtractionResult:
+    """Every drug line on a register photo. A photo the model cannot read gives no
+    records (the reporter is asked to type it) rather than an error."""
     llm = factory.get("llm")
     raw_message_id = hashlib.sha256(image).hexdigest()[:16]
-    extraction, field_confidence = llm.extract(
-        STOCK_REGISTER_PROMPT, [Media(data=image, mime=mime)], StockExtraction,
-    )
-    extraction.confidence = {**extraction.confidence, **field_confidence} if field_confidence else extraction.confidence
-    record = _to_stock_record(extraction, facility_id, reporter_phone_hash, raw_message_id, ConfidenceSource.GEMINI)
-    overall = Confidence(field_confidence=extraction.confidence, overall=record.confidence.overall, source=ConfidenceSource.GEMINI)
-    return ExtractionResult(records=[record], confidence=overall, transcript=None)
+    try:
+        page, _ = llm.extract(STOCK_REGISTER_PROMPT, [Media(data=image, mime=mime)], StockPage)
+    except ProviderError:
+        return ExtractionResult(records=[], confidence=Confidence(overall=0.0, source=ConfidenceSource.GEMINI), transcript=None)
+    records = [
+        _to_stock_record(row, facility_id, reporter_phone_hash, raw_message_id, ConfidenceSource.GEMINI)
+        for row in page.rows
+    ]
+    overall = min((r.confidence.overall for r in records), default=0.0)
+    return ExtractionResult(records=records, confidence=Confidence(overall=overall, source=ConfidenceSource.GEMINI), transcript=None)
 
 
 def from_audio(audio: bytes, mime: str, facility_id: str, reporter_phone_hash: str, lang_hint: str | None = None) -> ExtractionResult:

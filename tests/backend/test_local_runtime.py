@@ -82,3 +82,27 @@ def test_healthz_is_instant_and_does_no_work():
     on a small instance, and the instance was killed and restarted (wiping in-memory state)."""
     response = TestClient(create_app()).get("/healthz")
     assert response.status_code == 200 and response.json() == {"status": "ok"}
+
+
+def test_photo_report_is_read_held_for_yes_then_recorded():
+    import base64
+    import json
+
+    from tests.backend.ingest.test_extract import _register_llm_fixture
+    from backend.ingest.prompts import STOCK_REGISTER_PROMPT
+
+    photo = b"photo-of-a-register-page"
+    _register_llm_fixture(STOCK_REGISTER_PROMPT, photo, "StockPage", fields={"rows": [
+        {"drug_name": "ORS", "on_hand": 61, "confidence": {"on_hand": 0.99, "drug_name": 0.99}}]}, confidence={})
+    with TestClient(create_app()) as client:
+        facility_id = client.get("/simulator/contacts", params={"limit": 1}).json()[0]["facility_id"]
+        phone = phone_for_facility(facility_id)
+        client.post("/simulator/message", json={"from_phone": phone, "body": "", "message_id": "p1",
+                                                "media_base64": base64.b64encode(photo).decode(), "media_content_type": "image/jpeg"})
+        # Even a confident read is not written until the nurse says YES.
+        assert any("Read from your photo" in b and "ORS 61" in b for b in _outbox(client, phone))
+        detail = client.get(f"/officer/facility/{facility_id}", headers=OFFICER).json()
+        assert not any(s["drug_id"] == "ors" and s["on_hand"] == 61 and s["status"] == "confirmed" for s in detail["stock"])
+        _send(client, phone, "YES", "p2")
+        detail = client.get(f"/officer/facility/{facility_id}", headers=OFFICER).json()
+        assert any(s["drug_id"] == "ors" and s["on_hand"] == 61 and s["status"] == "confirmed" for s in detail["stock"])

@@ -6,6 +6,7 @@ transliterations).
 from __future__ import annotations
 
 import functools
+import re
 from dataclasses import dataclass
 
 import numpy as np
@@ -36,6 +37,10 @@ class NLEMIndex:
                 alias_owner.append(d.drug_id)
 
         self._alias_owner = alias_owner
+        self._aliases_longest_first = sorted(
+            (a for a in self.alias_to_id if len(a) >= 3 and a == re.sub(r"[^a-z0-9% ]+", " ", a).strip()),
+            key=len, reverse=True,
+        )
         self._alias_vectors = (
             self.embed_provider.embed(alias_texts) if alias_texts else np.zeros((0, 1))
         )
@@ -44,6 +49,12 @@ class NLEMIndex:
         key = raw_name.strip().lower()
         if key in self.alias_to_id:
             return [DrugMatch(drug_id=self.alias_to_id[key], score=1.0)]
+        # "ORS packets", "Zinc 20mg tab": a known name inside a longer read, matched on whole
+        # words; longest first so "zinc 20mg" beats "zinc". The fuzzy step below cannot do this.
+        words = f" {re.sub(r'[^a-z0-9%]+', ' ', key)} "
+        for alias in self._aliases_longest_first:
+            if f" {alias} " in words:
+                return [DrugMatch(drug_id=self.alias_to_id[alias], score=0.8)]  # a guess: under the 0.85 trust gate
         if not raw_name.isascii():
             local = _local_script_match(raw_name)
             if local:

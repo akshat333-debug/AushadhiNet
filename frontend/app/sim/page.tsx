@@ -7,7 +7,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChatCircleText, Checks, Microphone, PaperPlaneRight, ShieldCheck, WhatsappLogo } from "@phosphor-icons/react";
+import { Camera, ChatCircleText, Checks, Microphone, PaperPlaneRight, ShieldCheck, WhatsappLogo } from "@phosphor-icons/react";
 import ConfirmCard from "@/components/ConfirmCard";
 import { Notice, PageHeader } from "@/components/ui";
 import { api, Contact, OutboxMessage } from "@/lib/api";
@@ -17,9 +17,22 @@ interface Sent {
   id: string;
   text: string;
   repliesBefore: number;
+  photo?: string; // object URL of the image sent, shown in the bubble
 }
 
-type Bubble = { key: string; mine: boolean; text: string; buttons: string[] };
+// Phone photos run to several MB; Gemini reads a 1600px JPEG just as well and much faster.
+async function shrinkPhoto(file: File): Promise<{ base64: string; type: string; url: string }> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+  return { base64: dataUrl.split(",")[1], type: "image/jpeg", url: dataUrl };
+}
+
+type Bubble = { key: string; mine: boolean; text: string; buttons: string[]; photo?: string };
 
 export default function SimulatorPage() {
   const { t, lang } = useI18n();
@@ -31,6 +44,7 @@ export default function SimulatorPage() {
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -75,10 +89,28 @@ export default function SimulatorPage() {
     }
   }
 
+  async function sendPhoto(file: File) {
+    if (!phone) return;
+    setSending(true);
+    setError(null);
+    const id = `sim-${Date.now()}`;
+    try {
+      const photo = await shrinkPhoto(file);
+      const before = replies.length;
+      await api.simulatorSend({ from_phone: phone, body: "", media_base64: photo.base64, media_content_type: photo.type, message_id: id, lang });
+      setSent((prev) => [...prev, { id, text: "", repliesBefore: before, photo: photo.url }]);
+      setReplies(await api.simulatorOutbox(phone));
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSending(false);
+    }
+  }
+
   const facility = contacts.find((c) => c.phone === phone);
   const thread: Bubble[] = [];
   for (let i = 0; i <= replies.length; i++) {
-    sent.filter((s) => s.repliesBefore === i).forEach((s) => thread.push({ key: s.id, mine: true, text: s.text, buttons: [] }));
+    sent.filter((s) => s.repliesBefore === i).forEach((s) => thread.push({ key: s.id, mine: true, text: s.text, buttons: [], photo: s.photo }));
     const r = replies[i];
     if (r) thread.push({ key: `r-${r.seq}`, mine: false, text: r.body, buttons: r.buttons });
   }
@@ -180,7 +212,10 @@ export default function SimulatorPage() {
                           m.mine ? "rounded-tr-none bg-[#d9fdd3] dark:bg-teal-900" : "rounded-tl-none bg-white dark:bg-zinc-800"
                         }`}
                       >
-                        {m.text === "[voice note]" ? (
+                        {m.photo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={m.photo} alt={t("sim_photo")} className="mb-1 max-h-48 rounded-md" />
+                        ) : m.text === "[voice note]" ? (
                           <span className="flex items-center gap-1.5"><Microphone size={14} weight="fill" /> {t("sim_voice_note")}</span>
                         ) : (
                           m.text
@@ -200,6 +235,30 @@ export default function SimulatorPage() {
                 send(body, true);
               }}
             >
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                data-testid="sim-photo-input"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) sendPhoto(file);
+                }}
+              />
+              <button
+                type="button"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-zinc-600 transition hover:bg-black/5 active:scale-95 disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-white/10"
+                onClick={() => fileRef.current?.click()}
+                disabled={sending || !phone}
+                aria-label={t("sim_attach")}
+                title={t("sim_attach")}
+                data-testid="sim-photo"
+              >
+                <Camera size={20} />
+              </button>
               <label htmlFor="sim-input" className="sr-only">{t("sim_placeholder")}</label>
               <input
                 id="sim-input"

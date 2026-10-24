@@ -26,6 +26,10 @@ services:
         value: "1"
       - key: CORS_ALLOWED_ORIGINS
         value: https://aushadhinet-frontend.onrender.com
+      - key: GEMINI_API_KEY      # set in the Render dashboard, never committed; photos are read by Gemini when present
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
 
   - type: web
     name: aushadhinet-frontend

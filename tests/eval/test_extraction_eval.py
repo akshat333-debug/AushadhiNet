@@ -63,4 +63,4 @@ def test_default_predictor_against_real_pipeline_is_honestly_unscored():
     report = evaluate(limit=5)  # default predictor = the real extraction pipeline
     assert report["_scored"] == 0
     assert report["_unscored"] == 5
-    assert "fixture" in report["_unscored_sample_reason"] or "Gemini" in report["_unscored_sample_reason"]
+    assert "no records" in report["_unscored_sample_reason"]  # an unreadable photo yields no rows, never a guess

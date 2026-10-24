@@ -17,7 +17,8 @@ For each field on each row, give a confidence score from 0.0 to 1.0 reflecting h
 unambiguous that specific field was. A field you could not read at all should get confidence 0.0, \
 not be omitted -- omitting it would let it get silently treated as absent rather than uncertain.
 
-Return every row you can identify, even a single legible row from an otherwise illegible page."""
+Return every row you can identify as an item of `rows`, even a single legible row from an otherwise \
+illegible page. If nothing is legible, return an empty `rows` list rather than guessing."""
 
 STOCK_VOICE_PROMPT = """You are reading a transcript of a voice note from a Primary Health Centre \
 worker reporting drug stock, in Marathi, Hindi, or English, possibly mixing languages.

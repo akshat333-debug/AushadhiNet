@@ -16,7 +16,7 @@ def _clear_cache():
 
 
 def test_local_mode_returns_local_provider(monkeypatch):
-    monkeypatch.setattr("backend.providers.factory.get_settings", lambda: type("S", (), {"mode": "local", "duckdb_path": ":memory:", "signing_key": "k"})())
+    monkeypatch.setattr("backend.providers.factory.get_settings", lambda: type("S", (), {"mode": "local", "duckdb_path": ":memory:", "signing_key": "k", "gemini_api_key": "REPLACE_ME"})())
     from backend.providers.speech_local import LocalSpeechProvider
     provider = get("speech")
     assert isinstance(provider, LocalSpeechProvider)
@@ -25,7 +25,7 @@ def test_local_mode_returns_local_provider(monkeypatch):
 def test_local_mode_never_imports_google_sdk(monkeypatch):
     """The single most important assertion here: local mode must not even
     import google.cloud.* modules, let alone construct a client."""
-    monkeypatch.setattr("backend.providers.factory.get_settings", lambda: type("S", (), {"mode": "local", "duckdb_path": ":memory:", "signing_key": "k"})())
+    monkeypatch.setattr("backend.providers.factory.get_settings", lambda: type("S", (), {"mode": "local", "duckdb_path": ":memory:", "signing_key": "k", "gemini_api_key": "REPLACE_ME"})())
     blocked = [m for m in list(sys.modules) if m.startswith("google.cloud") or m.startswith("google.genai")]
     for m in blocked:
         monkeypatch.delitem(sys.modules, m)  # restored after the test; a permanent delete re-registers protobufs on the next import
@@ -38,7 +38,7 @@ def test_local_mode_never_imports_google_sdk(monkeypatch):
 
 
 def test_get_is_memoised(monkeypatch):
-    monkeypatch.setattr("backend.providers.factory.get_settings", lambda: type("S", (), {"mode": "local", "duckdb_path": ":memory:", "signing_key": "k"})())
+    monkeypatch.setattr("backend.providers.factory.get_settings", lambda: type("S", (), {"mode": "local", "duckdb_path": ":memory:", "signing_key": "k", "gemini_api_key": "REPLACE_ME"})())
     a = get("queue")
     b = get("queue")
     assert a is b
@@ -53,3 +53,20 @@ def test_unknown_mode_raises(monkeypatch):
     monkeypatch.setattr("backend.providers.factory.get_settings", lambda: type("S", (), {"mode": "chaos"})())
     with pytest.raises(ValueError):
         get("queue")
+
+
+def test_local_mode_with_a_gemini_key_reads_with_gemini_and_falls_back(monkeypatch):
+    pytest.importorskip("google.genai")
+    from backend.providers.base import ProviderError
+    monkeypatch.setattr("backend.providers.factory.get_settings", lambda: type("S", (), {"mode": "local", "gemini_api_key": "k"})())
+    get.cache_clear()
+    llm = get("llm")
+    assert type(llm).__name__ == "_GeminiWithLocalFallback"
+
+    def gemini_down(*args):
+        raise ProviderError("503")
+
+    monkeypatch.setattr(llm._gemini, "extract", gemini_down)
+    with pytest.raises(ProviderError, match="fixture"):  # reached the local provider, which has none
+        llm.extract("p", [], type("Schema", (), {}))
+    get.cache_clear()

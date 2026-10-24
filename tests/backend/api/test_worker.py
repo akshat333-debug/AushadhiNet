@@ -20,13 +20,13 @@ def _register_llm_fixture(prompt_prefix: str, media_bytes: bytes, schema_name: s
     (LLM_FIXTURES / f"{key}.json").write_text(json.dumps({"fields": fields, "confidence": {}}))
 
 
-def test_fixture_photo_message_produces_confirmed_stock_record_in_both_stores():
+def test_confident_photo_read_still_waits_for_the_reporters_yes():
     from backend.ingest.prompts import STOCK_REGISTER_PROMPT
 
     image_bytes = b"end-to-end-register-photo"
     _register_llm_fixture(
-        STOCK_REGISTER_PROMPT, image_bytes, "StockExtraction",
-        fields={"drug_name": "ORS (New WHO)", "on_hand": 60, "confidence": {"on_hand": 0.95, "drug_name": 0.92}},
+        STOCK_REGISTER_PROMPT, image_bytes, "StockPage",
+        fields={"rows": [{"drug_name": "ORS (New WHO)", "on_hand": 60, "confidence": {"on_hand": 0.95, "drug_name": 0.92}}]},
     )
     data_uri = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode()
     payload = {
@@ -36,15 +36,12 @@ def test_fixture_photo_message_produces_confirmed_stock_record_in_both_stores():
 
     handle_stock_message(payload, facility_id="F1")
 
-    live = factory.get("store_live")
-    history = factory.get("store_history")
-    records = live.query("stock_records", {"facility_id": "F1"})
+    records = factory.get("store_live").query("stock_records", {"facility_id": "F1"})
     assert len(records) == 1
-    assert records[0].status.value == "confirmed"
+    assert records[0].status.value == "pending"
     assert records[0].on_hand == 60
-
-    rows = history.sql("select * from stock_records where facility_id = ?", ["F1"])
-    assert len(rows) == 1
+    card = [m for m in factory.get("messaging").sent if m.to == "whatsapp:+911111111111"][-1]
+    assert card.kind == "buttons" and "60" in card.body  # the card shows what was read
 
 
 def test_low_confidence_photo_stays_pending_and_sends_a_card():
@@ -52,8 +49,8 @@ def test_low_confidence_photo_stays_pending_and_sends_a_card():
 
     image_bytes = b"blurry-register-photo"
     _register_llm_fixture(
-        STOCK_REGISTER_PROMPT, image_bytes, "StockExtraction",
-        fields={"drug_name": "ORS (New WHO)", "on_hand": 60, "confidence": {"on_hand": 0.5, "drug_name": 0.92}},
+        STOCK_REGISTER_PROMPT, image_bytes, "StockPage",
+        fields={"rows": [{"drug_name": "ORS (New WHO)", "on_hand": 60, "confidence": {"on_hand": 0.5, "drug_name": 0.92}}]},
     )
     data_uri = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode()
     payload = {

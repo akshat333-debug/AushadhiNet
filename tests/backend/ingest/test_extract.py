@@ -25,14 +25,21 @@ def test_from_image_hindi_style_register_yields_expected_row(monkeypatch):
 
     image_bytes = b"fake-register-photo-bytes"
     _register_llm_fixture(
-        STOCK_REGISTER_PROMPT, image_bytes, "StockExtraction",
-        fields={"drug_name": "ORS (New WHO)", "on_hand": 42, "confidence": {"on_hand": 0.95, "drug_name": 0.9}},
+        STOCK_REGISTER_PROMPT, image_bytes, "StockPage",
+        fields={"rows": [
+            {"drug_name": "ORS (New WHO)", "on_hand": 42, "confidence": {"on_hand": 0.95, "drug_name": 0.9}},
+            {"drug_name": "Zinc 20mg", "on_hand": 7, "confidence": {"on_hand": 0.9, "drug_name": 0.9}},
+        ]},
         confidence={},
     )
     result = from_image(image_bytes, "image/jpeg", facility_id="F1", reporter_phone_hash="h1")
-    assert len(result.records) == 1
-    assert result.records[0].on_hand == 42
-    assert result.records[0].drug_id  # normalised via NLEM match
+    assert [r.on_hand for r in result.records] == [42, 7]  # every line on the page
+    assert all(r.drug_id for r in result.records)  # normalised via NLEM match
+
+
+def test_unreadable_photo_yields_no_records_not_an_error():
+    result = from_image(b"no-fixture-for-this-photo", "image/jpeg", facility_id="F1", reporter_phone_hash="h1")
+    assert result.records == []
 
 
 def test_from_audio_marathi_voice_note_yields_expected_row(monkeypatch):

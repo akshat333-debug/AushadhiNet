@@ -99,6 +99,8 @@ const en = {
   sim_empty: "Send a stock report to start.",
   sim_examples: "Try these",
   sim_voice_note: "Voice note",
+  sim_photo: "Photo",
+  sim_attach: "Send a photo of the register",
   sim_how_title: "How it works",
   sim_how_1: "Each facility has its own WhatsApp number.",
   sim_how_2: "Send medicine and quantity, one per line, in any supported language.",

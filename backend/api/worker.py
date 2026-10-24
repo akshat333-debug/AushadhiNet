@@ -11,6 +11,7 @@ from backend.config import get_settings
 from backend.domain import BedCensus, CheckIn, ConfidenceSource, RecordStatus, StaffRole
 from backend.providers import factory
 
+from backend.ingest.cards import build_photo_card
 from backend.ingest.extract import from_audio, from_image
 from backend.ingest.gate import apply as gate_apply
 from backend.ingest.parse_text import from_text
@@ -45,7 +46,13 @@ def handle_stock_message(payload: dict, facility_id: str):
     else:
         result = from_text(payload.get("body") or "", facility_id, payload["reporter_phone_hash"])
 
-    decision = gate_apply(result.records, settings.confidence_threshold, payload.get("lang", "en"))
+    lang = payload.get("lang", "en")
+    photo = payload.get("num_media", 0) > 0 and not payload.get("media_content_type", "").startswith("audio/")
+    # A model reading a photo can be confidently wrong, so every photo read waits for the
+    # reporter's YES, shown with the values as read.
+    decision = gate_apply(result.records, float("inf") if photo else settings.confidence_threshold, lang)
+    if photo and decision.pending:
+        decision.card = build_photo_card(decision.pending, lang)
 
     for record in decision.confirmed:
         live_store.put("stock_records", record.record_id, record)

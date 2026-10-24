@@ -64,9 +64,32 @@ def _cloud_factory(name: str):
     raise KeyError(f"unknown provider '{name}'")
 
 
+class _GeminiWithLocalFallback:
+    """Local mode with a GEMINI_API_KEY set (the hosted demo): real Gemini for reading
+    photos, the local provider when Gemini fails (free-tier 429/503, outages)."""
+
+    def __init__(self):
+        from backend.providers.llm_google import GoogleLLMProvider
+        self._gemini = GoogleLLMProvider()
+        self._local = _LOCAL_FACTORIES["llm"]()
+
+    def extract(self, prompt, media, schema):
+        from backend.providers.base import ProviderError
+        try:
+            return self._gemini.extract(prompt, media, schema)
+        except ProviderError:
+            return self._local.extract(prompt, media, schema)
+
+    def generate(self, prompt, tools=None):
+        return self._local.generate(prompt, tools)  # the local agent is keyword dispatch; see agent.py
+
+
 @functools.lru_cache(maxsize=None)
 def get(name: str):
-    mode = get_settings().mode
+    settings = get_settings()
+    mode = settings.mode
+    if mode == "local" and name == "llm" and settings.gemini_api_key not in ("", "REPLACE_ME"):
+        return _GeminiWithLocalFallback()
     if mode == "local":
         if name not in _LOCAL_FACTORIES:
             raise KeyError(f"unknown provider '{name}'. Known: {sorted(_LOCAL_FACTORIES)}")

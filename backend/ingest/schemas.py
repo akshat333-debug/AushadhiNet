@@ -24,6 +24,11 @@ class StockExtraction(BaseModel):
     )
 
 
+class StockPage(BaseModel):
+    """A register photo holds several drug lines; Gemini returns all of them."""
+    rows: list[StockExtraction]
+
+
 class BedCensusExtraction(BaseModel):
     beds_total: int
     beds_occupied: int

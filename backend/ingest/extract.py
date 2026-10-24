@@ -37,11 +37,26 @@ def _to_stock_record(extraction: StockExtraction, facility_id: str, reporter_pho
     )
 
 
+def _too_small_to_read(image: bytes, min_side: int = 64) -> bool:
+    """Gemini invents rows for a near-blank image (seen live: a 1x1 PNG came back as three
+    medicines), so an image too small to hold a legible line never reaches it."""
+    import io
+
+    from PIL import Image, UnidentifiedImageError
+    try:
+        width, height = Image.open(io.BytesIO(image)).size
+    except (UnidentifiedImageError, OSError):
+        return False  # not decodable here; the model call decides
+    return min(width, height) < min_side
+
+
 def from_image(image: bytes, mime: str, facility_id: str, reporter_phone_hash: str) -> ExtractionResult:
     """Every drug line on a register photo. A photo the model cannot read gives no
     records (the reporter is asked to type it) rather than an error."""
-    llm = factory.get("llm")
     raw_message_id = hashlib.sha256(image).hexdigest()[:16]
+    if _too_small_to_read(image):
+        return ExtractionResult(records=[], confidence=Confidence(overall=0.0, source=ConfidenceSource.GEMINI), transcript=None)
+    llm = factory.get("llm")
     try:
         page, _ = llm.extract(STOCK_REGISTER_PROMPT, [Media(data=image, mime=mime)], StockPage)
     except ProviderError:

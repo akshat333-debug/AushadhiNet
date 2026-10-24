@@ -37,6 +37,17 @@ class GoogleLiveStore:
         except Exception as e:  # noqa: BLE001
             raise ProviderError(f"Firestore write failed: {e}") from e
 
+    def put_many(self, collection: str, items: dict[str, BaseModel]) -> None:
+        """Bulk load (seeding ~12k stock rows): BulkWriter batches and retries transient errors."""
+        writer = self._client.bulk_writer()
+        ref = self._client.collection(collection)
+        for doc_id, model in items.items():
+            writer.set(ref.document(doc_id), model.model_dump(mode="json"))
+        try:
+            writer.close()
+        except Exception as e:  # noqa: BLE001
+            raise ProviderError(f"Firestore bulk write failed: {e}") from e
+
     def get(self, collection: str, doc_id: str):
         snap = self._client.collection(collection).document(doc_id).get()
         return _to_model(collection, snap.to_dict()) if snap.exists else None

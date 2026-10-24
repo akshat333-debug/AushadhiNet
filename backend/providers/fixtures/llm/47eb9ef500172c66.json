@@ -1,1 +1,0 @@
-{"fields": {"rows": [{"drug_name": "ORS (New WHO)", "on_hand": 42, "confidence": {"on_hand": 0.95, "drug_name": 0.9}}, {"drug_name": "Zinc 20mg", "on_hand": 7, "confidence": {"on_hand": 0.9, "drug_name": 0.9}}]}, "confidence": {}}

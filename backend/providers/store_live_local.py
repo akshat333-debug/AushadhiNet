@@ -16,6 +16,10 @@ class LocalLiveStore:
         self._data: dict[str, dict[str, BaseModel]] = {}
         self._watchers: dict[str, list[Callable]] = {}
 
+    def put_many(self, collection: str, items: dict[str, BaseModel]) -> None:
+        for doc_id, model in items.items():
+            self.put(collection, doc_id, model)
+
     def put(self, collection: str, doc_id: str, model: BaseModel) -> None:
         self._data.setdefault(collection, {})[doc_id] = model
         for callback in self._watchers.get(collection, []):

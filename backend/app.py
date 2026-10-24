@@ -44,6 +44,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"], allow_headers=["*"],
     )
 
+    @app.get("/health")  # Cloud Run's front end reserves /healthz
     @app.get("/healthz")
     async def healthz() -> dict:
         # Does no work on purpose: platform health checks time out in seconds, and a

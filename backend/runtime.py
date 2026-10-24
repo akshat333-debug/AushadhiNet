@@ -100,6 +100,7 @@ def seed() -> int:
     latest = panel[panel["week"] == panel["week"].max()]
     now = datetime.now(timezone.utc)
     confidence = Confidence(field_confidence={"on_hand": 1.0}, overall=1.0, source=ConfidenceSource.IMPORT)
+    records = {}
     for row in latest.itertuples():
         record = StockRecord(
             record_id=f"seed-{row.facility_id}-{row.drug_id}", facility_id=row.facility_id, drug_id=row.drug_id,
@@ -107,7 +108,8 @@ def seed() -> int:
             dispensed=int(row.dispensed), status=RecordStatus.CONFIRMED, confidence=confidence.model_copy(),
             reporter_phone_hash="seed", raw_message_id=f"seed-{pd.Timestamp(row.week).date()}",
         )
-        live.put("stock_records", record.record_id, record)
+        records[record.record_id] = record
+    live.put_many("stock_records", records)
     return len(latest)
 
 

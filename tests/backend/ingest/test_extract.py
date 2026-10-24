@@ -90,3 +90,9 @@ def test_from_text_no_records_gives_zero_confidence():
     result = from_text("just chatting, no numbers here", facility_id="F1", reporter_phone_hash="h1")
     assert result.records == []
     assert result.confidence.overall == 0.0
+
+
+def test_tiny_image_never_reaches_the_model():
+    import base64
+    one_pixel = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=")
+    assert from_image(one_pixel, "image/png", facility_id="F1", reporter_phone_hash="h1").records == []

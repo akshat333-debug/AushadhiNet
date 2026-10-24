@@ -25,3 +25,10 @@ playwright-report/
 infra/terraform/**/plan.out
 infra/terraform/**/*.tfvars
 .terraform.lock.hcl
+# written by tests at run time (deterministic names)
+backend/providers/fixtures/llm/3b6abd4c27ac3f3b.json
+backend/providers/fixtures/llm/47eb9ef500172c66.json
+backend/providers/fixtures/llm/50dc7d55e7b9dc33.json
+backend/providers/fixtures/llm/b2f3e52f064cfd26.json
+backend/providers/fixtures/llm/cb7a697946ea54f4.json
+backend/providers/fixtures/llm/cbddaacf056bacd0.json

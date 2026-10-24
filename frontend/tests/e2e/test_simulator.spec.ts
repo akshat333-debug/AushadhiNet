@@ -35,12 +35,12 @@ test.describe("WhatsApp simulator", () => {
   test("a photo can be sent and always gets a reply", async ({ page }) => {
     await page.goto("/sim");
     await expect(page.getByTestId("sim-phone")).not.toHaveValue("");
-    const replies = page.getByTestId("sim-messages").locator("span").filter({ hasText: /photo|Could not read/ });
-    const before = await replies.count();
     // 1x1 PNG: with no Gemini key it is unreadable; with one, Gemini finds no rows. Either way the nurse hears back.
     const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
     await page.getByTestId("sim-photo-input").setInputFiles({ name: "register.png", mimeType: "image/png", buffer: png });
     await expect(page.getByTestId("sim-messages").locator("img")).toHaveCount(1, { timeout: 30_000 });
-    await expect(replies).toHaveCount(before + 1, { timeout: 60_000 });
+    // Counting replies races the outbox load on a long-lived server; the newest bubble is the answer.
+    await expect(page.getByTestId("sim-messages").locator("span.whitespace-pre-line").last())
+      .toHaveText(/Read from your photo|Could not read/, { timeout: 60_000 });
   });
 });

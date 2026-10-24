@@ -27,7 +27,7 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 | Check | Result |
 |---|---|
 | Backend, ML, eval tests | 333 passed (2026-10-24, with the gcp extra) |
-| Playwright e2e, real UI sign-in | 14/14 locally (adds the photo test); 13/13 on the live URLs before the photo feature |
+| Playwright e2e, real UI sign-in | 14/14 locally and 14/14 on the live Render URLs (2026-10-24, includes the photo test) |
 | Fresh clone from GitHub (`scripts/fresh_clone_check.sh`) | passes end to end |
 | `docker compose up --build` | healthy; ledger sealed at image build |
 | `terraform validate` | passes (Terraform 1.16, google provider 5.45) |

@@ -84,7 +84,7 @@ def test_cloudbuild_references_resources_terraform_creates():
     text = (MODULE / "main.tf").read_text()
     build = (INFRA_DIR / "cloudbuild.yaml").read_text()
     for name in ("aushadhinet-backend@", "pubsub-push@", "aushadhinet-order-signing", "transfer-order-signer",
-                 "twilio-auth-token", "gemini-api-key"):
+                 "gemini-api-key"):  # the Twilio secret is optional (simulator outbox without it)
         assert name in build, f"{name} missing from cloudbuild.yaml"
     for name in ('account_id   = "aushadhinet-backend"', 'account_id   = "pubsub-push"', '"twilio-auth-token"', '"gemini-api-key"',
                  'repository_id = "aushadhinet"'):

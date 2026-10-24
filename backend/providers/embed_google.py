@@ -14,13 +14,15 @@ class GoogleEmbedProvider:
         from google import genai
 
         settings = get_settings()
-        self._client = genai.Client(api_key=settings.gemini_api_key)
+        # Vertex AI, billed to the project: the Developer API's free tier allows 100 embedding
+        # calls a minute, too few to index the 649 NLEM names at startup.
+        self._client = genai.Client(vertexai=True, project=settings.gcp_project, location=settings.vertex_location)
 
     def embed(self, texts: list[str]) -> np.ndarray:
         vectors = []
         try:
             for i in range(0, len(texts), 100):  # the API caps a batch at 100 inputs
-                result = self._client.models.embed_content(model="gemini-embedding-001", contents=texts[i:i + 100])
+                result = self._client.models.embed_content(model="text-multilingual-embedding-002", contents=texts[i:i + 100])
                 vectors += [e.values for e in result.embeddings]
         except Exception as e:  # noqa: BLE001
             raise ProviderError(f"embedding request failed: {e}") from e

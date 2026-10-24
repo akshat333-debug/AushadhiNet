@@ -48,7 +48,7 @@ def _authenticate(authorization: str | None) -> AuthUser:
         raise HTTPException(401, "missing bearer token")
     token = authorization[len("Bearer "):]
     settings = get_settings()
-    if settings.mode == "cloud":
+    if settings.mode == "cloud" and not (settings.demo_mode and token.startswith("dev:")):
         return _decode_firebase_token(token)
     return _decode_local_dev_token(token)
 

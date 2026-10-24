@@ -18,9 +18,13 @@ from backend.providers.base import ProviderError
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
-    if get_settings().mode == "local":
+    settings = get_settings()
+    if settings.mode == "local":
         from backend.runtime import start
         start()
+    elif settings.demo_mode:
+        from backend.runtime import warm
+        warm()
     yield
 
 

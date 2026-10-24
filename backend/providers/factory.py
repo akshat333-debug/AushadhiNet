@@ -55,10 +55,15 @@ def _cloud_factory(name: str):
     if name == "sign":
         from backend.providers.sign_google import GoogleKMSSigner
         return GoogleKMSSigner()
+    settings = get_settings()
     if name == "messaging":
+        if settings.twilio_auth_token in ("", "REPLACE_ME"):
+            return _LOCAL_FACTORIES["messaging"]()  # no Twilio account: replies go to the simulator outbox
         from backend.providers.messaging_google import TwilioMessaging
         return TwilioMessaging()
     if name == "routes":
+        if settings.maps_api_key in ("", "REPLACE_ME"):
+            return _LOCAL_FACTORIES["routes"]()  # no Maps key: straight-line travel estimate
         from backend.providers.routes_google import GoogleRouteProvider
         return GoogleRouteProvider()
     raise KeyError(f"unknown provider '{name}'")

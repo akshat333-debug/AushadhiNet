@@ -185,11 +185,15 @@ def handle_inbound(payload: dict) -> None:
         messaging.send_text(sender, msg(lang, "unreadable"))
 
 
-def start() -> None:
+def warm() -> None:
     from backend.ingest.nlem import match
     from ml.data.facilities import served_facility_index as facility_index
     facility_index()  # directory load takes seconds; pay it at startup, not on the first request
     match("ors")  # builds the drug-name index (PDF parse + embeddings): minutes on a small CPU
+
+
+def start() -> None:
+    warm()
     seed_contacts()
     factory.get("queue").subscribe("ingest.raw_message", handle_inbound)
     log.info("seeded %d stock records for %s", seed(), PILOT_DISTRICT)

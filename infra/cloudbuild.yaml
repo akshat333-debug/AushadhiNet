@@ -2,8 +2,8 @@
 # Run from the repo root:
 #   gcloud builds submit --config infra/cloudbuild.yaml \
 #     --substitutions=_BACKEND_URL=https://aushadhinet-backend-<hash>.a.run.app,_FRONTEND_URL=https://aushadhinet-frontend-<hash>.a.run.app
-# First deploy: Cloud Run URLs are only known after a service exists, so deploy once, then
-# rerun with the real URLs and `terraform apply -var backend_url=...` to turn on Pub/Sub push.
+# Cloud Run URLs are deterministic: https://<service>-<project number>.<region>.run.app, so
+# both are known before the first deploy. Pass SHORT_SHA yourself for a manual submit.
 #
 # The backend allows unauthenticated requests because Twilio's webhook cannot send Google
 # credentials; the app authenticates every other route itself (Firebase ID tokens for
@@ -14,6 +14,7 @@ substitutions:
   _STATE: mh
   _BACKEND_URL: https://REPLACE_ME
   _FRONTEND_URL: https://REPLACE_ME
+  _DEMO_MODE: "false"   # "true" keeps demo sign-in and the simulator for a hosted demo
 
 steps:
   - id: backend-image
@@ -43,8 +44,13 @@ steps:
       - --service-account=aushadhinet-backend@$PROJECT_ID.iam.gserviceaccount.com
       - --allow-unauthenticated
       - --memory=2Gi
-      - --set-env-vars=AUSHADHI_MODE=cloud,GCP_PROJECT=$PROJECT_ID,BIGQUERY_PROJECT=$PROJECT_ID,BIGQUERY_DATASET=aushadhinet_${_STATE},CORS_ALLOWED_ORIGINS=${_FRONTEND_URL},PUBSUB_PUSH_AUDIENCE=${_BACKEND_URL}/internal/pubsub/ingest,PUBSUB_PUSH_SERVICE_ACCOUNT=pubsub-push@$PROJECT_ID.iam.gserviceaccount.com,SIGNING_KEY=projects/$PROJECT_ID/locations/${_REGION}/keyRings/aushadhinet-order-signing/cryptoKeys/transfer-order-signer/cryptoKeyVersions/1
-      - --set-secrets=TWILIO_AUTH_TOKEN=twilio-auth-token:latest,GEMINI_API_KEY=gemini-api-key:latest
+      - --cpu-boost
+      # One instance: the demo's simulator outbox lives in memory, and it caps the bill.
+      - --min-instances=0
+      - --max-instances=1
+      - --set-env-vars=AUSHADHI_MODE=cloud,DEMO_MODE=${_DEMO_MODE},GEMINI_MODEL=gemini-3.1-flash-lite,VERTEX_LOCATION=us-central1,GCP_PROJECT=$PROJECT_ID,BIGQUERY_PROJECT=$PROJECT_ID,BIGQUERY_DATASET=aushadhinet_${_STATE},CORS_ALLOWED_ORIGINS=${_FRONTEND_URL},PUBSUB_PUSH_AUDIENCE=${_BACKEND_URL}/internal/pubsub/ingest,PUBSUB_PUSH_SERVICE_ACCOUNT=pubsub-push@$PROJECT_ID.iam.gserviceaccount.com,SIGNING_KEY=projects/$PROJECT_ID/locations/${_REGION}/keyRings/aushadhinet-order-signing/cryptoKeys/transfer-order-signer/cryptoKeyVersions/1
+      # Twilio is optional: without its secret, replies go to the simulator outbox.
+      - --set-secrets=GEMINI_API_KEY=gemini-api-key:latest
 
   - id: deploy-frontend
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
@@ -57,6 +63,9 @@ steps:
       - --region=${_REGION}
       - --allow-unauthenticated
       - --port=3000
+      - --memory=512Mi
+      - --min-instances=0
+      - --max-instances=2
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/backend:$SHORT_SHA

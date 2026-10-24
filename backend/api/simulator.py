@@ -42,7 +42,8 @@ def simulator_message(msg: SimulatorMessage) -> dict:  # sync: runs in a worker 
 def _local_only() -> None:
     from fastapi import HTTPException
     from backend.config import get_settings
-    if get_settings().mode != "local":
+    settings = get_settings()
+    if settings.mode != "local" and not settings.demo_mode:
         raise HTTPException(404, "simulator endpoints exist only in local mode")
 
 

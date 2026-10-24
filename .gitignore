@@ -20,3 +20,8 @@ playwright-report/
 .terraform/
 *.tfstate
 *.tfstate.*
+*.tfstate
+*.tfstate.*
+infra/terraform/**/plan.out
+infra/terraform/**/*.tfvars
+.terraform.lock.hcl

@@ -10,7 +10,6 @@ Built for **Build with AI: Code for Communities** (Second Edition), Problem Stat
 |---|---|
 | Live app (Google Cloud Run) | [aushadhinet-frontend-449585498230.asia-south1.run.app](https://aushadhinet-frontend-449585498230.asia-south1.run.app) (scales to zero: first load can take ~30 s) |
 | API (Cloud Run) | https://aushadhinet-backend-449585498230.asia-south1.run.app/health |
-| Backup (Render, local mode) | [aushadhinet-frontend.onrender.com](https://aushadhinet-frontend.onrender.com) |
 | Demo video | [Watch on Google Drive](https://drive.google.com/file/d/1hv58NXTXzYdrw2FjT-09dVwV-RGRDBeq/view?usp=sharing) (also [in repo](docs/pitch/AushadhiNet-demo.mp4)) |
 | Pitch deck | [docs/pitch/AushadhiNet-pitch.pdf](docs/pitch/AushadhiNet-pitch.pdf) |
 
@@ -96,7 +95,7 @@ Google Cloud: Cloud Run, Firestore, BigQuery, Pub/Sub, Cloud KMS, Secret Manager
 (embeddings), Gemini, Speech-to-Text (Chirp 2), all provisioned by Terraform and deployed by Cloud
 Build. Also Google OR-Tools, LightGBM, FastAPI, Next.js 15, Tailwind, Leaflet + OpenStreetMap,
 Playwright. Local/Google provider seam: every Google service has a local twin, so the whole app runs
-with zero cloud credentials (that is the Render backup, via `render.yaml`).
+with zero cloud credentials (`docker compose`, or any Docker host via `render.yaml`).
 
 ## Across India, and beyond
 

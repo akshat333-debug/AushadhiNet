@@ -63,7 +63,7 @@ fixed during the build: `docs/build-log.md`.
    replay "rebalances scarcity, adds no supply".
 8. **Render first, then Google Cloud Run**: no hackathon credits, so the submission ran on Render.
    On 2026-10-24 the team's own GCP trial was enabled and the same Terraform + Cloud Build scripts
-   deployed it (Rs 850/month budget alert, instances scale to zero). Render stays as the backup.
+   deployed it (Rs 850/month budget alert, instances scale to zero). Render was retired on 2026-10-26; the recorded video is the fallback.
 9. **Trimmed serving footprint** (served states, recent-weeks slice) to fit Render's 512 MB.
 10. **Gemini via a free AI Studio key** (Developer API): fixed schema (no `additionalProperties`),
     embedding batches of 100, current model `gemini-3.1-flash-lite`.

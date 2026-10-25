@@ -74,14 +74,8 @@ agent answers, native-script reports). Audited against the Vercel web interface 
   (straight-line travel time).
 
 
-**Live (Render free tier, local mode on the sealed ledger, no GCP):**
-- Frontend: https://aushadhinet-frontend.onrender.com
-- Backend: https://aushadhinet-backend.onrender.com (health: `/healthz`)
-- Verified 2026-09-30 after the redesign: the full Playwright suite passes against these URLs, 13/13
-  (`E2E_BASE_URL=https://aushadhinet-frontend.onrender.com npx playwright test --workers=1`).
-- Warm both before recording: free instances sleep, and the first request takes 30-60s.
+**Render (retired 2026-10-26):** both services suspended. `render.yaml` is kept as a deploy-anywhere example.
 
-`render.yaml` deploys both services from their Dockerfiles (Render -> New -> Blueprint).
 Serving fits a 512 MB free instance: ~312 MB at startup, ~374 MB peak while proposing
 transfers (was ~860 MB before the serving footprint was trimmed). Free instances sleep
 when idle, so the first request after a pause takes 30-60s. This runs in local mode: the
@@ -93,7 +87,7 @@ sealed ledger, no GCP credentials. AC11 (real GCP services) is still unrun.
 - Agent in local mode is keyword dispatch over the same tools; the Gemini function-calling path is
   cloud-only and untested against the real API.
 - Register photos: Gemini reads every line (checked against the real Developer API through the
-  simulator UI). On Render this needs `GEMINI_API_KEY` set in the dashboard; without it a photo
+  simulator UI). Without `GEMINI_API_KEY` (local mode) a photo
   gets a "please type it" reply. Every photo read waits for the nurse's YES.
 - Free Gemini tier: 100 embedding calls a minute, so NLEM name matching uses the offline matcher
   (with Indic-script names from `backend/i18n.py`) rather than Gemini embeddings.

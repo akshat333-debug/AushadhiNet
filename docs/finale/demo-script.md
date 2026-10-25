@@ -1,6 +1,6 @@
 # Finale demo script (5 minutes)
 
-Live site (Google Cloud Run): https://aushadhinet-frontend-449585498230.asia-south1.run.app. Backup: https://aushadhinet-frontend.onrender.com. Fallback: the recorded video
+Live site (Google Cloud Run): https://aushadhinet-frontend-449585498230.asia-south1.run.app. Fallback: the recorded video
 (https://drive.google.com/file/d/1hv58NXTXzYdrw2FjT-09dVwV-RGRDBeq/view?usp=sharing).
 
 ## Before the slot

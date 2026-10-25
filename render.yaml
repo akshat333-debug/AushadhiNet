@@ -1,3 +1,5 @@
+# Not deployed: the Render services were retired on 2026-10-26 (Cloud Run is live). Kept as an
+# example of running the zero-credential local mode on any Docker host.
 # Render blueprint: backend + frontend, both from the repo's Dockerfiles.
 # Deploy with Render Dashboard -> New -> Blueprint, pointed at this repo.
 #

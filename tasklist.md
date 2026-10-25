@@ -11,7 +11,7 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
       Secret Manager + Vertex AI, Terraform-provisioned; 14/14 e2e on the Cloud Run URLs.
 - [ ] Finale day: `--min-instances=1` on the backend during the slot, back to 0 after (cold start
       measured at 63 s on 2026-10-25).
-- [ ] Optional: `GEMINI_API_KEY` on Render too, so the backup reads photos.
+- [x] Render retired (2026-10-26): both services suspended; Cloud Run is the only live site, the video is the fallback.
 - [x] Gemini adds a guarded plain-language note to agent answers on Cloud Run (2026-10-25); the tools still decide every fact and action.
 - [ ] **Real register photos (needs the team):** 15-50 phone photos of handwritten stock lists
       (Hindi/Marathi), no personal data, with a written answer key. Run
@@ -50,7 +50,7 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
 
 ## Optional improvements
 
-- [x] ~~Persist local-mode state~~: superseded; the Cloud Run deployment keeps state in Firestore (Render backup still resets on restart).
+- [x] ~~Persist local-mode state~~: superseded; the Cloud Run deployment keeps state in Firestore .
 - [ ] Cut AC6 transfer volume: minimum transfer size or route batching. Deferred: it changes a frozen, logged result and needs a new scored run, not a finale-week edit.
 - [ ] Scheduled proposals (Cloud Scheduler → propose endpoint). Deferred until Firebase Auth exists: the job needs a real service identity, not a demo token.
 - [ ] Fix the eval render font so Devanagari images show the Latin batch prefix. Deferred: regenerating the eval set means re-scoring all 220 images; real photos matter more.

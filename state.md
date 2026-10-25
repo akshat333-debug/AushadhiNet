@@ -56,7 +56,8 @@ agent answers, native-script reports). Audited against the Vercel web interface 
   passes 5/5; a 3-line register
   photo read correctly; the agent's Gemini note appears on live answers (about 12 s an answer).
 - Homepage data: the latest-stock index is held in memory (built at startup), so
-  `/public/district-summary` no longer reads 12k Firestore rows per request (was ~8 s warm).
+  `/public/district-summary` no longer reads 12k Firestore rows per request (was ~8 s warm,
+  now 0.6-0.9 s). Officer redesign (build ef80806): Playwright 15/15 against the Cloud Run URLs.
 - Limits: backend max 1 instance (in-memory simulator outbox; caps cost), frontend max 2, both scale
   to zero. Budget alert Rs 850/month (alerts only).
 - Not configured: Firebase Auth and Twilio (demo sign-in and the simulator stand in), Maps

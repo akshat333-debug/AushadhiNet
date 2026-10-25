@@ -9,7 +9,7 @@ a real Firebase Auth ID token in cloud mode. `role` is one of `facility`, `block
 | Method | Path | Description |
 |---|---|---|
 | POST | `/webhooks/twilio` | Twilio WhatsApp sandbox webhook. Signature-verified in cloud mode. Queues the message; returns in <1s. |
-| POST | `/simulator/message` | Local mode, or cloud with `DEMO_MODE`. Web WhatsApp simulator (text, photo, voice note); same handler as Twilio (`publish_inbound_message`). Photos and voice notes capped at 20 a minute (429). |
+| POST | `/simulator/message` | Local mode, or cloud with `DEMO_MODE`. Web WhatsApp simulator (text, photo, voice note, shared location as `latitude`/`longitude`); same handler as Twilio (`publish_inbound_message`). Photos and voice notes capped at 20 a minute (429). |
 | GET | `/simulator/contacts` | Local or demo mode. Pilot-district facilities with their dev WhatsApp numbers. |
 | GET | `/simulator/outbox?phone=...` | Local or demo mode. Replies the system would have sent to that number. |
 
@@ -25,6 +25,7 @@ facility's pending (low-confidence) records; unregistered numbers get a refusal.
 | POST | `/officer/orders/{id}/approve` | Approve a draft: signs it, sends WhatsApp + voice alerts to both facilities, each in its contact's language. Idempotent. 409 if not a draft. |
 | POST | `/officer/orders/{id}/reject` | Reject a draft. 409 if already approved. |
 | GET | `/officer/districts/{district_id}/facilities` | Facilities in a district with an at-risk flag. |
+| GET | `/officer/capacity/{district_id}` | Today's beds and staff: occupancy, facilities at least 90% full with referral suggestions, staff on site vs posts, off-site check-ins, deputation suggestions (`backend/capacity.py`). Facilities that have not reported show a generated baseline in local and demo mode (`demo_baseline: true`). |
 | GET | `/officer/facility/{facility_id}` | Latest stock, next-week forecast and stock-out probability for one facility. |
 | POST | `/officer/escalation/sweep` | `state` role only. Escalates overdue draft orders one level. |
 

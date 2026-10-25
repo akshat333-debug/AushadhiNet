@@ -15,6 +15,7 @@ fixed during the build: `docs/build-log.md`.
 | 2026-10-01 | Gemini Developer API path fixed and measured; Indic-script medicine matching; service-worker fix; MIT license. |
 | 2026-10-21 | Team Visible named a top-10 finalist, Track 3. Repo cleanup: unused forecasting modules removed. |
 | 2026-10-24 | Register photos read by Gemini in the hosted app (every line, always confirmed); finale demo script and Q&A. |
+| 2026-10-26 | Audit fixes 1-12; beds (`BEDS 4/6`) and staff check-ins (shared location, geofenced) wired end to end, with referral and deputation suggestions in the officer briefing. |
 | 2026-10-25 | Voice notes (Chirp 2), national reach view, 12-slide deck, video re-recorded. |
 | 2026-10-25 | Officer redesign: morning briefing (escalate vs move stock), before/after transfer map, urgency-sorted orders, animated how-it-works; homepage load 8 s to instant. |
 | 2026-10-24/25 | Deployed on Google Cloud Run with Firestore, BigQuery, Pub/Sub, KMS, Secret Manager and Vertex AI; Gemini adds a guarded note to agent answers. |
@@ -43,9 +44,12 @@ fixed during the build: `docs/build-log.md`.
 
 ## Decisions and why
 
-1. **Full scope (medicines, beds, staff)** because the Track 3 brief names all three. Bed-census and
-   staff check-in capture and the deputation/referral solvers are built and tested, but not yet
-   connected to WhatsApp or an API route; the live app covers medicines (audit, 2026-10-26).
+1. **Full scope (medicines, beds, staff)** because the Track 3 brief names all three. Beds
+   (`BEDS 4/6`) and staff check-ins (shared WhatsApp location, geofenced) arrive on the same
+   WhatsApp number; the officer briefing shows referral and deputation suggestions from the
+   OR-Tools solvers (2026-10-26). Bed counts and posts per facility are IPHS-style norms (the
+   national directory has neither); facilities that have not reported show a generated baseline,
+   labelled, in demo mode only, and it is never stored.
 2. **Frozen evaluation before modelling** (`eval/protocol.lock`), sealed synthetic generator with a
    content hash, and a test that fails if forecasting code imports the generator. Avoids an oracle
    advantage a judge could find.

@@ -49,9 +49,14 @@ a medicine's district stock is under two weeks of district demand, no facility c
 the app sends it to the state as a supply request with a quantity instead of drafting transfers.
 
 **The brief also names beds and staff. Where are they?**
-Built and tested, not yet connected: bed-census and staff check-in capture, and solvers that draft
-staff deputations and patient referrals. The live demo covers medicines, where the data is; beds and
-staff use the same WhatsApp-to-approval pipeline and are the next channel to wire.
+On the same WhatsApp number. A nurse sends `BEDS 4/6` (occupied/total); staff check in by sharing
+their location, and a check-in more than 200 m from the facility is flagged, not rejected. The
+officer's briefing shows "Beds and staff today": facilities at least 90% full with referral
+suggestions to the nearest facility with room, and roles with nobody on site with deputation
+suggestions from a facility that can spare someone (OR-Tools CP-SAT). Honest limits: facilities that
+have not reported show a generated baseline (labelled on screen), bed counts and posts per facility
+are IPHS-style norms because the national directory has neither, and these are suggestions, not
+signed orders like transfers.
 
 **Does rebalancing actually help, if total supply is short?**
 It spreads scarcity: in the replay, stock-out weeks fall 6% while unmet units stay flat (+0.25%).

@@ -64,6 +64,10 @@ agent answers, native-script reports). Audited against the Vercel web interface 
   simulator media capped at 20/min, alerts in each contact's language, expired drafts left out of
   the order list, an order lock so proposals can't expire a just-approved order, IVR webhook
   removed (it could never match a facility). 344 backend tests.
+- Beds and staff wired (2026-10-26): `BEDS 4/6` and shared-location check-ins (200 m geofence) on
+  WhatsApp; `/officer/capacity/{district}` and the briefing's "Beds and staff today" card with
+  referral and deputation suggestions from the OR-Tools solvers. Demo mode fills unreported
+  facilities with a generated baseline (labelled, never stored). 356 backend tests, 17 e2e.
 - Limits: backend max 1 instance (in-memory simulator outbox; caps cost), frontend max 2, both scale
   to zero. Budget alert Rs 850/month (alerts only).
 - Not configured: Firebase Auth and Twilio (demo sign-in and the simulator stand in), Maps

@@ -11,7 +11,7 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
       Secret Manager + Vertex AI, Terraform-provisioned; 14/14 e2e on the Cloud Run URLs.
 - [ ] Finale day: `--min-instances=1` on the backend during the slot, back to 0 after (cold start
       measured at 63 s on 2026-10-25).
-- [x] Render retired (2026-10-26): both services suspended; Cloud Run is the only live site, the video is the fallback.
+- [x] Render backend suspended (2026-10-26); the Render frontend (submitted link) calls the Cloud Run backend. 8/8 e2e on it.
 - [x] Gemini adds a guarded plain-language note to agent answers on Cloud Run (2026-10-25); the tools still decide every fact and action.
 - [ ] **Real register photos (needs the team):** 15-50 phone photos of handwritten stock lists
       (Hindi/Marathi), no personal data, with a written answer key. Run

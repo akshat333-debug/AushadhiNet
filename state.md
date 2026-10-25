@@ -74,7 +74,8 @@ agent answers, native-script reports). Audited against the Vercel web interface 
   (straight-line travel time).
 
 
-**Render (retired 2026-10-26):** both services suspended. `render.yaml` is kept as a deploy-anywhere example.
+**Render (2026-10-26):** backend suspended; the frontend at https://aushadhinet-frontend.onrender.com (the submitted link)
+is the same app against the Cloud Run backend, which allows its origin. 8/8 e2e pass on it.
 
 Serving fits a 512 MB free instance: ~312 MB at startup, ~374 MB peak while proposing
 transfers (was ~860 MB before the serving footprint was trimmed). Free instances sleep

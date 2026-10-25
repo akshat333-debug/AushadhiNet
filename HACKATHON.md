@@ -59,7 +59,7 @@ and a live link. Google AI is mandatory. Rule 04: design for cross-border applic
 
 - No GCP credits from the organisers. On 2026-10-24 the team's own GCP free trial ($300 credit)
   was enabled; the app now runs on Cloud Run with Firestore, BigQuery, Pub/Sub, KMS and Vertex AI
-  (project `aushadhinet`, budget alert at Rs 850/month). The Render deployment was retired on 2026-10-26 (stale backend, cold starts); Cloud Run is the only live site.
+  (project `aushadhinet`, budget alert at Rs 850/month). On 2026-10-26 the Render backend was suspended; the Render frontend (the submitted link) now calls the Cloud Run backend.
 - Free Gemini tier rate limits (100 embedding calls a minute; occasional 429/503 on generation).
 
 ## Unknown, to confirm

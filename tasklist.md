@@ -9,7 +9,8 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
       the WhatsApp simulator, every line read, always confirmed by the nurse, local fallback on 429/503.
 - [x] **Deployed on Google Cloud** (2026-10-24): Cloud Run + Firestore + BigQuery + Pub/Sub + KMS +
       Secret Manager + Vertex AI, Terraform-provisioned; 14/14 e2e on the Cloud Run URLs.
-- [ ] Finale day: `--min-instances=1` on the backend during the slot, back to 0 after.
+- [ ] Finale day: `--min-instances=1` on the backend during the slot, back to 0 after (cold start
+      measured at 63 s on 2026-10-25).
 - [ ] Optional: `GEMINI_API_KEY` on Render too, so the backup reads photos.
 - [x] Gemini adds a guarded plain-language note to agent answers on Cloud Run (2026-10-25); the tools still decide every fact and action.
 - [ ] **Real register photos (needs the team):** 15-50 phone photos of handwritten stock lists
@@ -19,7 +20,15 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
 - [x] **Live demo script** and **Q&A sheet**: `docs/finale/` (2026-10-24).
 - [ ] Rehearse the demo twice against the Cloud Run site; open it 2 minutes before the slot.
 - [x] **Deck refresh** (2026-10-25): Cloud Run link, photo reading, extraction slide (synthetic, labelled), rollout and cost slide; video re-recorded on Cloud Run.
-- [ ] Native Marathi and Hindi speakers review the translations.
+- [x] **Officer redesign** (2026-10-25): morning briefing (escalate vs move stock), before/after
+      transfer map, urgency-sorted orders with bulk approve, animated how-it-works.
+- [x] **Voice notes** (2026-10-25): record in the simulator, Chirp 2 transcribes (language detected),
+      confirmed by the nurse; live e2e passes against Cloud Run.
+- [x] **National reach** (2026-10-25): every state in the MoHFW directory on the Public view and region browser.
+- [x] **Deck to 12 slides** covering every topic in the brief; **video re-recorded** (3:22) on the new flow.
+- [ ] **Re-upload the video** (`docs/pitch/AushadhiNet-demo.mp4`) as a new version of the same Drive file
+      (Drive: File > Manage versions), so the submitted link shows the new one.
+- [ ] Native speakers review the translations (all 6 Indian languages; new strings added 2026-10-25).
 
 ## Security and cost
 

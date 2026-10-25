@@ -1,38 +1,38 @@
 [
  [
   "intro",
-  "India's primary health centres still run out of basic medicines like O R S, zinc and iron tablets, often while a clinic a few kilometres away has spare stock. AushadhiNet is an early warning and rebalancing system for public health supply chains. It runs on Google Cloud, and is piloted on all seven hundred and sixty health facilities in Nashik district."
- ],
- [
-  "map",
-  "A district officer signs in and sees every facility on the map, coloured by how many medicines are close to running out. Teal is safe, amber means one medicine is short, and red means several. The officer drills down from the state, to the district, to a single facility."
- ],
- [
-  "facility",
-  "For each medicine, the facility page shows current stock, next week's demand forecast with a range, and the probability of a stock out. The forecasting model is LightGBM trained on India's real H M I S health data, and on a held out test window it beats the naive baseline by nineteen percent."
+  "India's primary health centres still run out of basic medicines like O R S, zinc and iron tablets, often while a clinic a few kilometres away has spare stock. AushadhiNet gives a district officer a daily answer: what to ask the state for, and what to move between facilities. It runs on Google Cloud, and is demonstrated on all seven hundred and sixty health facilities of Nashik district."
  ],
  [
   "sim",
-  "Nurses don't need a new app. They report stock on WhatsApp, the way they already talk. O R S fifty is read and recorded instantly. Or she can simply photograph the register. Gemini reads every line of the photo, and because a model can be confidently wrong, nothing is saved until the nurse taps confirm."
+  "Nurses don't need a new app. They report stock on WhatsApp. A typed line with two medicines is read and recorded at once. She can also just speak. Google's Chirp model hears her Hindi voice note, and the items wait for her yes. Or she photographs the register, and Gemini reads every line. A model can be confidently wrong, so nothing heard or read is saved until the nurse confirms."
  ],
  [
   "lang",
-  "It works in seven Indian languages. Switch to Marathi, and the nurse can report in her own script and her own digits. The replies, the confirmation, and the whole interface come back in Marathi."
+  "Every reply comes back in the nurse's own language and script. Seven Indian languages, end to end."
+ ],
+ [
+  "briefing",
+  "The district officer starts the morning here. Four medicines are short across the whole district. Moving stock cannot fix that, so AushadhiNet drafts the supply request to the state, with quantities, ready to copy. Everything else is a local imbalance that a neighbour can cover."
+ ],
+ [
+  "map",
+  "Google O R Tools drafts transfers from nearby surplus. This is today. And this is after the drafted transfers: the pulsing rings are the facilities they fix."
  ],
  [
   "orders",
-  "When the forecast shows risk, an optimisation solver built on Google O R Tools proposes transfers from nearby facilities with surplus to facilities about to run dry. A human always decides. The officer approves, and both facilities are notified on WhatsApp."
+  "Orders are sorted by how soon a facility runs out. A human always decides. The officer approves the most urgent ones, each order is signed with Cloud K M S, and both facilities are told on WhatsApp."
  ],
  [
   "agent",
-  "Officers can also ask questions in plain language. The agent explains why a facility is at risk using the actual forecast. And it is guard railed: asked to ignore its rules and approve every order, it refuses. It can explain and draft, but it can never approve or send anything."
+  "The officer can also ask the agent why a facility is at risk. It answers from live stock and forecasts, and Gemini can add a plain language note, checked so it never invents a number. Asked to ignore its rules and approve everything, it refuses. It has no approve or send tool at all."
  ],
  [
   "public",
-  "Finally, a public transparency view shows district level shortage totals, with no facility identifiers, so citizens can see the picture without exposing individual clinics."
+  "Citizens see district totals, never a facility name. And every state is already in the system: one lakh ninety thousand facilities in six hundred and seventy eight districts, from the national directory. A district goes live with its nurses' WhatsApp numbers, and each state gets its own Google Cloud project from the same Terraform."
  ],
  [
   "outro",
-  "In a replay on a synthetic Nashik ledger, rebalancing cut stock out weeks by six percent without adding any new supply. AushadhiNet runs on Google Cloud Run, with Firestore, BigQuery, Pub Sub, Cloud K M S and Vertex A I. Earlier warnings, smarter sharing, and people always in control. Thank you."
+  "On real government health data, our forecaster beats the naive baseline by nineteen percent at district level, and in a twenty six week replay, rebalancing cut stock out weeks by six percent without adding supply. AushadhiNet runs on Google Cloud Run, with Firestore, BigQuery, Pub Sub, Cloud K M S, Vertex A I, Gemini and Chirp. Next is a four week pilot in one Nashik block. Earlier warnings, smarter sharing, people in control. Thank you."
  ]
 ]

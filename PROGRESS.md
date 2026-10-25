@@ -15,6 +15,7 @@ fixed during the build: `docs/build-log.md`.
 | 2026-10-01 | Gemini Developer API path fixed and measured; Indic-script medicine matching; service-worker fix; MIT license. |
 | 2026-10-21 | Team Visible named a top-10 finalist, Track 3. Repo cleanup: unused forecasting modules removed. |
 | 2026-10-24 | Register photos read by Gemini in the hosted app (every line, always confirmed); finale demo script and Q&A. |
+| 2026-10-25 | Voice notes (Chirp 2), national reach view, 12-slide deck, video re-recorded. |
 | 2026-10-25 | Officer redesign: morning briefing (escalate vs move stock), before/after transfer map, urgency-sorted orders, animated how-it-works; homepage load 8 s to instant. |
 | 2026-10-24/25 | Deployed on Google Cloud Run with Firestore, BigQuery, Pub/Sub, KMS, Secret Manager and Vertex AI; Gemini adds a guarded note to agent answers. |
 
@@ -89,6 +90,15 @@ fixed during the build: `docs/build-log.md`.
     most urgent" behind a second click; the map shows before/after the drafted transfers.
 22. **Latest-stock index kept in memory** on the backend (one instance), updated on every confirmed
     write: the Firestore full read took ~8 s per request.
+23. **Voice notes always wait for YES**, like photos, with the transcript quoted on the card; Chirp 2
+    detects the language because an English hint dropped "ORS" from a Hindi note.
+24. **Several items on one line are split** by the parser: "ओआरएस 50 जिंक 120" used to be saved as
+    ORS 120 at full confidence (a silent wrong write).
+25. **National reach from the real directory**, not new data: 190,609 facilities in 36 states and UTs
+    are listed as ready to onboard; only Nashik has stock. The duplicate "Andhra Pradesh Old" rows
+    (pre-2014, 98% repeats) are excluded.
+26. **Claims scoped to what runs**: the app serves the last-week forecast per facility; LightGBM's 19%
+    is the district-level real-HMIS result, and the deck and README now say so.
 
 ## Measured results
 

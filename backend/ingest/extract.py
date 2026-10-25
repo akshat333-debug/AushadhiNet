@@ -4,6 +4,7 @@ confidence (modular-plan.md §2.4, AC1/AC2).
 from __future__ import annotations
 
 import hashlib
+import logging
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
@@ -15,6 +16,8 @@ from backend.providers.base import Media, ProviderError
 from backend.ingest.nlem import match as nlem_match
 from backend.ingest.prompts import STOCK_REGISTER_PROMPT, STOCK_VOICE_PROMPT
 from backend.ingest.schemas import StockExtraction, StockPage
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -59,7 +62,8 @@ def from_image(image: bytes, mime: str, facility_id: str, reporter_phone_hash: s
     llm = factory.get("llm")
     try:
         page, _ = llm.extract(STOCK_REGISTER_PROMPT, [Media(data=image, mime=mime)], StockPage)
-    except ProviderError:
+    except ProviderError as e:
+        log.warning("photo read failed, nurse asked to type it: %s", str(e)[:300])
         return ExtractionResult(records=[], confidence=Confidence(overall=0.0, source=ConfidenceSource.GEMINI), transcript=None)
     records = [
         _to_stock_record(row, facility_id, reporter_phone_hash, raw_message_id, ConfidenceSource.GEMINI)

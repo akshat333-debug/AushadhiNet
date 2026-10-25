@@ -6,6 +6,7 @@ variants here too).
 from __future__ import annotations
 
 import base64
+import logging
 
 from backend.config import get_settings
 from backend.domain import BedCensus, CheckIn, ConfidenceSource, RecordStatus, StaffRole
@@ -17,6 +18,8 @@ from backend.ingest.cards import build_photo_card
 from backend.ingest.extract import from_audio, from_image
 from backend.ingest.gate import apply as gate_apply
 from backend.ingest.parse_text import from_text
+
+log = logging.getLogger(__name__)
 
 
 def _haversine_m(lat1, lon1, lat2, lon2) -> float:
@@ -44,7 +47,8 @@ def handle_stock_message(payload: dict, facility_id: str):
         if content_type.startswith("audio/"):
             try:
                 result = from_audio(media_bytes, content_type, facility_id, payload["reporter_phone_hash"], payload.get("lang"))
-            except ProviderError:
+            except ProviderError as e:
+                log.warning("voice note not transcribed, nurse asked to type it: %s", str(e)[:300])
                 result = from_text("", facility_id, payload["reporter_phone_hash"])  # nothing heard: the reply asks to type it
         else:
             result = from_image(media_bytes, content_type, facility_id, payload["reporter_phone_hash"])

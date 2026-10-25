@@ -15,7 +15,7 @@ import MapView, { DrillLevel } from "@/components/MapView";
 import HowItWorks from "@/components/HowItWorks";
 import { CountUp, Reveal, Skeleton, Stat } from "@/components/ui";
 import type { Flow, MapPoint, Tone } from "@/components/FacilityMap";
-import { api, DistrictSummaryRow, FacilitySummary, TransferOrder } from "@/lib/api";
+import { api, CoverageRow, DistrictSummaryRow, FacilitySummary, TransferOrder } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 import { useI18n } from "@/lib/i18n";
 
@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const { t, num, drug, drugIds, place } = useI18n();
   const { user, ready } = useAuth();
   const [summary, setSummary] = useState<DistrictSummaryRow[] | null>(null);
+  const [states, setStates] = useState<CoverageRow[] | null>(null);
   const [facilities, setFacilities] = useState<FacilitySummary[] | null>(null);
   const [publicPoints, setPublicPoints] = useState<MapPoint[] | null>(null);
   const [drafts, setDrafts] = useState<TransferOrder[] | null>(null);
@@ -49,6 +50,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     api.districtSummary().then(setSummary).catch((e) => setError((e as Error).message));
+    api.coverage().then(setStates).catch(() => setStates([]));
   }, []);
 
   useEffect(() => {
@@ -109,31 +111,40 @@ export default function DashboardPage() {
   const root: DrillLevel = {
     id: "national",
     label: t("india"),
-    children: Array.from(new Set((summary ?? []).map((r) => r.district_id.split("/")[0]))).map((code) => ({
-      id: code,
-      label: place(code),
-      children: (summary ?? [])
-        .filter((r) => r.district_id.startsWith(`${code}/`))
-        .map((r) => ({
-          id: r.district_id,
-          label: place(r.district_id),
-          sub: t("district_tile_sub", { risk: num(r.facilities_at_risk), total: num(r.facilities_reporting) }),
-          tone: r.facilities_at_risk ? "risk" : "ok",
-          load: async () => {
-            if (!user) throw new Error(t("signin_for_facilities"));
-            const fs = await api.districtFacilities(r.district_id);
-            return fs
-              .sort((a, b) => Number(b.at_risk) - Number(a.at_risk))
-              .map((f) => ({
-                id: f.facility_id,
-                label: f.name,
-                sub: `${f.facility_id} · ${f.block ?? ""}`,
-                tone: f.at_risk ? "risk" : "ok",
-                href: `/facility/${f.facility_id}`,
-              }));
-          },
-        })),
-    })),
+    // Live states (with reporting districts) open; every other state in the directory is shown as ready to onboard.
+    children: [...(states ?? [])]
+      .sort((a, b) => b.live_districts - a.live_districts || b.facilities - a.facilities)
+      .map((s): DrillLevel => {
+        const sub = t("coverage_line", { facilities: num(s.facilities), districts: num(s.districts) });
+        if (!s.live_districts) return { id: `${s.code}-${s.state}`, label: s.state, tone: "idle", sub: `${sub} · ${t("coverage_ready")}` };
+        return {
+          id: s.code,
+          label: place(s.code),
+          sub,
+          children: (summary ?? [])
+            .filter((r) => r.district_id.startsWith(`${s.code}/`))
+            .map((r) => ({
+              id: r.district_id,
+              label: place(r.district_id),
+              sub: `${t("kpi_live_hint", { n: num(r.facilities_reporting) })} · ${t("kpi_transfer").toLowerCase()}: ${num(r.facilities_needing_transfer)}`,
+              tone: r.facilities_needing_transfer ? "risk" : "ok",
+              load: async () => {
+                if (!user) throw new Error(t("signin_for_facilities"));
+                const fs = await api.districtFacilities(r.district_id);
+                const act = (f: FacilitySummary) => f.short_drugs.some((d) => !(d in r.escalate));
+                return fs
+                  .sort((a, b) => Number(act(b)) - Number(act(a)))
+                  .map((f) => ({
+                    id: f.facility_id,
+                    label: f.name,
+                    sub: `${f.facility_id} · ${f.block ?? ""}`,
+                    tone: act(f) ? "risk" : "ok",
+                    href: `/facility/${f.facility_id}`,
+                  }));
+              },
+            })),
+        };
+      }),
   };
 
   const gapCount = Object.keys(gaps).length;
@@ -323,7 +334,7 @@ export default function DashboardPage() {
 
         <Reveal delay={0.16} className="card p-5 lg:col-span-5">
           <h2 className="h2 mb-3">{t("regions_title")}</h2>
-          {summary ? <MapView root={root} /> : <Skeleton className="h-40" />}
+          {summary && states ? <MapView root={root} /> : <Skeleton className="h-40" />}
         </Reveal>
       </section>
     </div>

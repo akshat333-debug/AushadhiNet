@@ -22,7 +22,7 @@ const en = {
   error_load: "Could not load: {error}",
   india: "India",
   min_drive: "{n} min drive",
-  colocated: "Same location in the facility directory",
+  colocated: "Same village or town",
 
   home_title: "Medicine stock for {n} health facilities, reported over WhatsApp.",
   home_sub: "Nurses send stock by text, voice or photo. Officers see shortages a week ahead and approve transfers.",
@@ -42,7 +42,6 @@ const en = {
   shortages_empty: "No medicine is under a week of cover.",
   signin_for_facilities: "Sign in as an officer (top right) to see facilities.",
   no_drill: "No further drill-down at this level.",
-  district_tile_sub: "{risk} of {total} facilities at risk",
 
   orders_title: "Transfer orders",
   orders_sub: "Drafts from the solver wait here. Nothing moves until an officer approves.",
@@ -107,7 +106,6 @@ const en = {
   public_sub: "District totals only. No facility is named.",
   public_col_district: "District",
   public_col_reporting: "Facilities reporting",
-  public_col_at_risk: "At risk",
   public_by_medicine: "Facilities short, by medicine",
 
   facility_loading: "Loading facility {id}…",
@@ -169,6 +167,20 @@ const en = {
   how_1: "A nurse sends stock on WhatsApp: a line of text, a voice note or a photo of the register.",
   how_2: "Gemini reads it. Anything it is unsure of waits for the nurse's YES.",
   how_3: "The forecast flags shortages a week ahead. OR-Tools drafts transfers; an officer approves.",
+  coverage_title: "Across India",
+  coverage_sub: "Every state in the national health-facility directory (MoHFW, 2016). Bringing a district online needs its nurses' WhatsApp numbers, not new hardware or a new app.",
+  coverage_live: "Live",
+  coverage_ready: "Ready to onboard",
+  coverage_line: "{facilities} facilities · {districts} districts",
+  kpi_states: "States and UTs",
+  kpi_ready: "Facilities ready to onboard",
+  kpi_ready_hint: "{districts} districts in the national directory",
+  kpi_live: "Live districts",
+  kpi_live_hint: "{n} facilities reporting stock",
+  public_live_title: "Live districts",
+  sim_record: "Record a voice note",
+  sim_recording: "Recording {s}s · tap the mic to send",
+  sim_mic_denied: "Microphone not available. Allow it in the browser, or type the values.",
 };
 
 export type Messages = typeof en;

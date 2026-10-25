@@ -80,3 +80,19 @@ def district_summary() -> list[dict]:
             "facilities_needing_transfer": sum(1 for drugs in short[d].values() if drugs - gaps.keys()),
         })
     return rows
+
+
+@router.get("/coverage")
+def coverage_view() -> list[dict]:
+    """Every state in the national facility directory (MoHFW, 2016) with its facility and
+    district counts, and how many of its districts are live (reporting stock) today: the
+    reach a rollout covers without new data collection. Counts only, no facility names."""
+    from collections import Counter
+    from backend.domain.ids import district_id
+    from ml.data.facilities import coverage
+    live = Counter(r["district_id"].split("/")[0] for r in district_summary() if r["facilities_reporting"])
+    rows = []
+    for c in coverage():
+        code = district_id(c["state"], "x").split("/")[0]
+        rows.append({**c, "code": code, "live_districts": live.get(code, 0)})
+    return rows

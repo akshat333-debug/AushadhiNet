@@ -1,7 +1,8 @@
 "use client";
 /**
  * Region drill-down: national -> state -> district -> facility. Tiles can
- * carry static children, load them on click, or link to a facility page.
+ * carry static children, load them on click, or link to a facility page;
+ * "idle" tiles (states not live yet) are shown but cannot be opened.
  */
 import Link from "next/link";
 import { useState } from "react";
@@ -13,7 +14,7 @@ export interface DrillLevel {
   id: string;
   label: string;
   sub?: string;
-  tone?: "risk" | "ok";
+  tone?: "risk" | "ok" | "idle";
   href?: string;
   children?: DrillLevel[];
   load?: () => Promise<DrillLevel[]>;
@@ -45,7 +46,7 @@ export default function MapView({ root }: { root: DrillLevel }) {
     }
   }
 
-  const tileClass = (tone?: "risk" | "ok") =>
+  const tileClass = (tone?: DrillLevel["tone"]) =>
     `group flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left text-sm transition hover:border-teal-600 hover:bg-teal-50/60 dark:hover:border-teal-400 dark:hover:bg-teal-950/30 ${
       tone === "risk" ? "border-rose-200 dark:border-rose-900/70" : "border-zinc-200 dark:border-zinc-800"
     }`;
@@ -91,7 +92,15 @@ export default function MapView({ root }: { root: DrillLevel }) {
       ) : (
         <div className="grid max-h-[340px] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
           {(current.children || []).slice(0, limit).map((child) =>
-            child.href ? (
+            child.tone === "idle" ? (
+              <div key={child.id} className="flex items-start gap-2.5 rounded-lg border border-dashed border-zinc-200 px-3 py-2.5 text-sm dark:border-zinc-800" data-testid={`map-node-${child.id}`}>
+                <MapPin size={16} className="mt-0.5 shrink-0 text-zinc-400" />
+                <span className="min-w-0 flex-1">
+                  <span className="muted block truncate font-medium">{child.label}</span>
+                  {child.sub && <span className="muted block truncate text-xs">{child.sub}</span>}
+                </span>
+              </div>
+            ) : child.href ? (
               <Link key={child.id} href={child.href} className={tileClass(child.tone)} data-testid={`map-node-${child.id}`}>
                 {tileBody(child)}
               </Link>

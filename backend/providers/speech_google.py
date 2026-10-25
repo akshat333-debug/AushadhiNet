@@ -1,42 +1,39 @@
 """Cloud Speech-to-Text v2 (Chirp 2) provider (architecture.md §1's Google
 Cloud mapping). Requires GCP credentials and a project -- only constructed
 in `AUSHADHI_MODE=cloud` via backend/providers/factory.py's deferred
-import, so a local-mode process never even imports `google.cloud.speech`.
+import, so a local-mode process never even imports `google.cloud.speech_v2`.
+
+Chirp 2 runs only in a few regions, each behind its own endpoint; Singapore is
+the nearest to India. Audio format is auto-detected, so WhatsApp voice notes
+(OGG/Opus) and browser recordings (WebM/Opus, MP4/AAC) all work unconverted.
 """
 from __future__ import annotations
 
 from backend.config import get_settings
 from backend.providers.base import ProviderError, Transcript
 
+CHIRP_LOCATION = "asia-southeast1"
+
 
 class GoogleSpeechProvider:
     def __init__(self):
-        from google.cloud import speech
+        from google.api_core.client_options import ClientOptions
+        from google.cloud import speech_v2
 
-        self._client = speech.SpeechClient()
-        self._speech = speech
-        self._project = get_settings().gcp_project
+        self._types = speech_v2.types
+        self._client = speech_v2.SpeechClient(client_options=ClientOptions(api_endpoint=f"{CHIRP_LOCATION}-speech.googleapis.com"))
+        self._recognizer = f"projects/{get_settings().gcp_project}/locations/{CHIRP_LOCATION}/recognizers/_"
 
     def transcribe(self, audio: bytes, mime: str, lang_hint: str | None = None) -> Transcript:
-        encoding_map = {
-            "audio/ogg": self._speech.ExplicitDecodingConfig.AudioEncoding.OGG_OPUS,
-            "audio/amr": self._speech.ExplicitDecodingConfig.AudioEncoding.AMR,
-            "audio/mpeg": self._speech.ExplicitDecodingConfig.AudioEncoding.MP3,
-        }
-        config = self._speech.RecognitionConfig(
-            explicit_decoding_config=self._speech.ExplicitDecodingConfig(
-                encoding=encoding_map.get(mime, self._speech.ExplicitDecodingConfig.AudioEncoding.OGG_OPUS),
-                sample_rate_hertz=16000, audio_channel_count=1,
-            ),
-            language_codes=[lang_hint] if lang_hint else ["mr-IN", "hi-IN", "en-IN"],
+        # Language is detected, not taken from `lang_hint`: nurses mix languages, and with an
+        # English hint a Hindi note "ओआरएस 50 जिंक 120" came back as "50 zinc 120".
+        config = self._types.RecognitionConfig(
+            auto_decoding_config=self._types.AutoDetectDecodingConfig(),
+            language_codes=["auto"],
             model="chirp_2",
         )
-        request = self._speech.RecognizeRequest(
-            recognizer=f"projects/{self._project}/locations/global/recognizers/_",
-            config=config, content=audio,
-        )
         try:
-            response = self._client.recognize(request=request)
+            response = self._client.recognize(request=self._types.RecognizeRequest(recognizer=self._recognizer, config=config, content=audio))
         except Exception as e:  # noqa: BLE001 -- any Google API error becomes a ProviderError
             raise ProviderError(f"Chirp transcription failed: {e}") from e
 

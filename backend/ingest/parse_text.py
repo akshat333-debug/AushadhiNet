@@ -21,13 +21,16 @@ from backend.ingest.nlem import match as nlem_match
 # match, so the name is "anything not starting with a digit". \d also matches native
 # digits such as "५०", which int() reads.
 _LINE_RE = re.compile(r"^\s*(?P<drug>[^\s\d].*?)\s*[:\-]?\s*(?P<qty>\d+)\s*$")
+# Several items on one line ("ORS 50 Zinc 120", or a voice transcript): split after a number
+# when a new name follows, but not before a unit ("Paracetamol 500 mg 30" stays one item).
+_ITEM_SPLIT = re.compile(r"(?<=\d)[\s,;]+(?!(?:mg|mcg|ml|gm?|iu|%)(?:\b|\s|$))(?=[^\d\s,;])", re.IGNORECASE)
 
 
 def from_text(body: str, facility_id: str, reporter_phone_hash: str) -> ExtractionResult:
     raw_message_id = hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
     records: list[StockRecord] = []
 
-    for line in body.splitlines():
+    for line in (part for row in body.splitlines() for part in _ITEM_SPLIT.split(row)):
         m = _LINE_RE.match(line)
         if not m:
             continue

@@ -75,6 +75,14 @@ def from_audio(audio: bytes, mime: str, facility_id: str, reporter_phone_hash: s
     raw_message_id = hashlib.sha256(audio).hexdigest()[:16]
 
     transcript = speech.transcribe(audio, mime, lang_hint)
+    # Chirp writes spoken numbers as digits ("ORS 50 Zinc 120"), which the text parser reads
+    # exactly, several items at once; Gemini is the fallback for numbers said as words.
+    from backend.ingest.parse_text import from_text
+    parsed = from_text(transcript.text, facility_id, reporter_phone_hash)
+    if parsed.records:
+        records = [r.model_copy(update={"raw_message_id": raw_message_id, "confidence": r.confidence.model_copy(update={"source": ConfidenceSource.CHIRP})})
+                   for r in parsed.records]
+        return ExtractionResult(records=records, confidence=parsed.confidence.model_copy(update={"source": ConfidenceSource.CHIRP}), transcript=transcript.text)
     extraction, field_confidence = llm.extract(
         f"{STOCK_VOICE_PROMPT}\n\nTranscript: {transcript.text}", [], StockExtraction,
     )

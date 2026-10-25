@@ -76,3 +76,15 @@ def test_district_wide_gap_is_escalated_not_counted_as_a_transfer(monkeypatch):
     assert row["procurement_units"] == {"ors": 35}          # two weeks of 20 a week, less the 5 held
     assert row["facilities_at_risk"] == 2                    # a and b
     assert row["facilities_needing_transfer"] == 1           # only a, for zinc
+
+
+def test_coverage_counts_states_without_naming_facilities():
+    from ml.data.facilities import load_facilities
+    nashik = load_facilities(state="Maharashtra", district="Nashik")[0]
+    _seed_record(nashik.facility_id, "ors", on_hand=5, record_id="c1")
+    response = TestClient(create_app()).get("/public/coverage")
+    rows = {r["state"]: r for r in response.json()}
+    assert "Andhra Pradesh Old" not in rows                  # pre-2014 duplicate of AP + Telangana
+    assert rows["Maharashtra"]["live_districts"] == 1
+    assert rows["Maharashtra"]["districts"] > 30 and rows["Uttar Pradesh"]["live_districts"] == 0
+    assert nashik.name not in response.text

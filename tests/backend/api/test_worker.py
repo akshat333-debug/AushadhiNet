@@ -101,9 +101,10 @@ def test_checkin_900m_away_is_flagged_not_rejected():
     assert live.get("checkins", record.record_id) is not None
 
 
-def test_fixture_audio_message_produces_confirmed_stock_record_end_to_end():
+def test_fixture_audio_message_is_read_and_held_for_yes_end_to_end():
     """AC2: a Marathi voice note yields a correct stock update end to end
-    (worker-level, not just extract.py in isolation)."""
+    (worker-level, not just extract.py in isolation). Like a photo, a voice read
+    is never written silently: it waits for YES on a card quoting what was heard."""
     from backend.ingest.prompts import STOCK_VOICE_PROMPT
     from backend.providers.speech_local import FIXTURES_DIR as SPEECH_FIXTURES
 
@@ -123,10 +124,11 @@ def test_fixture_audio_message_produces_confirmed_stock_record_end_to_end():
         "num_media": 1, "media_url": data_uri, "media_content_type": "audio/ogg", "message_sid": "SM7",
     }
 
-    handle_stock_message(payload, facility_id="F6")
+    decision = handle_stock_message(payload, facility_id="F6")
 
     live = factory.get("store_live")
     records = live.query("stock_records", {"facility_id": "F6"})
     assert len(records) == 1
-    assert records[0].status.value == "confirmed"
+    assert records[0].status.value == "pending"
     assert records[0].on_hand == 50
+    assert "Zinc pannas goli" in decision.card.text

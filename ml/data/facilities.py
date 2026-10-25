@@ -127,3 +127,23 @@ def served_facility_index() -> dict[str, Facility]:
     """The API's view of the directory (backend.config.served_states)."""
     from backend.config import get_settings
     return facility_index(tuple(get_settings().served_states_list))
+
+
+@lru_cache(maxsize=1)
+def coverage(csv_path: pathlib.Path | str = DEFAULT_CSV) -> list[dict]:
+    """Facility counts per state from the national directory, for the public reach view.
+    Read as plain columns (not Facility objects), so it costs a second and a few MB.
+    Keyed by full state name: the two-letter IDs merge some states (Uttar Pradesh and
+    Uttarakhand both give "ut"), which is harmless for the served state but not for counts."""
+    df = pd.read_csv(csv_path, usecols=["State Name", "District Name", "Facility Type"], low_memory=False)
+    df["kind"] = df["Facility Type"].astype(str).str.strip().str.lower().map(_TYPE_MAP)
+    df = df.dropna(subset=["kind"])
+    df["State Name"] = df["State Name"].astype(str).str.strip()
+    # The pre-2014 undivided state: 98% of its rows repeat Andhra Pradesh / Telangana entries.
+    df = df[df["State Name"] != "Andhra Pradesh Old"]
+    rows = []
+    for state, g in df.groupby("State Name"):
+        kinds = g["kind"].astype(str).value_counts()
+        rows.append({"state": state, "districts": int(g["District Name"].nunique()), "facilities": int(len(g)),
+                     "by_type": {k: int(v) for k, v in kinds.items()}})
+    return sorted(rows, key=lambda r: -r["facilities"])

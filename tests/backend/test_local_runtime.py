@@ -115,3 +115,22 @@ def test_photo_report_is_read_held_for_yes_then_recorded():
         _send(client, phone, "YES", "p2")
         detail = client.get(f"/officer/facility/{facility_id}", headers=OFFICER).json()
         assert any(s["drug_id"] == "ors" and s["on_hand"] == 61 and s["status"] == "confirmed" for s in detail["stock"])
+
+
+def test_voice_note_with_two_items_is_heard_held_for_yes_then_recorded():
+    import base64, hashlib, json
+    from backend.providers.speech_local import FIXTURES_DIR
+    audio = b"voice-note-ors-and-zinc"
+    FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
+    (FIXTURES_DIR / f"{hashlib.sha256(audio).hexdigest()[:16]}.json").write_text(
+        json.dumps({"text": "ओआरएस 50 जिंक 120", "language": "hi-IN", "confidence": 0.87}))
+    with TestClient(create_app()) as client:
+        phone = phone_for_facility("MH-0000221")
+        client.post("/simulator/message", json={"from_phone": phone, "message_id": "v1", "lang": "hi",
+                                                "media_base64": base64.b64encode(audio).decode(), "media_content_type": "audio/webm"})
+        card = _outbox(client, phone)[-1]
+        assert "ओआरएस 50 जिंक 120" in card and "50" in card and "120" in card
+        _send(client, phone, "YES", "v2")
+        from backend.runtime import latest_records
+        assert latest_records()[("MH-0000221", "ors")].on_hand == 50
+        assert latest_records()[("MH-0000221", "zinc-20mg")].on_hand == 120

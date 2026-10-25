@@ -216,6 +216,8 @@ def warm() -> None:
     match("ors")  # builds the drug-name index (PDF parse + embeddings): minutes on a small CPU
     weekly_demand()
     latest_records()  # one full read of the stock store (~8 s on Firestore), then served from memory
+    from ml.data.facilities import coverage
+    coverage()
 
 
 def start() -> None:

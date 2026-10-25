@@ -28,11 +28,12 @@ def build(record, low_fields: list[str], lang: str = "en") -> ConfirmationCard:
     )
 
 
-def build_photo_card(records, lang: str = "en") -> ConfirmationCard:
+def build_photo_card(records, lang: str = "en", heard: str | None = None) -> ConfirmationCard:
+    """Values read from a photo, or from a voice note (`heard` = its transcript), for a YES."""
     from backend.i18n import drug_name, msg
     items = ", ".join(f"{drug_name(r.drug_id, lang) or r.drug_id} {r.on_hand}" for r in records)
     return ConfirmationCard(
-        text=msg(lang, "card_photo", items=items),
+        text=msg(lang, "card_voice", heard=heard, items=items) if heard is not None else msg(lang, "card_photo", items=items),
         buttons=[msg(lang, "btn_confirm"), msg(lang, "btn_correct")],
         record_id=records[0].record_id, low_fields=["on_hand", "drug_name"],
     )

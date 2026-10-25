@@ -10,6 +10,7 @@ import base64
 from backend.config import get_settings
 from backend.domain import BedCensus, CheckIn, ConfidenceSource, RecordStatus, StaffRole
 from backend.providers import factory
+from backend.providers.base import ProviderError
 from backend.runtime import note_confirmed
 
 from backend.ingest.cards import build_photo_card
@@ -41,19 +42,23 @@ def handle_stock_message(payload: dict, facility_id: str):
         media_bytes = _download_media(payload["media_url"], settings)
         content_type = payload.get("media_content_type", "")
         if content_type.startswith("audio/"):
-            result = from_audio(media_bytes, content_type, facility_id, payload["reporter_phone_hash"])
+            try:
+                result = from_audio(media_bytes, content_type, facility_id, payload["reporter_phone_hash"], payload.get("lang"))
+            except ProviderError:
+                result = from_text("", facility_id, payload["reporter_phone_hash"])  # nothing heard: the reply asks to type it
         else:
             result = from_image(media_bytes, content_type, facility_id, payload["reporter_phone_hash"])
     else:
         result = from_text(payload.get("body") or "", facility_id, payload["reporter_phone_hash"])
 
     lang = payload.get("lang", "en")
-    photo = payload.get("num_media", 0) > 0 and not payload.get("media_content_type", "").startswith("audio/")
-    # A model reading a photo can be confidently wrong, so every photo read waits for the
-    # reporter's YES, shown with the values as read.
-    decision = gate_apply(result.records, float("inf") if photo else settings.confidence_threshold, lang)
-    if photo and decision.pending:
-        decision.card = build_photo_card(decision.pending, lang)
+    media = payload.get("num_media", 0) > 0
+    voice = media and payload.get("media_content_type", "").startswith("audio/")
+    # A model reading a photo or hearing a voice note can be confidently wrong, so every such
+    # read waits for the reporter's YES, shown with the values as read (and what was heard).
+    decision = gate_apply(result.records, float("inf") if media else settings.confidence_threshold, lang)
+    if media and decision.pending:
+        decision.card = build_photo_card(decision.pending, lang, heard=result.transcript if voice else None)
 
     for record in decision.confirmed:
         live_store.put("stock_records", record.record_id, record)

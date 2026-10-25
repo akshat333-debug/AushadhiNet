@@ -18,6 +18,20 @@ interface Sent {
   text: string;
   repliesBefore: number;
   photo?: string; // object URL of the image sent, shown in the bubble
+  voice?: number; // seconds of a recorded voice note
+}
+
+// Chrome and Firefox record WebM/Opus, Safari MP4/AAC; Chirp detects either.
+const VOICE_TYPES = ["audio/webm;codecs=opus", "audio/ogg;codecs=opus", "audio/mp4"];
+const MAX_VOICE_SECONDS = 30;
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1]);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
 }
 
 // Phone photos run to several MB; Gemini reads a 1600px JPEG just as well and much faster.
@@ -32,7 +46,7 @@ async function shrinkPhoto(file: File): Promise<{ base64: string; type: string; 
   return { base64: dataUrl.split(",")[1], type: "image/jpeg", url: dataUrl };
 }
 
-type Bubble = { key: string; mine: boolean; text: string; buttons: string[]; photo?: string };
+type Bubble = { key: string; mine: boolean; text: string; buttons: string[]; photo?: string; voice?: number };
 
 export default function SimulatorPage() {
   const { t, lang } = useI18n();
@@ -46,6 +60,20 @@ export default function SimulatorPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  const recorder = useRef<MediaRecorder | null>(null);
+  const recordStart = useRef(0);
+  const [recSeconds, setRecSeconds] = useState<number | null>(null);
+  // Read when a recording stops, so it must not be the value captured when it started.
+  const replyCount = useRef(0);
+  replyCount.current = replies.length;
+
+  // Ticks the recording timer and stops at the cap.
+  useEffect(() => {
+    if (recSeconds === null) return;
+    if (recSeconds >= MAX_VOICE_SECONDS) return void recorder.current?.stop();
+    const timer = setTimeout(() => setRecSeconds((n) => (n === null ? null : n + 1)), 1000);
+    return () => clearTimeout(timer);
+  }, [recSeconds]);
 
   useEffect(() => {
     api
@@ -89,16 +117,16 @@ export default function SimulatorPage() {
     }
   }
 
-  async function sendPhoto(file: File) {
+  async function sendMedia(prepare: () => Promise<{ base64: string; type: string; bubble: Partial<Sent> }>) {
     if (!phone) return;
     setSending(true);
     setError(null);
     const id = `sim-${Date.now()}`;
     try {
-      const photo = await shrinkPhoto(file);
-      const before = replies.length;
-      await api.simulatorSend({ from_phone: phone, body: "", media_base64: photo.base64, media_content_type: photo.type, message_id: id, lang });
-      setSent((prev) => [...prev, { id, text: "", repliesBefore: before, photo: photo.url }]);
+      const media = await prepare();
+      const before = replyCount.current;
+      await api.simulatorSend({ from_phone: phone, body: "", media_base64: media.base64, media_content_type: media.type, message_id: id, lang });
+      setSent((prev) => [...prev, { id, text: "", repliesBefore: before, ...media.bubble }]);
       setReplies(await api.simulatorOutbox(phone));
     } catch (err) {
       setError((err as Error).message);
@@ -107,10 +135,41 @@ export default function SimulatorPage() {
     }
   }
 
+  const sendPhoto = (file: File) =>
+    sendMedia(async () => {
+      const photo = await shrinkPhoto(file);
+      return { base64: photo.base64, type: photo.type, bubble: { photo: photo.url } };
+    });
+
+  // Tap to start recording, tap again to send, like WhatsApp's hands-free mode.
+  async function toggleVoice() {
+    if (recorder.current?.state === "recording") return recorder.current.stop();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = VOICE_TYPES.find((type) => MediaRecorder.isTypeSupported(type));
+      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const chunks: Blob[] = [];
+      rec.ondataavailable = (e) => chunks.push(e.data);
+      rec.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop());
+        setRecSeconds(null);
+        const seconds = Math.max(1, Math.round((Date.now() - recordStart.current) / 1000));
+        const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+        sendMedia(async () => ({ base64: await blobToBase64(blob), type: blob.type.split(";")[0], bubble: { voice: seconds } }));
+      };
+      recorder.current = rec;
+      recordStart.current = Date.now();
+      rec.start();
+      setRecSeconds(0);
+    } catch {
+      setError(t("sim_mic_denied"));
+    }
+  }
+
   const facility = contacts.find((c) => c.phone === phone);
   const thread: Bubble[] = [];
   for (let i = 0; i <= replies.length; i++) {
-    sent.filter((s) => s.repliesBefore === i).forEach((s) => thread.push({ key: s.id, mine: true, text: s.text, buttons: [], photo: s.photo }));
+    sent.filter((s) => s.repliesBefore === i).forEach((s) => thread.push({ key: s.id, mine: true, text: s.text, buttons: [], photo: s.photo, voice: s.voice }));
     const r = replies[i];
     if (r) thread.push({ key: `r-${r.seq}`, mine: false, text: r.body, buttons: r.buttons });
   }
@@ -215,8 +274,11 @@ export default function SimulatorPage() {
                         {m.photo ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={m.photo} alt={t("sim_photo")} className="mb-1 max-h-48 rounded-md" />
-                        ) : m.text === "[voice note]" ? (
-                          <span className="flex items-center gap-1.5"><Microphone size={14} weight="fill" /> {t("sim_voice_note")}</span>
+                        ) : m.voice !== undefined || m.text === "[voice note]" ? (
+                          <span className="inline-flex items-center gap-1.5" data-testid="sim-voice-bubble">
+                            <Microphone size={14} weight="fill" /> {t("sim_voice_note")}
+                            {m.voice !== undefined && <span className="muted font-mono text-xs">0:{String(m.voice).padStart(2, "0")}</span>}
+                          </span>
                         ) : (
                           m.text
                         )}
@@ -259,6 +321,20 @@ export default function SimulatorPage() {
               >
                 <Camera size={20} />
               </button>
+              <button
+                type="button"
+                className={`grid h-10 w-10 shrink-0 place-items-center rounded-full transition active:scale-95 disabled:opacity-50 ${
+                  recSeconds !== null ? "animate-pulse bg-rose-600 text-white" : "text-zinc-600 hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/10"
+                }`}
+                onClick={toggleVoice}
+                disabled={(sending && recSeconds === null) || !phone}
+                aria-label={recSeconds !== null ? t("sim_recording", { s: recSeconds }) : t("sim_record")}
+                aria-pressed={recSeconds !== null}
+                title={recSeconds !== null ? t("sim_recording", { s: recSeconds }) : t("sim_record")}
+                data-testid="sim-voice"
+              >
+                <Microphone size={20} weight={recSeconds !== null ? "fill" : "regular"} />
+              </button>
               <label htmlFor="sim-input" className="sr-only">{t("sim_placeholder")}</label>
               <input
                 id="sim-input"
@@ -266,7 +342,7 @@ export default function SimulatorPage() {
                 autoComplete="off"
                 ref={inputRef}
                 className="flex-1 rounded-full border-0 bg-white px-4 py-2 text-sm text-zinc-900 placeholder:text-zinc-500 dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder:text-zinc-400"
-                placeholder={t("sim_placeholder")}
+                placeholder={recSeconds !== null ? t("sim_recording", { s: recSeconds }) : t("sim_placeholder")}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
                 data-testid="sim-input"

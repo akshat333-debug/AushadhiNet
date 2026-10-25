@@ -67,6 +67,15 @@ export interface DistrictSummaryRow {
   facilities_needing_transfer: number;
 }
 
+export interface CoverageRow {
+  state: string;
+  code: string;
+  districts: number;
+  facilities: number;
+  by_type: Record<string, number>;
+  live_districts: number;
+}
+
 export interface Contact {
   facility_id: string;
   name: string;
@@ -129,6 +138,7 @@ export const api = {
   facilityPoints: (districtId: string) => request<[number, number][]>(`/public/facility-points?district_id=${encodeURIComponent(districtId)}`),
   simulatorOutbox: (phone: string) => request<OutboxMessage[]>(`/simulator/outbox?phone=${encodeURIComponent(phone)}`),
   districtSummary: () => request<DistrictSummaryRow[]>("/public/district-summary"),
+  coverage: () => request<CoverageRow[]>("/public/coverage"),
   simulatorSend: (payload: { from_phone: string; body?: string; media_base64?: string; media_content_type?: string; message_id: string; lang?: string }) =>
     request<{ status: string }>("/simulator/message", { method: "POST", body: JSON.stringify(payload) }),
   askAgent: (question: string, lang = "en") => request<{ text: string; cited_ids: string[]; draft_order_id: string | null }>("/agent/ask", {

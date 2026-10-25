@@ -7,7 +7,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Camera, ChatCircleText, Checks, Microphone, PaperPlaneRight, ShieldCheck, WhatsappLogo } from "@phosphor-icons/react";
+import { Camera, ChatCircleText, Checks, MapPin, Microphone, PaperPlaneRight, ShieldCheck, WhatsappLogo } from "@phosphor-icons/react";
 import ConfirmCard from "@/components/ConfirmCard";
 import { Notice, PageHeader } from "@/components/ui";
 import { api, Contact, OutboxMessage } from "@/lib/api";
@@ -19,6 +19,7 @@ interface Sent {
   repliesBefore: number;
   photo?: string; // object URL of the image sent, shown in the bubble
   voice?: number; // seconds of a recorded voice note
+  location?: boolean; // a shared location (staff check-in)
 }
 
 // Chrome and Firefox record WebM/Opus, Safari MP4/AAC; Chirp detects either.
@@ -46,7 +47,7 @@ async function shrinkPhoto(file: File): Promise<{ base64: string; type: string; 
   return { base64: dataUrl.split(",")[1], type: "image/jpeg", url: dataUrl };
 }
 
-type Bubble = { key: string; mine: boolean; text: string; buttons: string[]; photo?: string; voice?: number };
+type Bubble = { key: string; mine: boolean; text: string; buttons: string[]; photo?: string; voice?: number; location?: boolean };
 
 export default function SimulatorPage() {
   const { t, lang } = useI18n();
@@ -135,6 +136,25 @@ export default function SimulatorPage() {
     }
   }
 
+  // WhatsApp's "share location", sent from the facility itself (a staff check-in inside the geofence).
+  async function shareLocation() {
+    const here = contacts.find((c) => c.phone === phone);
+    if (!here) return;
+    setSending(true);
+    setError(null);
+    const id = `sim-${Date.now()}`;
+    try {
+      const before = replyCount.current;
+      await api.simulatorSend({ from_phone: phone, body: "", message_id: id, lang, latitude: here.lat, longitude: here.lon });
+      setSent((prev) => [...prev, { id, text: "", repliesBefore: before, location: true }]);
+      setReplies(await api.simulatorOutbox(phone));
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSending(false);
+    }
+  }
+
   const sendPhoto = (file: File) =>
     sendMedia(async () => {
       const photo = await shrinkPhoto(file);
@@ -169,13 +189,13 @@ export default function SimulatorPage() {
   const facility = contacts.find((c) => c.phone === phone);
   const thread: Bubble[] = [];
   for (let i = 0; i <= replies.length; i++) {
-    sent.filter((s) => s.repliesBefore === i).forEach((s) => thread.push({ key: s.id, mine: true, text: s.text, buttons: [], photo: s.photo, voice: s.voice }));
+    sent.filter((s) => s.repliesBefore === i).forEach((s) => thread.push({ key: s.id, mine: true, text: s.text, buttons: [], photo: s.photo, voice: s.voice, location: s.location }));
     const r = replies[i];
     if (r) thread.push({ key: `r-${r.seq}`, mine: false, text: r.body, buttons: r.buttons });
   }
 
-  const examples = [t("sim_example_local"), "IFA 20", t("sim_example_yes")];
-  const steps = [t("sim_how_1"), t("sim_how_2"), t("sim_how_3")];
+  const examples = [t("sim_example_local"), "IFA 20", t("sim_example_yes"), "BEDS 4/6"];
+  const steps = [t("sim_how_1"), t("sim_how_2"), t("sim_how_3"), t("sim_how_4")];
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -271,7 +291,11 @@ export default function SimulatorPage() {
                           m.mine ? "rounded-tr-none bg-[#d9fdd3] dark:bg-teal-900" : "rounded-tl-none bg-white dark:bg-zinc-800"
                         }`}
                       >
-                        {m.photo ? (
+                        {m.location ? (
+                          <span className="inline-flex items-center gap-1.5" data-testid="sim-location-bubble">
+                            <MapPin size={14} weight="fill" className="text-rose-600" /> {t("sim_location_bubble")}
+                          </span>
+                        ) : m.photo ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={m.photo} alt={t("sim_photo")} className="mb-1 max-h-48 rounded-md" />
                         ) : m.voice !== undefined || m.text === "[voice note]" ? (
@@ -291,7 +315,7 @@ export default function SimulatorPage() {
             </div>
 
             <form
-              className="flex items-center gap-2 bg-[#f0f2f5] px-2.5 py-2.5 dark:bg-zinc-800"
+              className="flex items-center gap-1.5 bg-[#f0f2f5] px-2 py-2.5 dark:bg-zinc-800"
               onSubmit={(e) => {
                 e.preventDefault();
                 send(body, true);
@@ -335,13 +359,24 @@ export default function SimulatorPage() {
               >
                 <Microphone size={20} weight={recSeconds !== null ? "fill" : "regular"} />
               </button>
+              <button
+                type="button"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-zinc-600 transition hover:bg-black/5 active:scale-95 disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-white/10"
+                onClick={shareLocation}
+                disabled={sending || !phone}
+                aria-label={t("sim_location")}
+                title={t("sim_location")}
+                data-testid="sim-location"
+              >
+                <MapPin size={20} />
+              </button>
               <label htmlFor="sim-input" className="sr-only">{t("sim_placeholder")}</label>
               <input
                 id="sim-input"
                 name="message"
                 autoComplete="off"
                 ref={inputRef}
-                className="flex-1 rounded-full border-0 bg-white px-4 py-2 text-sm text-zinc-900 placeholder:text-zinc-500 dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder:text-zinc-400"
+                className="min-w-0 flex-1 rounded-full border-0 bg-white px-4 py-2 text-sm text-zinc-900 placeholder:text-zinc-500 dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder:text-zinc-400"
                 placeholder={recSeconds !== null ? t("sim_recording", { s: recSeconds }) : t("sim_placeholder")}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}

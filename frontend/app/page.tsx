@@ -3,7 +3,8 @@
  * Overview. Officers get a morning briefing: medicines short across the whole
  * district (only a supply order fixes those, so they are escalated with a
  * quantity) and stock that can move between facilities (drafted transfers),
- * with a map that can show the district before and after those transfers.
+ * with a map that can show the district before and after those transfers, then
+ * today's beds and staff.
  * Anonymous visitors see what the system is, district totals, a
  * locations-only map and the three-step story.
  */
@@ -12,6 +13,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Check, ClipboardText, Copy, Eye, Lightning, Megaphone, Truck, WhatsappLogo } from "@phosphor-icons/react";
 import MapView, { DrillLevel } from "@/components/MapView";
+import CapacityCard from "@/components/CapacityCard";
 import HowItWorks from "@/components/HowItWorks";
 import { CountUp, Reveal, Skeleton, Stat } from "@/components/ui";
 import type { Flow, MapPoint, Tone } from "@/components/FacilityMap";
@@ -292,7 +294,11 @@ export default function DashboardPage() {
         </Reveal>
       </section>
 
-      {!user && (
+      {user ? (
+        <Reveal delay={0.1}>
+          <CapacityCard district={district} />
+        </Reveal>
+      ) : (
         <Reveal delay={0.1}>
           <HowItWorks />
         </Reveal>

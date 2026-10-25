@@ -185,7 +185,8 @@ def replace_drafts(district_id: str, drafts: list) -> list:
 
 
 def handle_inbound(payload: dict) -> None:
-    from backend.api.worker import handle_stock_message
+    from backend.api.worker import handle_bed_census, handle_stock_message
+    from backend.capacity import parse_beds
     from backend.i18n import CONFIRM_WORDS, drug_name, msg
     from backend.ingest.cards import apply_reply
     messaging = factory.get("messaging")
@@ -198,6 +199,18 @@ def handle_inbound(payload: dict) -> None:
         return
 
     body = (payload.get("body") or "").strip()
+    if payload.get("latitude") is not None:
+        _check_in(payload, facility_id, body, lang)
+        return
+    beds = None if payload.get("num_media") else parse_beds(body)
+    if beds is not None:
+        try:
+            handle_bed_census(payload, facility_id, beds_total=beds[1], beds_occupied=beds[0])
+        except ValueError:  # more occupied than total
+            messaging.send_text(sender, msg(lang, "beds_invalid"))
+            return
+        messaging.send_text(sender, msg(lang, "beds_recorded", facility=facility_id, occupied=beds[0], total=beds[1]))
+        return
     if not payload.get("num_media") and body.upper() in CONFIRM_WORDS:
         live = factory.get("store_live")
         pending = live.query("stock_records", {"facility_id": facility_id, "status": RecordStatus.PENDING})
@@ -215,6 +228,20 @@ def handle_inbound(payload: dict) -> None:
         messaging.send_text(sender, msg(lang, "recorded", facility=facility_id, items=items))
     elif decision.card is None:
         messaging.send_text(sender, msg(lang, "unreadable"))
+
+
+def _check_in(payload: dict, facility_id: str, body: str, lang: str) -> None:
+    """A shared WhatsApp location is a staff check-in, checked against the facility's geofence."""
+    from backend.api.worker import handle_checkin
+    from backend.capacity import IST, role_from
+    from backend.i18n import msg
+    from ml.data.facilities import served_facility_index
+    facility = served_facility_index()[facility_id]
+    record = handle_checkin(payload, facility_id, payload["reporter_phone_hash"], role_from(body),
+                            float(payload["latitude"]), float(payload["longitude"]), facility.lat, facility.lon)
+    text = (msg(lang, "checkin_ok", facility=facility_id, time=record.at.astimezone(IST).strftime("%H:%M")) if record.geofence_ok
+            else msg(lang, "checkin_far", facility=facility_id, km=f"{record.distance_m / 1000:.1f}"))
+    factory.get("messaging").send_text(payload["from"], text)
 
 
 def warm() -> None:

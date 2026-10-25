@@ -12,6 +12,10 @@ LANG_NAMES = {"en": "English", "hi": "Hindi", "mr": "Marathi", "bn": "Bengali", 
 
 MESSAGES: dict[str, dict[str, str]] = {
     "en": {
+        "beds_recorded": "Beds recorded for {facility}: {occupied} of {total} occupied.",
+        "beds_invalid": "Occupied beds cannot be more than total beds. Send as 'BEDS <occupied>/<total>', e.g. 'BEDS 4/6'.",
+        "checkin_ok": "Checked in at {facility}, {time}.",
+        "checkin_far": "Checked in, but you are {km} km from {facility}. Your officer will see it flagged.",
         "not_registered": "This number is not registered to a facility.",
         "recorded": "Recorded for {facility}: {items}.",
         "unreadable": "Could not read that. Send stock as '<medicine> <quantity>', one per line, e.g. 'ORS 50'. Or send a photo of the register.",
@@ -37,6 +41,10 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "That is outside your jurisdiction: {detail}",
     },
     "hi": {
+        "beds_recorded": "{facility} के बेड दर्ज किए गए: {total} में से {occupied} भरे हैं।",
+        "beds_invalid": "भरे हुए बेड कुल बेड से ज़्यादा नहीं हो सकते। 'BEDS <भरे>/<कुल>' के रूप में भेजें, जैसे 'BEDS 4/6'।",
+        "checkin_ok": "{facility} पर हाज़िरी दर्ज, {time}।",
+        "checkin_far": "हाज़िरी दर्ज, लेकिन आप {facility} से {km} किमी दूर हैं। आपके अधिकारी को यह चिह्नित दिखेगा।",
         "not_registered": "यह नंबर किसी स्वास्थ्य केंद्र से पंजीकृत नहीं है।",
         "recorded": "{facility} के लिए दर्ज किया गया: {items}।",
         "unreadable": "यह पढ़ा नहीं जा सका। स्टॉक '<दवा> <मात्रा>' के रूप में भेजें, हर पंक्ति में एक, जैसे 'ओआरएस 50'। या रजिस्टर की फ़ोटो भेजें।",
@@ -62,6 +70,10 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "यह आपके अधिकार क्षेत्र से बाहर है: {detail}",
     },
     "mr": {
+        "beds_recorded": "{facility} चे बेड नोंदवले: {total} पैकी {occupied} भरलेले.",
+        "beds_invalid": "भरलेले बेड एकूण बेडपेक्षा जास्त असू शकत नाहीत. 'BEDS <भरलेले>/<एकूण>' असे पाठवा, उदा. 'BEDS 4/6'.",
+        "checkin_ok": "{facility} येथे हजेरी नोंदवली, {time}.",
+        "checkin_far": "हजेरी नोंदवली, पण तुम्ही {facility} पासून {km} किमी दूर आहात. तुमच्या अधिकाऱ्यांना हे चिन्हांकित दिसेल.",
         "not_registered": "हा नंबर कोणत्याही आरोग्य केंद्राशी नोंदणीकृत नाही.",
         "recorded": "{facility} साठी नोंद केली: {items}.",
         "unreadable": "हे वाचता आले नाही. साठा '<औषध> <प्रमाण>' असा पाठवा, प्रत्येक ओळीत एक, उदा. 'ओआरएस 50'. किंवा रजिस्टरचा फोटो पाठवा.",
@@ -87,6 +99,10 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "हे तुमच्या कार्यक्षेत्राबाहेर आहे: {detail}",
     },
     "bn": {
+        "beds_recorded": "{facility}-এর শয্যা নথিভুক্ত: {total}টির মধ্যে {occupied}টি ভর্তি।",
+        "beds_invalid": "ভর্তি শয্যা মোট শয্যার বেশি হতে পারে না। 'BEDS <ভর্তি>/<মোট>' আকারে পাঠান, যেমন 'BEDS 4/6'।",
+        "checkin_ok": "{facility}-এ হাজিরা নথিভুক্ত, {time}।",
+        "checkin_far": "হাজিরা নথিভুক্ত, কিন্তু আপনি {facility} থেকে {km} কিমি দূরে। আপনার আধিকারিক এটি চিহ্নিত দেখবেন।",
         "not_registered": "এই নম্বরটি কোনো স্বাস্থ্যকেন্দ্রে নিবন্ধিত নয়।",
         "recorded": "{facility}-এর জন্য নথিভুক্ত হয়েছে: {items}।",
         "unreadable": "এটি পড়া যায়নি। মজুত '<ওষুধ> <পরিমাণ>' আকারে পাঠান, প্রতি লাইনে একটি, যেমন 'ওআরএস 50'। অথবা রেজিস্টারের ছবি পাঠান।",
@@ -112,6 +128,10 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "এটি আপনার এক্তিয়ারের বাইরে: {detail}",
     },
     "ta": {
+        "beds_recorded": "{facility}க்கு படுக்கைகள் பதிவு: {total}இல் {occupied} நிரம்பியுள்ளன.",
+        "beds_invalid": "நிரம்பிய படுக்கைகள் மொத்தத்தை விட அதிகமாக இருக்க முடியாது. 'BEDS <நிரம்பியவை>/<மொத்தம்>' என அனுப்பவும், எ.கா. 'BEDS 4/6'.",
+        "checkin_ok": "{facility}இல் வருகை பதிவு, {time}.",
+        "checkin_far": "வருகை பதிவு, ஆனால் நீங்கள் {facility}இலிருந்து {km} கி.மீ. தொலைவில் உள்ளீர்கள். உங்கள் அலுவலருக்கு இது குறிக்கப்பட்டுக் காட்டப்படும்.",
         "not_registered": "இந்த எண் எந்த சுகாதார நிலையத்திலும் பதிவு செய்யப்படவில்லை.",
         "recorded": "{facility}க்கு பதிவு செய்யப்பட்டது: {items}.",
         "unreadable": "இதைப் படிக்க முடியவில்லை. இருப்பை '<மருந்து> <அளவு>' என ஒவ்வொரு வரியிலும் ஒன்றாக அனுப்பவும், எ.கா. 'ஓஆர்எஸ் 50'. அல்லது பதிவேட்டின் புகைப்படத்தை அனுப்பவும்.",
@@ -137,6 +157,10 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "இது உங்கள் அதிகார வரம்பிற்கு வெளியே உள்ளது: {detail}",
     },
     "te": {
+        "beds_recorded": "{facility} పడకలు నమోదు: {total}లో {occupied} నిండాయి.",
+        "beds_invalid": "నిండిన పడకలు మొత్తం పడకల కంటే ఎక్కువ ఉండకూడదు. 'BEDS <నిండినవి>/<మొత్తం>' రూపంలో పంపండి, ఉదా. 'BEDS 4/6'.",
+        "checkin_ok": "{facility}లో హాజరు నమోదైంది, {time}.",
+        "checkin_far": "హాజరు నమోదైంది, కానీ మీరు {facility} నుండి {km} కి.మీ. దూరంలో ఉన్నారు. మీ అధికారికి ఇది గుర్తించబడి కనిపిస్తుంది.",
         "not_registered": "ఈ నంబర్ ఏ ఆరోగ్య కేంద్రంలోనూ నమోదు కాలేదు.",
         "recorded": "{facility} కోసం నమోదు చేయబడింది: {items}.",
         "unreadable": "దీన్ని చదవలేకపోయాము. నిల్వను '<మందు> <పరిమాణం>' రూపంలో, ఒక్కో లైన్‌కు ఒకటి పంపండి, ఉదా. 'ఓఆర్ఎస్ 50'. లేదా రిజిస్టర్ ఫోటో పంపండి.",
@@ -162,6 +186,10 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "ఇది మీ అధికార పరిధికి వెలుపల ఉంది: {detail}",
     },
     "kn": {
+        "beds_recorded": "{facility} ಹಾಸಿಗೆಗಳು ದಾಖಲಾಗಿವೆ: {total}ರಲ್ಲಿ {occupied} ಭರ್ತಿ.",
+        "beds_invalid": "ಭರ್ತಿಯಾದ ಹಾಸಿಗೆಗಳು ಒಟ್ಟು ಹಾಸಿಗೆಗಳಿಗಿಂತ ಹೆಚ್ಚಿರಲು ಸಾಧ್ಯವಿಲ್ಲ. 'BEDS <ಭರ್ತಿ>/<ಒಟ್ಟು>' ಎಂದು ಕಳುಹಿಸಿ, ಉದಾ. 'BEDS 4/6'.",
+        "checkin_ok": "{facility}ನಲ್ಲಿ ಹಾಜರಾತಿ ದಾಖಲಾಗಿದೆ, {time}.",
+        "checkin_far": "ಹಾಜರಾತಿ ದಾಖಲಾಗಿದೆ, ಆದರೆ ನೀವು {facility}ನಿಂದ {km} ಕಿ.ಮೀ. ದೂರದಲ್ಲಿದ್ದೀರಿ. ನಿಮ್ಮ ಅಧಿಕಾರಿಗೆ ಇದು ಗುರುತಿಸಲ್ಪಟ್ಟು ಕಾಣುತ್ತದೆ.",
         "not_registered": "ಈ ಸಂಖ್ಯೆ ಯಾವುದೇ ಆರೋಗ್ಯ ಕೇಂದ್ರಕ್ಕೆ ನೋಂದಾಯಿಸಲಾಗಿಲ್ಲ.",
         "recorded": "{facility}ಗಾಗಿ ದಾಖಲಿಸಲಾಗಿದೆ: {items}.",
         "unreadable": "ಇದನ್ನು ಓದಲಾಗಲಿಲ್ಲ. ದಾಸ್ತಾನನ್ನು '<ಔಷಧ> <ಪ್ರಮಾಣ>' ರೂಪದಲ್ಲಿ, ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು ಕಳುಹಿಸಿ, ಉದಾ. 'ಒಆರ್‌ಎಸ್ 50'. ಅಥವಾ ರಿಜಿಸ್ಟರ್‌ನ ಫೋಟೋ ಕಳುಹಿಸಿ.",

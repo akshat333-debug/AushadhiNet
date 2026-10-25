@@ -181,6 +181,20 @@ const en = {
   sim_record: "Record a voice note",
   sim_recording: "Recording {s}s · tap the mic to send",
   sim_mic_denied: "Microphone not available. Allow it in the browser, or type the values.",
+  cap_title: "Beds and staff today",
+  cap_beds: "{full} facilities at least 90% full · {occupied} of {total} beds in use",
+  cap_refer: "{from}: refer {n} to {to}",
+  cap_staff: "{present} of {rostered} staff checked in on site",
+  cap_nobody: "nobody at {n} facilities",
+  cap_depute: "{to}: send {n} {role} from {from}",
+  cap_off_site: "{name}: {role} checked in {km} km away",
+  cap_minutes: "{n} min",
+  cap_nearby: "nearby",
+  cap_demo: "Facilities that have not reported today show generated demo data; a WhatsApp report replaces it. Suggestions only: no order is created.",
+  cap_none: "Nothing needs moving.",
+  sim_location: "Share location to check in",
+  sim_location_bubble: "Location shared",
+  sim_how_4: "Beds: send 'BEDS 4/6' (occupied/total). Staff: share your location to check in; more than 200 m from the facility is flagged.",
 };
 
 export type Messages = typeof en;

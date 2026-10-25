@@ -44,6 +44,8 @@ class SimulatorMessage(BaseModel):
     media_content_type: str | None = None
     message_id: str
     lang: str | None = None  # the simulator's UI language; real contacts carry their own
+    latitude: float | None = None  # a shared location (staff check-in), as WhatsApp sends it
+    longitude: float | None = None
 
 
 @router.post("/message")
@@ -58,7 +60,7 @@ def simulator_message(msg: SimulatorMessage) -> dict:  # sync: runs in a worker 
     publish_inbound_message(
         from_=msg.from_phone, body=msg.body, num_media=1 if media_url else 0,
         media_url=media_url, media_content_type=msg.media_content_type,
-        message_sid=msg.message_id, lang=msg.lang,
+        message_sid=msg.message_id, lang=msg.lang, latitude=msg.latitude, longitude=msg.longitude,
     )
     return {"status": "queued"}
 
@@ -77,7 +79,8 @@ def simulator_contacts(limit: int = 25) -> list[dict]:
     from backend.runtime import PILOT_DISTRICT, phone_for_facility
     from ml.data.facilities import served_facility_index as facility_index
     facilities = [f for f in facility_index().values() if f.district_id == PILOT_DISTRICT][:limit]
-    return [{"facility_id": f.facility_id, "name": f.name, "phone": phone_for_facility(f.facility_id)} for f in facilities]
+    return [{"facility_id": f.facility_id, "name": f.name, "phone": phone_for_facility(f.facility_id), "lat": f.lat, "lon": f.lon}
+            for f in facilities]
 
 
 @router.get("/outbox")

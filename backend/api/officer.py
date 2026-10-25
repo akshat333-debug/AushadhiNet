@@ -167,6 +167,14 @@ def district_facilities(district_id: str, user: AuthUser = Depends(OFFICER)):
     ]
 
 
+@router.get("/capacity/{district_id:path}")
+def capacity(district_id: str, user: AuthUser = Depends(OFFICER)):
+    """Today's beds and staff: full facilities with referral suggestions, staff gaps with deputation suggestions."""
+    check_jurisdiction(user, district_id)
+    from backend.capacity import district_capacity
+    return district_capacity(district_id)
+
+
 @router.get("/facility/{facility_id}")
 def facility_detail(facility_id: str, user: AuthUser = Depends(OFFICER)):
     from ml.data.facilities import served_facility_index as facility_index

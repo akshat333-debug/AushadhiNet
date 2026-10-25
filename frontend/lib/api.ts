@@ -80,6 +80,39 @@ export interface Contact {
   facility_id: string;
   name: string;
   phone: string;
+  lat: number;
+  lon: number;
+}
+
+interface Route {
+  from_id: string;
+  from_name: string;
+  to_id: string;
+  to_name: string;
+  minutes: number;
+}
+
+/** Today's beds and staff for one district, with referral and deputation suggestions (backend/capacity.py). */
+export interface Capacity {
+  date: string;
+  demo_baseline: boolean;
+  beds: {
+    facilities: number;
+    occupied: number;
+    total: number;
+    full: { facility_id: string; name: string; occupied: number; total: number }[];
+    full_count: number;
+    referrals: (Route & { patients: number })[];
+  };
+  staff: {
+    rostered: number;
+    present: number;
+    facilities: number;
+    nobody: { facility_id: string; name: string }[];
+    nobody_count: number;
+    off_site: { facility_id: string; name: string; role: string; distance_m: number }[];
+    deputations: (Route & { role: string; staff: number })[];
+  };
 }
 
 export interface OutboxMessage {
@@ -131,6 +164,7 @@ export const api = {
   rejectOrder: (orderId: string) => request<TransferOrder>(`/officer/orders/${orderId}/reject`, { method: "POST" }),
   proposeOrders: (districtId: string) => request<TransferOrder[]>(`/officer/propose/${districtId}`, { method: "POST" }),
   runEscalation: () => request<TransferOrder[]>("/officer/escalation/sweep", { method: "POST" }),
+  capacity: (districtId: string) => request<Capacity>(`/officer/capacity/${districtId}`),
   districtFacilities: (districtId: string) => request<FacilitySummary[]>(`/officer/districts/${districtId}/facilities`),
   facilityDetail: (facilityId: string) => request<FacilityDetail>(`/officer/facility/${encodeURIComponent(facilityId)}`),
   simulatorContacts: () => request<Contact[]>("/simulator/contacts"),
@@ -139,7 +173,7 @@ export const api = {
   simulatorOutbox: (phone: string) => request<OutboxMessage[]>(`/simulator/outbox?phone=${encodeURIComponent(phone)}`),
   districtSummary: () => request<DistrictSummaryRow[]>("/public/district-summary"),
   coverage: () => request<CoverageRow[]>("/public/coverage"),
-  simulatorSend: (payload: { from_phone: string; body?: string; media_base64?: string; media_content_type?: string; message_id: string; lang?: string }) =>
+  simulatorSend: (payload: { from_phone: string; body?: string; media_base64?: string; media_content_type?: string; message_id: string; lang?: string; latitude?: number; longitude?: number }) =>
     request<{ status: string }>("/simulator/message", { method: "POST", body: JSON.stringify(payload) }),
   askAgent: (question: string, lang = "en") => request<{ text: string; cited_ids: string[]; draft_order_id: string | null }>("/agent/ask", {
     method: "POST",

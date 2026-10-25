@@ -28,6 +28,7 @@ def _phone_hash(raw_from: str) -> str:
 def publish_inbound_message(
     from_: str, body: str | None, num_media: int, media_url: str | None,
     media_content_type: str | None, message_sid: str, lang: str | None = None,
+    latitude: float | None = None, longitude: float | None = None,
 ) -> None:
     """The single queue-publish call every inbound channel uses."""
     payload = {
@@ -41,6 +42,8 @@ def publish_inbound_message(
     }
     if lang:
         payload["lang"] = lang
+    if latitude is not None and longitude is not None:  # a shared location: a staff check-in
+        payload["latitude"], payload["longitude"] = latitude, longitude
     factory.get("queue").publish("ingest.raw_message", payload)
 
 
@@ -66,6 +69,8 @@ async def twilio_webhook(request: Request) -> Response:
         num_media=int(form.get("NumMedia", "0") or "0"),
         media_url=form.get("MediaUrl0"), media_content_type=form.get("MediaContentType0"),
         message_sid=form.get("MessageSid", ""),
+        latitude=float(form["Latitude"]) if form.get("Latitude") else None,
+        longitude=float(form["Longitude"]) if form.get("Longitude") else None,
     )
 
     # Empty TwiML response: we reply asynchronously (alerts/confirmation

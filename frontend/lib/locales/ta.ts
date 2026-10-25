@@ -82,7 +82,7 @@ const ta: Messages = {
   agent_placeholder: "இருப்பு, அபாயம் அல்லது பரிமாற்றம் பற்றிக் கேள்…",
   agent_ask: "கேள்",
   agent_q_risk: "எந்த நிலையங்கள் அபாயத்தில் உள்ளன?",
-  agent_q_explain: "MH-0000221 இல் ஓஆர்எஸ் அபாயம் ஏன்?",
+  agent_q_explain: "MH-0002021 இல் கால்சியம் மாத்திரை அபாயம் ஏன்?",
   agent_q_propose: "பரிமாற்றங்களை முன்மொழி",
   agent_you: "நீங்கள்",
   agent_name: "உதவியாளர்",

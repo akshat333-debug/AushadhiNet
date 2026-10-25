@@ -1,6 +1,6 @@
 # AushadhiNet — what is done and the decisions behind it
 
-Updated 2026-10-24. Status and numbers: `state.md`. Pending work: `tasklist.md`. Every bug found and
+Updated 2026-10-25. Status and numbers: `state.md`. Pending work: `tasklist.md`. Every bug found and
 fixed during the build: `docs/build-log.md`.
 
 ## Timeline
@@ -15,6 +15,7 @@ fixed during the build: `docs/build-log.md`.
 | 2026-10-01 | Gemini Developer API path fixed and measured; Indic-script medicine matching; service-worker fix; MIT license. |
 | 2026-10-21 | Team Visible named a top-10 finalist, Track 3. Repo cleanup: unused forecasting modules removed. |
 | 2026-10-24 | Register photos read by Gemini in the hosted app (every line, always confirmed); finale demo script and Q&A. |
+| 2026-10-24/25 | Deployed on Google Cloud Run with Firestore, BigQuery, Pub/Sub, KMS, Secret Manager and Vertex AI; Gemini adds a guarded note to agent answers. |
 
 ## What is built
 
@@ -52,8 +53,9 @@ fixed during the build: `docs/build-log.md`.
 6. **Human in the loop:** the agent structurally cannot approve or send; only an officer can.
 7. **Honest framing:** federation "matches local without pooling raw data", not "wins"; the AC6
    replay "rebalances scarcity, adds no supply".
-8. **Render instead of GCP for the live demo**: no hackathon credits and GCP billing could not be
-   enabled. Cloud deploy is scripted (Terraform + Cloud Build) but not run.
+8. **Render first, then Google Cloud Run**: no hackathon credits, so the submission ran on Render.
+   On 2026-10-24 the team's own GCP trial was enabled and the same Terraform + Cloud Build scripts
+   deployed it (Rs 850/month budget alert, instances scale to zero). Render stays as the backup.
 9. **Trimmed serving footprint** (served states, recent-weeks slice) to fit Render's 512 MB.
 10. **Gemini via a free AI Studio key** (Developer API): fixed schema (no `additionalProperties`),
     embedding batches of 100, current model `gemini-3.1-flash-lite`.

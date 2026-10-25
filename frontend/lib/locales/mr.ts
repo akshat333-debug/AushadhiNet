@@ -82,7 +82,7 @@ const mr: Messages = {
   agent_placeholder: "साठा, धोका किंवा हस्तांतरणाबद्दल विचारा…",
   agent_ask: "विचारा",
   agent_q_risk: "कोणत्या केंद्रांना धोका आहे?",
-  agent_q_explain: "MH-0000221 मध्ये ओआरएसचा धोका का आहे?",
+  agent_q_explain: "MH-0002021 मध्ये कॅल्शियम गोळीचा धोका का आहे?",
   agent_q_propose: "हस्तांतरण प्रस्ताव तयार करा",
   agent_you: "तुम्ही",
   agent_name: "सहाय्यक",

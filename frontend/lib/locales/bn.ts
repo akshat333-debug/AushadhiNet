@@ -82,7 +82,7 @@ const bn: Messages = {
   agent_placeholder: "মজুত, ঝুঁকি বা স্থানান্তর নিয়ে জিজ্ঞাসা করুন…",
   agent_ask: "জিজ্ঞাসা",
   agent_q_risk: "কোন কেন্দ্রগুলো ঝুঁকিতে আছে?",
-  agent_q_explain: "MH-0000221-এ ওআরএস-এর ঝুঁকি কেন?",
+  agent_q_explain: "MH-0002021-এ ক্যালসিয়াম ট্যাবলেট-এর ঝুঁকি কেন?",
   agent_q_propose: "স্থানান্তরের প্রস্তাব দিন",
   agent_you: "আপনি",
   agent_name: "সহকারী",

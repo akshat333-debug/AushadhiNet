@@ -82,7 +82,7 @@ const te: Messages = {
   agent_placeholder: "నిల్వ, ప్రమాదం లేదా బదిలీల గురించి అడగండి…",
   agent_ask: "అడుగు",
   agent_q_risk: "ఏ కేంద్రాలు ప్రమాదంలో ఉన్నాయి?",
-  agent_q_explain: "MH-0000221 లో ఓఆర్ఎస్ ప్రమాదం ఎందుకు?",
+  agent_q_explain: "MH-0002021 లో కాల్షియం మాత్ర ప్రమాదం ఎందుకు?",
   agent_q_propose: "బదిలీలను ప్రతిపాదించు",
   agent_you: "మీరు",
   agent_name: "సహాయకుడు",

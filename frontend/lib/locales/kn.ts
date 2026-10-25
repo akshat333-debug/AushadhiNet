@@ -82,7 +82,7 @@ const kn: Messages = {
   agent_placeholder: "ದಾಸ್ತಾನು, ಅಪಾಯ ಅಥವಾ ವರ್ಗಾವಣೆ ಬಗ್ಗೆ ಕೇಳಿ…",
   agent_ask: "ಕೇಳಿ",
   agent_q_risk: "ಯಾವ ಕೇಂದ್ರಗಳು ಅಪಾಯದಲ್ಲಿವೆ?",
-  agent_q_explain: "MH-0000221 ರಲ್ಲಿ ಒಆರ್‌ಎಸ್ ಅಪಾಯ ಏಕೆ?",
+  agent_q_explain: "MH-0002021 ರಲ್ಲಿ ಕ್ಯಾಲ್ಸಿಯಂ ಮಾತ್ರೆ ಅಪಾಯ ಏಕೆ?",
   agent_q_propose: "ವರ್ಗಾವಣೆ ಪ್ರಸ್ತಾವಿಸಿ",
   agent_you: "ನೀವು",
   agent_name: "ಸಹಾಯಕ",

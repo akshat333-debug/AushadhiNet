@@ -10,14 +10,14 @@ test.describe("Languages", () => {
     const qty = 100 + (Date.now() % 800);
     await page.getByTestId("sim-input").fill(`ओआरएस ${qty}`);
     await page.getByTestId("sim-send").click();
-    await expect(page.getByTestId("sim-messages")).toContainText(`साठी नोंद केली: ओआरएस ${qty}`, { timeout: 30_000 });
+    await expect(page.getByTestId("sim-messages")).toContainText(`साठी नोंद केली: ओआरएस ${qty}`, { timeout: 45_000 });
   });
 
   test("the choice persists and the agent answers in Hindi", async ({ page }) => {
     await signIn(page, "District officer, Nashik");
     await page.getByTestId("lang-switcher").selectOption("hi");
     await page.goto("/agent");
-    await page.getByRole("button", { name: "MH-0000221 में ओआरएस का जोखिम क्यों है?" }).click();
-    await expect(page.getByTestId("agent-chat")).toContainText("अगले सप्ताह ख़त्म होने की संभावना", { timeout: 30_000 });
+    await page.getByRole("button", { name: "MH-0002021 में कैल्शियम गोली का जोखिम क्यों है?" }).click();
+    await expect(page.getByTestId("agent-chat")).toContainText("अगले सप्ताह ख़त्म होने की संभावना", { timeout: 45_000 });
   });
 });

@@ -82,7 +82,7 @@ const hi: Messages = {
   agent_placeholder: "स्टॉक, जोखिम या स्थानांतरण के बारे में पूछें…",
   agent_ask: "पूछें",
   agent_q_risk: "किन केंद्रों में जोखिम है?",
-  agent_q_explain: "MH-0000221 में ओआरएस का जोखिम क्यों है?",
+  agent_q_explain: "MH-0002021 में कैल्शियम गोली का जोखिम क्यों है?",
   agent_q_propose: "स्थानांतरण का प्रस्ताव बनाएँ",
   agent_you: "आप",
   agent_name: "सहायक",

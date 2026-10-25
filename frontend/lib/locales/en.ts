@@ -80,7 +80,7 @@ const en = {
   agent_placeholder: "Ask about stock, risk or transfers…",
   agent_ask: "Ask",
   agent_q_risk: "Which facilities are at risk?",
-  agent_q_explain: "Why is MH-0000221 at risk for ORS?",
+  agent_q_explain: "Why is MH-0002021 at risk for calcium?",
   agent_q_propose: "Propose transfers",
   agent_you: "You",
   agent_name: "Agent",

@@ -97,8 +97,8 @@ const en = {
   sim_attach: "Send a photo of the register",
   sim_how_title: "How it works",
   sim_how_1: "Each facility has its own WhatsApp number.",
-  sim_how_2: "Send medicine and quantity, one per line, in any supported language.",
-  sim_how_3: "Unclear names get a confirmation card instead of a silent save.",
+  sim_how_2: "Send medicine and quantity as text, a voice note or a photo of the register, in any supported language.",
+  sim_how_3: "Voice notes, photos and unclear names get a confirmation card instead of a silent save.",
   sim_example_local: "ORS 50",
   sim_example_yes: "YES",
 

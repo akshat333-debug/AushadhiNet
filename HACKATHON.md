@@ -1,6 +1,6 @@
 # Hackathon details
 
-What we know about the event, from the brief and organiser announcements. Updated 2026-10-21.
+What we know about the event, from the brief and organiser announcements. Updated 2026-10-25.
 
 ## Event
 
@@ -19,15 +19,31 @@ What we know about the event, from the brief and organiser announcements. Update
 | Date | Event |
 |---|---|
 | 30 Sep 2026 | Submission deadline (met). |
+| 1-15 Oct 2026 | Prototype evaluation (event page). |
+| 16 Oct 2026 | Top-20 shortlist (event page). |
 | Oct 2026 | Finalists announced: **Visible is in the Track 3 top 10.** |
-| 26-29 Oct 2026 | Virtual finale for Tracks 1-4; each team is contacted separately with its date and time. |
+| 26-29 Oct 2026 | Virtual finale for Tracks 1-4; each team is contacted separately with its date and time (finalist email). |
 | 30 Oct 2026 | Winners for all five tracks announced. |
+| TBA | In-person demo day: winning teams present to industry experts (event page). |
 
-## How submissions were judged
+The event page still lists the Virtual Demo Day as 23 Oct; the finalist email (newer, sent to finalists)
+says 26-29 Oct. We follow the email; the slot is on the Hack2Skill team dashboard.
 
-The finalist announcement says evaluation covered: **working prototype, use of Google AI, track fit,
-impact, deployment readiness, and demo reviews.** The Review-1 planning assumed AI execution carried
-about 25% of the score (see `docs/review1/`).
+## How submissions are judged
+
+From the event brief, by weight:
+
+| Weight | Criterion | Judges ask |
+|---|---|---|
+| 25% | AI/Technical Execution | Is Google AI doing meaningful work? Does the prototype work end to end? |
+| 20% | Problem-Solution Fit | Does it directly address the stated challenge? |
+| 20% | Depth & Reach Across India | Can it scale from one city or state to communities across India? |
+| 20% | Deployability & Scalability | Could a ministry or several states pilot it within weeks? |
+| 15% | Impact Potential | How many people, across how many states, how meaningfully? |
+
+Submission package: public repo, 3-5 minute demo video, **10-12 slide** deck (problem, solution, AI
+approach, who it serves, why it is deployable, how it scales across India), a 2-3 line description,
+and a live link. Google AI is mandatory. Rule 04: design for cross-border applicability (BRICS).
 
 ## What we submitted
 
@@ -48,5 +64,6 @@ about 25% of the score (see `docs/review1/`).
 
 ## Unknown, to confirm
 
-- Finale slot length, and whether the demo is live or pre-recorded.
+- Finale slot date and length, and whether the demo is live or pre-recorded.
+- In-person demo day date and venue.
 - Finale judging criteria and weights (assume the same six as above).

@@ -26,9 +26,10 @@ sign-in is a demo picker and WhatsApp is the in-app simulator; Firebase Auth and
 in the code and are the next configuration step for a pilot.
 
 **Where is Google AI used?**
-Gemini reads register photos (live), Vertex AI embeds medicine names in 7 scripts (live), OR-Tools
-solves the transfers (live). Chirp for voice notes and Cloud Translate / Text-to-Speech for alerts
-are wired in cloud mode. The agent picks its tools by rule, so it can never be talked into an action;
+Gemini reads register photos (live), Chirp 2 transcribes voice notes and detects the language
+(live), Vertex AI embeds medicine names in 7 scripts (live), Gemini adds a guarded note to agent
+answers (live), OR-Tools solves the transfers (live). Cloud Translate / Text-to-Speech for alerts are
+wired in cloud mode. The agent picks its tools by rule, so it can never be talked into an action;
 Gemini then adds one or two plain-language sentences to its answer, and that note is dropped if it
 adds a number the tools did not produce or mentions approving or sending.
 
@@ -54,6 +55,22 @@ It does not create supply. The same forecasts can drive procurement, which is th
 **Cost to scale?**
 Not measured yet. The serving footprint fits a 512 MB instance for one district (760 facilities).
 Per-state GCP projects keep data within the state.
+
+**How does this reach the rest of India?**
+Every state is already loaded: the MoHFW facility directory (2016) gives 190,609 facilities in 678
+districts of 36 states and UTs. A district goes live with its nurses' WhatsApp numbers. Each state
+gets its own Google Cloud project from the same Terraform module, so its data stays in-state.
+Only Nashik has stock data today.
+
+**Could a ministry pilot it within weeks?**
+Yes, four weeks: week 1 Terraform and Cloud Build (this deployment took one day), week 2 load one
+block's nurse numbers and connect Twilio and Firebase sign-in, week 3 daily reports and real register
+photos, week 4 approved transfers and supply requests, compared with last year's stock-out weeks.
+
+**Beyond India?**
+Nothing in the core is India-specific. Another country needs a facility list, its essential-medicines
+list (the WHO model list plays the role of India's NLEM) and a language pack; Google's speech and
+Gemini models already handle Portuguese, Russian, Chinese and Arabic.
 
 **What would a pilot need?**
 One block in Nashik, its nurses' WhatsApp numbers, a few weeks of real register photos to measure

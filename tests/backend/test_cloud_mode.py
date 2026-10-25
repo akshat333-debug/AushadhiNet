@@ -154,3 +154,26 @@ def test_firestore_store_returns_models_like_the_local_store(monkeypatch):
     store.put("orders", "o", order)
     assert store.get("orders", "o") == order
     assert store.query("orders", {"status": OrderStatus.DRAFT}) == [order]
+
+
+def test_failed_pubsub_publish_is_reported_not_swallowed(monkeypatch):
+    """Regression: the publish future was never awaited, so a failed publish looked like success."""
+    from google.cloud import pubsub_v1
+    from backend.providers.base import ProviderError
+    from backend.providers.queue_google import GooglePubSubQueue
+
+    class Future:
+        def result(self, timeout=None):
+            raise RuntimeError("permission denied")
+
+    class Publisher:
+        def topic_path(self, project, topic):
+            return f"projects/{project}/topics/{topic}"
+
+        def publish(self, path, data):
+            return Future()
+
+    monkeypatch.setattr(pubsub_v1, "PublisherClient", Publisher)
+    monkeypatch.setattr(pubsub_v1, "SubscriberClient", lambda: None)
+    with pytest.raises(ProviderError):
+        GooglePubSubQueue().publish("ingest.raw_message", {"body": "ORS 50"})

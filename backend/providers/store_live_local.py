@@ -6,15 +6,12 @@ what makes that swap a config change, not a rewrite).
 """
 from __future__ import annotations
 
-from typing import Callable
-
 from pydantic import BaseModel
 
 
 class LocalLiveStore:
     def __init__(self):
         self._data: dict[str, dict[str, BaseModel]] = {}
-        self._watchers: dict[str, list[Callable]] = {}
 
     def put_many(self, collection: str, items: dict[str, BaseModel]) -> None:
         for doc_id, model in items.items():
@@ -22,8 +19,6 @@ class LocalLiveStore:
 
     def put(self, collection: str, doc_id: str, model: BaseModel) -> None:
         self._data.setdefault(collection, {})[doc_id] = model
-        for callback in self._watchers.get(collection, []):
-            callback(doc_id, model)
 
     def get(self, collection: str, doc_id: str):
         return self._data.get(collection, {}).get(doc_id)
@@ -34,10 +29,3 @@ class LocalLiveStore:
             if all(getattr(doc, k, None) == v for k, v in filters.items()):
                 results.append(doc)
         return results
-
-    def watch(self, collection: str, callback: Callable) -> Callable:
-        self._watchers.setdefault(collection, []).append(callback)
-
-        def unsubscribe():
-            self._watchers[collection].remove(callback)
-        return unsubscribe

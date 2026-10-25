@@ -134,3 +134,15 @@ def test_voice_note_with_two_items_is_heard_held_for_yes_then_recorded():
         from backend.runtime import latest_records
         assert latest_records()[("MH-0000221", "ors")].on_hand == 50
         assert latest_records()[("MH-0000221", "zinc-20mg")].on_hand == 120
+
+
+def test_latest_stock_can_be_read_while_a_new_report_arrives():
+    """Regression: a report for a new (facility, medicine) pair, landing while a request looped over
+    the shared index, raised "dictionary changed size during iteration"."""
+    from backend.runtime import latest_records, note_confirmed
+    with TestClient(create_app()):
+        record = next(iter(latest_records().values()))
+        for i, _ in enumerate(latest_records().items()):
+            if i == 0:
+                note_confirmed(record.model_copy(update={"drug_id": "new-medicine"}))
+        assert (record.facility_id, "new-medicine") in latest_records()

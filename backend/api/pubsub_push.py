@@ -10,6 +10,7 @@ import json
 import logging
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response
+from starlette.concurrency import run_in_threadpool
 
 from backend.config import get_settings
 
@@ -39,7 +40,7 @@ def _verify_push_token(authorization: str | None) -> None:
 async def pubsub_ingest(request: Request, authorization: str | None = Header(default=None)) -> Response:
     if get_settings().mode != "cloud":
         raise HTTPException(404, "cloud mode only")
-    _verify_push_token(authorization)
+    await run_in_threadpool(_verify_push_token, authorization)  # may fetch Google's certs
     try:
         envelope = await request.json()
         payload = json.loads(base64.b64decode(envelope["message"]["data"]))
@@ -47,5 +48,6 @@ async def pubsub_ingest(request: Request, authorization: str | None = Header(def
         log.warning("dropping malformed Pub/Sub push envelope")
         return Response(status_code=204)  # ack: redelivering a malformed message can never succeed
     from backend.runtime import handle_inbound
-    handle_inbound(payload)  # an exception here returns 500, so Pub/Sub retries with backoff
+    # Gemini/Chirp reads block for seconds; off the event loop, other requests keep being served.
+    await run_in_threadpool(handle_inbound, payload)  # an exception returns 500, so Pub/Sub retries
     return Response(status_code=204)

@@ -17,8 +17,8 @@ import { useI18n } from "@/lib/i18n";
 const PILOT_DISTRICT = "mh/nashik";
 const PAGE = 12;
 const TOP = 5;
-// "All" shows decisions first (what just happened), then open drafts, then superseded ones.
-const STATUS_ORDER: Record<string, number> = { approved: 0, rejected: 1, dispatched: 2, received: 3, draft: 4, expired: 5 };
+// "All" shows decisions first (what just happened), then open drafts; the API leaves out expired ones.
+const STATUS_ORDER: Record<string, number> = { approved: 0, rejected: 1, dispatched: 2, received: 3, draft: 4 };
 
 export default function OrdersPage() {
   const { user, ready } = useAuth();

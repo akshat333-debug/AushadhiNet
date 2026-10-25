@@ -5,7 +5,7 @@ webhook must return fast (architecture.md §4 step 1: "200 returned
 immediately, message queued").
 
 `publish_inbound_message` is the one shared entry point every capture
-channel (Twilio, the web simulator, IVR) funnels through, so they are
+channel (Twilio and the web simulator) funnels through, so they are
 provably the same pipeline, not three parallel reimplementations
 (modular-plan.md step 31's "same handler path... not duplication").
 """

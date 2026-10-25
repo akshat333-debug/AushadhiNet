@@ -48,6 +48,11 @@ supply lags behind it. We keep the real data and treat it as what it is, a distr
 a medicine's district stock is under two weeks of district demand, no facility can spare any, so
 the app sends it to the state as a supply request with a quantity instead of drafting transfers.
 
+**The brief also names beds and staff. Where are they?**
+Built and tested, not yet connected: bed-census and staff check-in capture, and solvers that draft
+staff deputations and patient referrals. The live demo covers medicines, where the data is; beds and
+staff use the same WhatsApp-to-approval pipeline and are the next channel to wire.
+
 **Does rebalancing actually help, if total supply is short?**
 It spreads scarcity: in the replay, stock-out weeks fall 6% while unmet units stay flat (+0.25%).
 It does not create supply. The same forecasts can drive procurement, which is the next step.

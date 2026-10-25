@@ -60,6 +60,10 @@ agent answers, native-script reports). Audited against the Vercel web interface 
   now 0.6-0.9 s). Officer redesign (build ef80806): Playwright 15/15 against the Cloud Run URLs.
 - Voice notes and national reach (build be546c4): Playwright 16/16 against the Cloud Run URLs,
   including a Hindi voice note transcribed by Chirp 2; 340 backend tests pass.
+- Audit fixes (2026-10-26): Pub/Sub publish is awaited, inbound handling runs off the event loop,
+  simulator media capped at 20/min, alerts in each contact's language, expired drafts left out of
+  the order list, an order lock so proposals can't expire a just-approved order, IVR webhook
+  removed (it could never match a facility). 344 backend tests.
 - Limits: backend max 1 instance (in-memory simulator outbox; caps cost), frontend max 2, both scale
   to zero. Budget alert Rs 850/month (alerts only).
 - Not configured: Firebase Auth and Twilio (demo sign-in and the simulator stand in), Maps

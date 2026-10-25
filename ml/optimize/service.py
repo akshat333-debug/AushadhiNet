@@ -1,6 +1,7 @@
 """`propose(district_id) -> list[TransferOrder]` (modular-plan.md §2.12):
-runs all three solvers (drug transfer, deputation, referral) for one
-district's facility cluster and returns every proposal as a draft order.
+runs the drug-transfer solver for one district's facility cluster and
+returns every proposal as a draft order (deputation and referral have
+their own solvers, which need staffing and bed inputs; see `propose`).
 This is the one seam backend/agent's `propose_order` tool calls into
 (modular-plan.md §5 gap #5) -- the agent never touches solver internals.
 """

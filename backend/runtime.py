@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import pathlib
+import threading
 from datetime import datetime, timezone
 from functools import lru_cache
 
@@ -19,6 +20,10 @@ from backend.providers import factory
 
 log = logging.getLogger(__name__)
 PILOT_DISTRICT = "mh/nashik"
+# Every order status change (approve, reject, expire) re-checks and writes under this lock, so a
+# proposal can't expire an order that was approved a moment ago. shortcut: a process lock, correct
+# while Cloud Run runs one backend instance; use a Firestore transaction if it scales out.
+ORDER_LOCK = threading.Lock()
 SYNTHETIC_STOCK = pathlib.Path(__file__).resolve().parents[1] / "data" / "synthetic" / "stock.parquet"
 
 
@@ -130,7 +135,9 @@ def latest_records() -> dict[tuple[str, str], StockRecord]:
         for r in live.query("stock_records", {"status": RecordStatus.CONFIRMED}):
             note_confirmed(r, newest)
         _latest = (live, newest)
-    return _latest[1]
+    # A copy: reports update the index from other threads, and adding a key while a caller loops
+    # over it raises "dictionary changed size during iteration". dict() copies atomically.
+    return dict(_latest[1])
 
 
 def note_confirmed(record: StockRecord, index: dict | None = None) -> None:
@@ -167,12 +174,13 @@ def replace_drafts(district_id: str, drafts: list) -> list:
     from ml.data.facilities import served_facility_index as facility_index
     index = facility_index()
     live = factory.get("store_live")
-    for old in live.query("orders", {"status": OrderStatus.DRAFT}):
-        if getattr(index.get(old.from_facility_id), "district_id", None) == district_id:
-            live.put("orders", old.order_id, old.model_copy(update={"status": OrderStatus.EXPIRED}))
-    for order in drafts:
-        assert order.status == OrderStatus.DRAFT
-        live.put("orders", order.order_id, order)
+    assert all(order.status == OrderStatus.DRAFT for order in drafts)
+    with ORDER_LOCK:
+        expired = {old.order_id: old.model_copy(update={"status": OrderStatus.EXPIRED})
+                   for old in live.query("orders", {"status": OrderStatus.DRAFT})
+                   if getattr(index.get(old.from_facility_id), "district_id", None) == district_id}
+        live.put_many("orders", expired)
+    live.put_many("orders", {order.order_id: order for order in drafts})
     return drafts
 
 

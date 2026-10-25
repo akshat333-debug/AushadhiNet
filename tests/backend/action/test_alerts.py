@@ -50,3 +50,16 @@ def test_route_plan_text_mentions_both_facilities():
     f1, f2 = _facility("F1", "PHC Alpha"), _facility("F2", "PHC Beta")
     text = route_plan_text(_order(), f1, f2)
     assert "PHC Alpha" in text and "PHC Beta" in text and "min" in text
+
+
+def test_each_recipient_gets_the_alert_in_their_own_language():
+    """Regression: approvals always sent Marathi, ignoring each contact's language."""
+    from backend.domain import Contact
+    live = factory.get("store_live")
+    live.put("contacts", "+911111111111", Contact(phone="+911111111111", facility_id="F1", lang="ta"))
+    live.put("contacts", "+912222222222", Contact(phone="+912222222222", facility_id="F2", lang="en"))
+    send_transfer_alerts(_order(), _facility("F1", "PHC Alpha"), _facility("F2", "PHC Beta"), "+911111111111", "+912222222222")
+
+    texts = {m.to: m.body for m in factory.get("messaging").sent if m.kind == "text"}
+    assert texts["+911111111111"].startswith("[ta]")
+    assert not texts["+912222222222"].startswith("[")  # English needs no translation call

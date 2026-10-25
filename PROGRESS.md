@@ -43,7 +43,9 @@ fixed during the build: `docs/build-log.md`.
 
 ## Decisions and why
 
-1. **Full scope (medicines, beds, staff)** because the Track 3 brief names all three.
+1. **Full scope (medicines, beds, staff)** because the Track 3 brief names all three. Bed-census and
+   staff check-in capture and the deputation/referral solvers are built and tested, but not yet
+   connected to WhatsApp or an API route; the live app covers medicines (audit, 2026-10-26).
 2. **Frozen evaluation before modelling** (`eval/protocol.lock`), sealed synthetic generator with a
    content hash, and a test that fails if forecasting code imports the generator. Avoids an oracle
    advantage a judge could find.

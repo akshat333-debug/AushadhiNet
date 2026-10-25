@@ -19,7 +19,9 @@ class GooglePubSubQueue:
     def publish(self, topic: str, payload: dict) -> None:
         topic_path = self._publisher.topic_path(self._project, topic)
         try:
-            self._publisher.publish(topic_path, json.dumps(payload).encode("utf-8"))
+            # Wait for the server's ack: an unwaited future swallows failures, and Cloud Run
+            # throttles CPU after the response, so a batched message may never leave.
+            self._publisher.publish(topic_path, json.dumps(payload).encode("utf-8")).result(timeout=10)
         except Exception as e:  # noqa: BLE001
             raise ProviderError(f"Pub/Sub publish failed: {e}") from e
 

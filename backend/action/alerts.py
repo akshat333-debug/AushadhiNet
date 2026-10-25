@@ -17,22 +17,24 @@ def send_transfer_alerts(
     to_facility: Facility,
     from_phone: str,
     to_phone: str,
-    lang: str = "mr",
+    lang: str | None = None,
     drug_name: str | None = None,
 ) -> None:
-    """Sends the manifest as text to both ends, plus a voice version in
-    the reporter's language. AC8: alerts delivered in the recipient's
-    language."""
+    """Sends the manifest as text to both ends, plus a voice version, each in
+    that recipient's own language (their contact's setting unless `lang` is
+    given). AC8: alerts delivered in the recipient's language."""
+    from backend.runtime import reply_lang
     messaging = factory.get("messaging")
     translate = factory.get("translate")
     tts = factory.get("tts")
 
     manifest_en = render(order, from_facility, to_facility, drug_name)
-    manifest_local = translate.translate(manifest_en, lang)
 
     for phone in (from_phone, to_phone):
+        phone_lang = lang or reply_lang({"from": phone})
+        manifest_local = manifest_en if phone_lang == "en" else translate.translate(manifest_en, phone_lang)
         messaging.send_text(phone, manifest_local)
-        audio = tts.synthesize(manifest_local, lang)
+        audio = tts.synthesize(manifest_local, phone_lang)
         # in cloud mode this would upload `audio` and send the media URL;
         # local mode logs the media payload directly for the demo/tests
         messaging.send_media(phone, f"data:audio/ogg;base64,{_b64(audio)}")

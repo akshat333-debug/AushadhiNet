@@ -15,15 +15,24 @@ class SentMessage:
     extra: dict = field(default_factory=dict)
 
 
+# The cloud demo runs this for days and each approval logs two voice clips, so only the newest
+# messages are kept. shortcut: older simulator threads lose their start past this cap.
+MAX_SENT = 2000
+
+
 class LocalMessaging:
     def __init__(self):
         self.sent: list[SentMessage] = []
 
+    def _log(self, message: SentMessage) -> None:
+        self.sent.append(message)
+        del self.sent[:-MAX_SENT]
+
     def send_text(self, to: str, body: str) -> None:
-        self.sent.append(SentMessage(to=to, kind="text", body=body))
+        self._log(SentMessage(to=to, kind="text", body=body))
 
     def send_media(self, to: str, url: str) -> None:
-        self.sent.append(SentMessage(to=to, kind="media", body=url))
+        self._log(SentMessage(to=to, kind="media", body=url))
 
     def send_buttons(self, to: str, body: str, buttons: list[str]) -> None:
-        self.sent.append(SentMessage(to=to, kind="buttons", body=body, extra={"buttons": buttons}))
+        self._log(SentMessage(to=to, kind="buttons", body=body, extra={"buttons": buttons}))

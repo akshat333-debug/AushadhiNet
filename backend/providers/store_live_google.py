@@ -1,8 +1,6 @@
 """Firestore live-state store (architecture.md §1)."""
 from __future__ import annotations
 
-from typing import Callable
-
 from pydantic import BaseModel
 
 from backend.config import get_settings
@@ -57,11 +55,3 @@ class GoogleLiveStore:
         for field, value in filters.items():
             query = query.where(field, "==", getattr(value, "value", value))  # enums are stored as their string value
         return [_to_model(collection, doc.to_dict()) for doc in query.stream()]
-
-    def watch(self, collection: str, callback: Callable) -> Callable:
-        def on_snapshot(col_snapshot, changes, read_time):
-            for change in changes:
-                callback(change.document.id, _to_model(collection, change.document.to_dict()))
-
-        watch = self._client.collection(collection).on_snapshot(on_snapshot)
-        return watch.unsubscribe

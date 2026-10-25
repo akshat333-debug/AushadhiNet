@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from backend.deps import AuthUser, check_jurisdiction, require_role
 from backend.domain import AuditEvent, OrderStatus, TransferOrder
 from backend.providers import factory
+from backend.runtime import ORDER_LOCK
 
 from backend.action.alerts import send_transfer_alerts
 from backend.action.escalate import sweep
@@ -60,7 +61,7 @@ def _audit(user: AuthUser, action: str, order: TransferOrder) -> None:
 def list_orders(district_id: str, user: AuthUser = Depends(OFFICER)):
     """Orders with what an officer triages by: facility names, the destination's days of
     cover for that drug, and whether the drug is short district-wide (a transfer then only
-    spreads stock; procurement is the fix). Most urgent first."""
+    spreads stock; procurement is the fix). Most urgent first; expired drafts are left out."""
     check_jurisdiction(user, district_id)
     from ml.data.facilities import served_facility_index as facility_index
     from backend.api.public import district_summary
@@ -81,7 +82,10 @@ def list_orders(district_id: str, user: AuthUser = Depends(OFFICER)):
         return {**o.model_dump(mode="json"), "from_name": name(o.from_facility_id), "to_name": name(o.to_facility_id),
                 "dest_cover_days": cover, "district_gap": o.drug_id in gaps}
 
-    rows = [enrich(o) for o in factory.get("store_live").query("orders", {}) if district_id in _order_districts(o)]
+    # Expired drafts (superseded solver runs) are most of the store and grow with every proposal; skip them.
+    live = factory.get("store_live")
+    orders = [o for status in OrderStatus if status != OrderStatus.EXPIRED for o in live.query("orders", {"status": status})]
+    rows = [enrich(o) for o in orders if district_id in _order_districts(o)]
     return sorted(rows, key=lambda r: (r["dest_cover_days"] is None, r["dest_cover_days"] or 0.0))
 
 
@@ -95,7 +99,13 @@ def approve_order(order_id: str, user: AuthUser = Depends(OFFICER)):
 
     signed = sign(order, approved_by=f"officer:{user.uid}")
     live = factory.get("store_live")
-    live.put("orders", order_id, signed)
+    with ORDER_LOCK:  # a proposal may have expired it, or a second click approved it, while it was signed
+        current = live.get("orders", order_id)
+        if current.status == OrderStatus.APPROVED:
+            return current
+        if current.status != OrderStatus.DRAFT:
+            raise HTTPException(409, f"cannot approve an order that is {current.status.value}")
+        live.put("orders", order_id, signed)
     _audit(user, "approve_order", signed)
 
     from ml.data.facilities import served_facility_index as facility_index
@@ -115,8 +125,13 @@ def reject_order(order_id: str, user: AuthUser = Depends(OFFICER)):
         return order
     if order.status != OrderStatus.DRAFT:
         raise HTTPException(409, f"cannot reject an order that is {order.status.value}")
-    rejected = order.model_copy(update={"status": OrderStatus.REJECTED})
-    factory.get("store_live").put("orders", order_id, rejected)
+    live = factory.get("store_live")
+    with ORDER_LOCK:
+        current = live.get("orders", order_id)
+        if current.status != OrderStatus.DRAFT:
+            raise HTTPException(409, f"cannot reject an order that is {current.status.value}")
+        rejected = current.model_copy(update={"status": OrderStatus.REJECTED})
+        live.put("orders", order_id, rejected)
     _audit(user, "reject_order", rejected)
     return rejected
 

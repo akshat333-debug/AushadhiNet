@@ -9,10 +9,9 @@ a real Firebase Auth ID token in cloud mode. `role` is one of `facility`, `block
 | Method | Path | Description |
 |---|---|---|
 | POST | `/webhooks/twilio` | Twilio WhatsApp sandbox webhook. Signature-verified in cloud mode. Queues the message; returns in <1s. |
-| POST | `/webhooks/ivr` | Dialogflow CX fulfillment webhook for the IVR channel. |
-| POST | `/simulator/message` | Local mode only. Web WhatsApp simulator; same handler as Twilio (`publish_inbound_message`). |
-| GET | `/simulator/contacts` | Local mode only. Pilot-district facilities with their dev WhatsApp numbers. |
-| GET | `/simulator/outbox?phone=...` | Local mode only. Replies the system would have sent to that number. |
+| POST | `/simulator/message` | Local mode, or cloud with `DEMO_MODE`. Web WhatsApp simulator (text, photo, voice note); same handler as Twilio (`publish_inbound_message`). Photos and voice notes capped at 20 a minute (429). |
+| GET | `/simulator/contacts` | Local or demo mode. Pilot-district facilities with their dev WhatsApp numbers. |
+| GET | `/simulator/outbox?phone=...` | Local or demo mode. Replies the system would have sent to that number. |
 
 Inbound messages from a registered facility number are parsed and acknowledged; `YES` confirms that
 facility's pending (low-confidence) records; unregistered numbers get a refusal.
@@ -21,9 +20,9 @@ facility's pending (low-confidence) records; unregistered numbers get a refusal.
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/officer/orders/{district_id}` | Orders touching a district (jurisdiction-checked). |
+| GET | `/officer/orders/{district_id}` | Orders touching a district (jurisdiction-checked), with facility names, the destination's days of cover and a district-wide-gap flag; most urgent first, expired drafts left out. |
 | POST | `/officer/propose/{district_id}` | Run the transfer solver; store results as drafts, expiring the district's earlier drafts. |
-| POST | `/officer/orders/{id}/approve` | Approve a draft: signs it, sends WhatsApp + voice alerts to both facilities. Idempotent. 409 if not a draft. |
+| POST | `/officer/orders/{id}/approve` | Approve a draft: signs it, sends WhatsApp + voice alerts to both facilities, each in its contact's language. Idempotent. 409 if not a draft. |
 | POST | `/officer/orders/{id}/reject` | Reject a draft. 409 if already approved. |
 | GET | `/officer/districts/{district_id}/facilities` | Facilities in a district with an at-risk flag. |
 | GET | `/officer/facility/{facility_id}` | Latest stock, next-week forecast and stock-out probability for one facility. |
@@ -43,7 +42,8 @@ a caller-supplied district. A cross-district order needs an officer covering bot
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/public/district-summary` | Per district: facilities reporting, facilities with any drug under one week of cover, and that count per drug. No facility-level identifiers. |
+| GET | `/public/district-summary` | Per district: facilities reporting, facilities with any drug under one week of cover, that count per drug, medicines short district-wide (`escalate`, with `procurement_units`) and `facilities_needing_transfer`. No facility-level identifiers. |
+| GET | `/public/coverage` | Every state in the MoHFW facility directory: facility and district counts, and how many districts are live. Counts only. |
 
 ## Error shape
 

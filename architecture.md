@@ -37,7 +37,7 @@ Placeholders live in `.env.example` (`GCP_PROJECT=REPLACE_ME`, etc.). No other f
 ```
 backend/            FastAPI app
   runtime.py        inbound-message routing, contacts registry, risk helpers, draft proposals; local seeding
-  api/              routes: webhooks (twilio, ivr), simulator (local only), officer, public, agent, pubsub push (cloud)
+  api/              routes: webhooks (twilio), simulator (local, or cloud demo mode), officer, public, agent, pubsub push (cloud)
   providers/        speech, llm, embed, translate, tts, store_live, store_history, queue, sign, messaging
   ingest/           extraction schemas, confidence gate, NLEM matcher, confirmation cards
   domain/           Pydantic models: Facility, Contact, StockRecord, BedCensus, CheckIn, Forecast, TransferOrder

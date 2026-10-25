@@ -60,14 +60,12 @@ def create_app() -> FastAPI:
         return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
     from backend.api.webhooks_twilio import router as twilio_router
-    from backend.api.webhooks_ivr import router as ivr_router
     from backend.api.simulator import router as simulator_router
     from backend.api.officer import router as officer_router
     from backend.api.public import router as public_router
     from backend.api.agent_api import router as agent_router
     from backend.api.pubsub_push import router as pubsub_router
     app.include_router(twilio_router)
-    app.include_router(ivr_router)
     app.include_router(simulator_router)
     app.include_router(officer_router)
     app.include_router(public_router)

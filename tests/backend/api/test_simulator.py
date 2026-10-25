@@ -1,5 +1,5 @@
-"""DoD test for backend/api/simulator.py + webhooks_ivr.py (step 31): all
-three capture channels funnel through the SAME handler function, proven
+"""DoD test for backend/api/simulator.py (step 31): both capture channels
+(Twilio and the simulator) funnel through the SAME handler function, proven
 by object identity, not by re-running similar assertions against separate
 implementations."""
 from __future__ import annotations
@@ -10,16 +10,14 @@ from backend.app import create_app
 from backend.providers import factory
 
 
-def test_simulator_and_ivr_call_the_same_function_as_twilio():
+def test_simulator_calls_the_same_function_as_twilio():
     """Call-graph assertion: not "produces the same result" (which two
     independent implementations could coincidentally satisfy) but "is
     the literal same function object"."""
     import backend.api.simulator as simulator_module
-    import backend.api.webhooks_ivr as ivr_module
     import backend.api.webhooks_twilio as twilio_module
 
     assert simulator_module.publish_inbound_message is twilio_module.publish_inbound_message
-    assert ivr_module.publish_inbound_message is twilio_module.publish_inbound_message
 
 
 def test_simulator_message_queues_same_payload_shape_as_twilio():
@@ -53,15 +51,14 @@ def test_simulator_media_base64_becomes_data_uri():
     assert received[0]["num_media"] == 1
 
 
-def test_ivr_webhook_queues_transcript_as_body():
-    factory.get.cache_clear()
+def test_media_messages_are_capped_per_minute(monkeypatch):
+    """Each photo or voice note is a paid Gemini/Chirp call and the simulator is public in demo mode."""
+    import base64
+    from collections import deque
+    import backend.api.simulator as sim
+    monkeypatch.setattr(sim, "MEDIA_PER_MINUTE", 2)
+    monkeypatch.setattr(sim, "_media_times", deque())
     client = TestClient(create_app())
-    received = []
-    factory.get("queue").subscribe("ingest.raw_message", lambda payload: received.append(payload))
-
-    response = client.post("/webhooks/ivr", json={
-        "text": "ORS panas", "sessionInfo": {"parameters": {"caller_id": "+911111111111"}}, "responseId": "R1",
-    })
-    assert response.status_code == 200
-    assert received[0]["body"] == "ORS panas"
-    assert received[0]["from"] == "ivr:+911111111111"
+    media = {"from_phone": "whatsapp:+10000000000", "media_base64": base64.b64encode(b"x").decode(), "media_content_type": "image/jpeg"}
+    assert [client.post("/simulator/message", json={**media, "message_id": f"m{i}"}).status_code for i in range(3)] == [200, 200, 429]
+    assert client.post("/simulator/message", json={"from_phone": "whatsapp:+10000000000", "body": "ORS 5", "message_id": "t"}).status_code == 200

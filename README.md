@@ -38,7 +38,7 @@ facilities in time to act.
 | Stock-out weeks in 26-week replay (simulation) | **-6.0%** |
 | Gemini register reading (206 synthetic lines, 4 scripts) | **98.1% medicine, 100% quantity** |
 | Languages, end to end (UI, WhatsApp replies, voice, agent) | **7** (en, hi, mr, bn, ta, te, kn) |
-| Automated tests | **356** (340 backend + 16 Playwright E2E, run against the live site) |
+| Automated tests | **360** (344 backend + 16 Playwright E2E, run against the live site) |
 
 ## Try it in 2 minutes
 
@@ -109,7 +109,7 @@ Auth and Twilio, which are wired but not configured.
 
 ## What it does
 
-A nurse reports medicine stock, bed counts, and their own presence at a Primary Health Centre by
+A nurse reports medicine stock at a Primary Health Centre by
 WhatsApp voice note, photo, or text, in any of 7 Indian languages. Gemini and Chirp turn that into
 structured records with a confidence score per field — anything uncertain gets a one-tap confirmation
 card, never a silent guess. A forecast gives each facility's stock-out risk a week ahead, with the model
@@ -267,6 +267,9 @@ tests/       mirrors every package above, plus frontend/tests/e2e
   `infra/terraform/state-module`, add the secret values, `gcloud builds submit --config
   infra/cloudbuild.yaml`, `terraform apply -var backend_url=...` for Pub/Sub push, then
   `AUSHADHI_MODE=cloud python -m backend.runtime seed`.
+- Beds and staff: bed-census and staff check-in handlers (`backend/api/worker.py`) and the staff
+  deputation and patient referral solvers (`ml/optimize/`) are built and tested, but no WhatsApp
+  message or API route reaches them yet; the live app covers medicines.
 - Only Nashik has stock data (a sealed synthetic ledger); other districts are listed from the national
   directory and go live when their nurses report.
 - Federation ties but does not beat local-only training for the data-poor state; its value here is

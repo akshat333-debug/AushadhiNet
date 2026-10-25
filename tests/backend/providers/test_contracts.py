@@ -104,22 +104,6 @@ def test_live_store_put_get_query():
     assert len(store.query("facilities", {"status": "active"})) == 1
 
 
-def test_live_store_watch_fires_on_put():
-    from pydantic import BaseModel
-
-    class Doc(BaseModel):
-        name: str
-
-    store = LocalLiveStore()
-    seen = []
-    unsub = store.watch("facilities", lambda doc_id, doc: seen.append((doc_id, doc.name)))
-    store.put("facilities", "F1", Doc(name="PHC A"))
-    assert seen == [("F1", "PHC A")]
-    unsub()
-    store.put("facilities", "F2", Doc(name="PHC B"))
-    assert len(seen) == 1  # no longer watching
-
-
 # --- store_history ---
 
 def test_history_store_insert_and_parameterised_query():

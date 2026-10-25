@@ -7,18 +7,40 @@ handler.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+import threading
+import time
+from collections import deque
+
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 
 from backend.api.webhooks_twilio import publish_inbound_message
 
 router = APIRouter(prefix="/simulator", tags=["simulator"])
 
+# The simulator is public in demo mode and each photo or voice note is a paid Gemini/Chirp call,
+# so media is capped per minute. shortcut: per-process limit, fine for one Cloud Run instance;
+# needs a shared limiter (or Cloud Armor) if the backend scales out.
+MEDIA_PER_MINUTE = 20
+_media_times: deque[float] = deque()
+_media_lock = threading.Lock()
+
+
+def _allow_media() -> bool:
+    now = time.monotonic()
+    with _media_lock:
+        while _media_times and now - _media_times[0] > 60:
+            _media_times.popleft()
+        if len(_media_times) >= MEDIA_PER_MINUTE:
+            return False
+        _media_times.append(now)
+        return True
+
 
 class SimulatorMessage(BaseModel):
     from_phone: str
     body: str | None = None
-    media_base64: str | None = None
+    media_base64: str | None = Field(None, max_length=4_000_000)  # ~3 MB: a 1600 px JPEG or a 30 s voice note is far less
     media_content_type: str | None = None
     message_id: str
     lang: str | None = None  # the simulator's UI language; real contacts carry their own
@@ -28,6 +50,8 @@ class SimulatorMessage(BaseModel):
 def simulator_message(msg: SimulatorMessage) -> dict:  # sync: runs in a worker thread, not on the event loop
     _local_only()  # in cloud mode this would let anyone post reports as any number
     media_url = None
+    if msg.media_base64 and not _allow_media():
+        raise HTTPException(429, "Too many photos or voice notes in the last minute. Try again shortly, or type the values.")
     if msg.media_base64:
         media_url = f"data:{msg.media_content_type or 'application/octet-stream'};base64,{msg.media_base64}"
 
@@ -40,7 +64,6 @@ def simulator_message(msg: SimulatorMessage) -> dict:  # sync: runs in a worker 
 
 
 def _local_only() -> None:
-    from fastapi import HTTPException
     from backend.config import get_settings
     settings = get_settings()
     if settings.mode != "local" and not settings.demo_mode:

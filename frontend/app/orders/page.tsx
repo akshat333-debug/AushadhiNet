@@ -93,7 +93,8 @@ export default function OrdersPage() {
     if (!confirmTop) return setConfirmTop(true);
     setConfirmTop(false);
     act(async () => {
-      for (const o of top) await api.approveOrder(o.order_id);
+      // Independent orders, each signed and alerted on its own: in parallel, not one after another.
+      await Promise.all(top.map((o) => api.approveOrder(o.order_id)));
       return t("notice_approved_n", { n: num(top.length) });
     });
   }

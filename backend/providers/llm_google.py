@@ -31,7 +31,8 @@ class GoogleLLMProvider:
         from google import genai
 
         settings = get_settings()
-        self._client = genai.Client(api_key=settings.gemini_api_key)
+        # A hung call would stall a nurse's reply or an officer's answer; the callers fall back.
+        self._client = genai.Client(api_key=settings.gemini_api_key, http_options=genai.types.HttpOptions(timeout=45_000))
         self._model = settings.gemini_model
 
     def extract(self, prompt: str, media: list[Media], schema: type):
@@ -61,9 +62,14 @@ class GoogleLLMProvider:
         }
         return parsed, confidence
 
-    def generate(self, prompt: str, tools: list[dict] | None = None) -> LLMResponse:
+    def generate(self, prompt: str, tools: list[dict] | None = None, timeout_s: float = 45) -> LLMResponse:
+        from google.genai import types
+
         try:
-            response = self._client.models.generate_content(model=self._model, contents=prompt)
+            response = self._client.models.generate_content(
+                model=self._model, contents=prompt,
+                config=types.GenerateContentConfig(http_options=types.HttpOptions(timeout=int(timeout_s * 1000))),
+            )
         except Exception as e:  # noqa: BLE001
             raise ProviderError(f"Gemini generation failed: {e}") from e
         return LLMResponse(text=response.text or "", tool_calls=[])

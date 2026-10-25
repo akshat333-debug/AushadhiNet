@@ -29,5 +29,5 @@ class LocalLLMProvider:
         instance = schema.model_validate(data["fields"])
         return instance, data["confidence"]
 
-    def generate(self, prompt: str, tools: list[dict] | None = None) -> LLMResponse:
+    def generate(self, prompt: str, tools: list[dict] | None = None, timeout_s: float = 45) -> LLMResponse:
         return LLMResponse(text=f"[local-llm stub response to: {prompt[:60]}...]", tool_calls=[])

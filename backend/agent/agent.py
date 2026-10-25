@@ -107,16 +107,47 @@ def _keyword_dispatch(question: str, officer: OfficerCtx, lang: str = "en") -> t
     return msg(lang, "agent_help"), [], None
 
 
+_NUMBER_RE = re.compile(r"\d+(?:\.\d+)?")
+_ACTION_WORDS = ("approv", "send", "sent", "transfer now", "order now")
+
+
+def _with_gemini_note(text: str, question: str, lang: str) -> str:
+    """Cloud mode: Gemini adds a one- or two-sentence plain-language reading of the answer the
+    tools produced. The tools decide what is true and what happens; the note may not add a
+    number the answer lacks or talk about approving or sending, else it is dropped."""
+    from backend.config import get_settings
+    from backend.i18n import LANG_NAMES
+    from backend.providers.base import ProviderError
+
+    if get_settings().mode != "cloud":
+        return text
+    prompt = (
+        f"{INSTRUCTIONS}\n\nA district health officer asked: {question}\n"
+        f"The system's answer, from its own stock and forecast data, is:\n{text}\n\n"
+        f"In {LANG_NAMES.get(lang, 'English')}, write one or two short sentences saying what this means "
+        "for the officer and what to check next. Use only facts from the answer. No new numbers, no "
+        "recommendation to approve, send or order anything."
+    )
+    try:
+        note = factory.get("llm").generate(prompt, timeout_s=8).text.strip()  # the officer is waiting
+    except ProviderError:
+        return text
+    numbers_ok = set(_NUMBER_RE.findall(note)) <= set(_NUMBER_RE.findall(text))
+    if not note or len(note) > 400 or not numbers_ok or any(w in note.lower() for w in _ACTION_WORDS):
+        return text
+    return f"{text}\n\n{note}"
+
+
 def ask(question: str, officer: OfficerCtx, lang: str = "en") -> AgentAnswer:
     log(actor=f"agent:{officer.uid}", action="ask:entry", target_id="agent", payload={"question": question}, jurisdiction=officer.jurisdiction)
 
-    llm = factory.get("llm")
-    llm.generate(f"{INSTRUCTIONS}\n\nOfficer question: {question}")  # exercised for parity with the cloud path; local stub is not load-bearing here
     try:
         text, cited_ids, draft_order_id = _keyword_dispatch(question, officer, lang)
     except PermissionError as exc:
         from backend.i18n import msg
         text, cited_ids, draft_order_id = msg(lang, "agent_outside", detail=exc), [], None
+    if cited_ids and draft_order_id is None:  # an explanation or a shortage list, not a refusal or a draft
+        text = _with_gemini_note(text, question, lang)
 
     log(actor=f"agent:{officer.uid}", action="ask:exit", target_id="agent", payload={"answer": text[:200]}, jurisdiction=officer.jurisdiction)
     return AgentAnswer(text=text, cited_ids=cited_ids, draft_order_id=draft_order_id)

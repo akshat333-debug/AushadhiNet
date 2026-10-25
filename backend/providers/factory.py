@@ -85,7 +85,7 @@ class _GeminiWithLocalFallback:
         except ProviderError:
             return self._local.extract(prompt, media, schema)
 
-    def generate(self, prompt, tools=None):
+    def generate(self, prompt, tools=None, timeout_s=45):
         return self._local.generate(prompt, tools)  # the local agent is keyword dispatch; see agent.py
 
 

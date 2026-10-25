@@ -8,6 +8,7 @@ translator; have native speakers review them before a real rollout.
 from __future__ import annotations
 
 LANGS = ("en", "hi", "mr", "bn", "ta", "te", "kn")
+LANG_NAMES = {"en": "English", "hi": "Hindi", "mr": "Marathi", "bn": "Bengali", "ta": "Tamil", "te": "Telugu", "kn": "Kannada"}
 
 MESSAGES: dict[str, dict[str, str]] = {
     "en": {

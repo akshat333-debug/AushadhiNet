@@ -28,8 +28,9 @@ in the code and are the next configuration step for a pilot.
 **Where is Google AI used?**
 Gemini reads register photos (live), Vertex AI embeds medicine names in 7 scripts (live), OR-Tools
 solves the transfers (live). Chirp for voice notes and Cloud Translate / Text-to-Speech for alerts
-are wired in cloud mode; the agent is rule-based over the same tools, so it can never be talked
-into an action.
+are wired in cloud mode. The agent picks its tools by rule, so it can never be talked into an action;
+Gemini then adds one or two plain-language sentences to its answer, and that note is dropped if it
+adds a number the tools did not produce or mentions approving or sending.
 
 **Can the AI approve or send anything?**
 No. The agent's tool list has no approve or send tool; we test this by name inspection and with a

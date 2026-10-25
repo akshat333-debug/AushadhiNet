@@ -72,6 +72,9 @@ fixed during the build: `docs/build-log.md`.
     demo shows real Google AI without needing GCP billing, and never breaks on a rate limit.
 17. **Facts verified against primary sources** before use (HDI 2022-23 facility counts, eVIN study);
     an unverified "29% → 75%" claim was removed.
+18. **Gemini explains, rules act** in the agent: tools are chosen by rule and Gemini only adds a short
+    note, which is dropped if it brings a new number or mentions approving or sending. Keeps the
+    "cannot be talked into an action" guarantee while showing Gemini reasoning over live data.
 
 ## Measured results
 

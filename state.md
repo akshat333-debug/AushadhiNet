@@ -1,6 +1,6 @@
 # AushadhiNet — current state
 
-Snapshot as of 2026-10-24. Team **Visible** is a top-10 finalist in Track 3 (see `HACKATHON.md`).
+Snapshot as of 2026-10-25. Team **Visible** is a top-10 finalist in Track 3 (see `HACKATHON.md`).
 `PROGRESS.md` is what is done and why; `tasklist.md` is what is left; `docs/build-log.md` is the full
 build log (every bug found and how it was fixed). Requirements: `project.md`; design: `architecture.md`.
 
@@ -42,7 +42,7 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 | AC9 federation, Meghalaya validation | local 0.993, federated 0.996, centralised 1.000 | Ties local-only (all ~21% better than naive). Value is privacy, not accuracy. |
 | App forecasts, facility-week | lag-1 naive kept | Beats best LightGBM variant 0.220 vs 0.239 on the last 13 train weeks. |
 | AC3 extraction accuracy | measured on synthetic renders | Gemini (gemini-3.1-flash-lite) on 206 of 220 rendered register lines (14 hit free-tier 429s), 4 scripts: medicine 98.1% (Bengali 92.2%, others 100%), quantity 100%, batch 100% outside Devanagari. Devanagari batch scores 0% because the render font has no Latin "B" (drawn as a box), so the label is unreadable in the image itself: an eval-data bug, not a read error. Images are rendered text, not photographs; no real-photo number yet. Report: eval/reports/extraction_gemini.json. |
-| AC11 cloud deploy | scripted, not run | Needs a GCP project. Runbook in README "What's not done yet". |
+| AC11 cloud deploy | met | Terraform + Cloud Build deployed to Cloud Run on 2026-10-24; see Deployment below. |
 
 ## Deployment
 
@@ -51,7 +51,10 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 - Backend: https://aushadhinet-backend-449585498230.asia-south1.run.app (health: `/health`; Cloud Run reserves `/healthz`)
 - Real services: Firestore (760 contacts, 12,160 stock rows seeded with BulkWriter), BigQuery
   history, Pub/Sub push, KMS order signing, Secret Manager, Vertex AI embeddings, Gemini photos.
-- Verified: Playwright 14/14 against the Cloud Run URLs; a 3-line register photo read correctly.
+- Verified: Playwright against the Cloud Run URLs (2026-10-25, build 38d066c): 13/14 in the full
+  run; the offline test was flaky on a fixed 1.5 s wait, now waits for the service worker and
+  passes 5/5; a 3-line register
+  photo read correctly; the agent's Gemini note appears on live answers (about 12 s an answer).
 - Limits: backend max 1 instance (in-memory simulator outbox; caps cost), frontend max 2, both scale
   to zero. Budget alert Rs 850/month (alerts only).
 - Not configured: Firebase Auth and Twilio (demo sign-in and the simulator stand in), Maps

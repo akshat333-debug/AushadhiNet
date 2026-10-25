@@ -11,14 +11,14 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
       Secret Manager + Vertex AI, Terraform-provisioned; 14/14 e2e on the Cloud Run URLs.
 - [ ] Finale day: `--min-instances=1` on the backend during the slot, back to 0 after.
 - [ ] Optional: `GEMINI_API_KEY` on Render too, so the backup reads photos.
-- [ ] Gemini for the officer agent's answers (still keyword dispatch locally).
+- [x] Gemini adds a guarded plain-language note to agent answers on Cloud Run (2026-10-25); the tools still decide every fact and action.
 - [ ] **Real register photos (needs the team):** 15-50 phone photos of handwritten stock lists
       (Hindi/Marathi), no personal data, with a written answer key. Run
       `eval/run_extraction_eval.py`'s `evaluate_gemini` on them for the first real-photo number.
 - [ ] **Finale format:** wait for the organisers' email (slot length, live vs recorded demo).
 - [x] **Live demo script** and **Q&A sheet**: `docs/finale/` (2026-10-24).
 - [ ] Rehearse the demo twice against the Cloud Run site; open it 2 minutes before the slot.
-- [ ] **Deck refresh:** extraction result (synthetic, labelled), live Gemini slide, rollout and cost.
+- [x] **Deck refresh** (2026-10-25): Cloud Run link, photo reading, extraction slide (synthetic, labelled), rollout and cost slide; video re-recorded on Cloud Run.
 - [ ] Native Marathi and Hindi speakers review the translations.
 
 ## Security and cost
@@ -26,7 +26,7 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
 - [ ] After the finale: delete the GCP project (`gcloud projects delete aushadhinet`) or close the
       billing account, so nothing can bill the card.
 
-- [ ] Rotate the Render, Sarvam and Gemini API keys (all were pasted in chat).
+- [ ] Rotate the Render and Sarvam API keys (pasted in chat). The old Gemini key is already invalid; Cloud Run uses the one in Secret Manager.
 
 ## Cloud deploy (AC11): done for the demo; remaining for a real rollout
 
@@ -40,7 +40,7 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
 
 ## Optional improvements
 
-- [ ] Persist local-mode state (e.g. DuckDB) so restarts keep the demo data.
-- [ ] Cut AC6 transfer volume: minimum transfer size or route batching.
-- [ ] Scheduled proposals (Cloud Scheduler → propose endpoint) instead of on-demand only.
-- [ ] Fix the eval render font so Devanagari images show the Latin batch prefix.
+- [x] ~~Persist local-mode state~~: superseded; the Cloud Run deployment keeps state in Firestore (Render backup still resets on restart).
+- [ ] Cut AC6 transfer volume: minimum transfer size or route batching. Deferred: it changes a frozen, logged result and needs a new scored run, not a finale-week edit.
+- [ ] Scheduled proposals (Cloud Scheduler → propose endpoint). Deferred until Firebase Auth exists: the job needs a real service identity, not a demo token.
+- [ ] Fix the eval render font so Devanagari images show the Latin batch prefix. Deferred: regenerating the eval set means re-scoring all 220 images; real photos matter more.

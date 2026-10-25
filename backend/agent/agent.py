@@ -12,11 +12,14 @@ import pathlib
 import re
 from dataclasses import dataclass, field
 
+import logging
+
 from backend.providers import factory
 
 from backend.agent import tools
 from backend.agent.audit import log
 
+_log = logging.getLogger(__name__)
 INSTRUCTIONS = (pathlib.Path(__file__).parent / "instructions.md").read_text()
 
 
@@ -130,10 +133,15 @@ def _with_gemini_note(text: str, question: str, lang: str) -> str:
     )
     try:
         note = factory.get("llm").generate(prompt, timeout_s=8).text.strip()  # the officer is waiting
-    except ProviderError:
+    except ProviderError as e:
+        _log.warning("agent note skipped: %s", str(e)[:200])
         return text
-    numbers_ok = set(_NUMBER_RE.findall(note)) <= set(_NUMBER_RE.findall(text))
-    if not note or len(note) > 400 or not numbers_ok or any(w in note.lower() for w in _ACTION_WORDS):
+    numbers = lambda s: set(_NUMBER_RE.findall(s.replace(",", "")))  # "31,547" is one number
+    extra = numbers(note) - numbers(text)
+    reason = ("empty" if not note else "too long" if len(note) > 400 else f"new numbers {sorted(extra)}" if extra
+              else "mentions an action" if any(w in note.lower() for w in _ACTION_WORDS) else None)
+    if reason:
+        _log.warning("agent note dropped (%s): %s", reason, note[:200])
         return text
     return f"{text}\n\n{note}"
 

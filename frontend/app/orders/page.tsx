@@ -3,10 +3,11 @@
  * Order queue (AC7/AC8's human gate). "Propose transfers" runs the solver
  * and saves drafts; approving calls backend/api/officer.py, the only path
  * that can move an order past `draft`, which also sends the WhatsApp and
- * voice alerts to both facilities.
+ * voice alerts to both facilities. Drafts arrive most urgent first (the
+ * destination's days of cover), so "approve the most urgent" takes the top few.
  */
 import { useCallback, useEffect, useState } from "react";
-import { ClockCounterClockwise, Lightning, Truck } from "@phosphor-icons/react";
+import { Checks, ClockCounterClockwise, Lightning, Truck } from "@phosphor-icons/react";
 import OrderCard from "@/components/OrderCard";
 import { Empty, Notice, PageHeader, Skeleton } from "@/components/ui";
 import { api, TransferOrder } from "@/lib/api";
@@ -15,6 +16,7 @@ import { useI18n } from "@/lib/i18n";
 
 const PILOT_DISTRICT = "mh/nashik";
 const PAGE = 12;
+const TOP = 5;
 // "All" shows decisions first (what just happened), then open drafts, then superseded ones.
 const STATUS_ORDER: Record<string, number> = { approved: 0, rejected: 1, dispatched: 2, received: 3, draft: 4, expired: 5 };
 
@@ -22,12 +24,18 @@ export default function OrdersPage() {
   const { user, ready } = useAuth();
   const { t, num, place } = useI18n();
   const [orders, setOrders] = useState<TransferOrder[] | null>(null);
-  const [names, setNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState<"draft" | "all">("draft");
   const [limit, setLimit] = useState(PAGE);
+  // Bulk approval sends WhatsApp orders, so it takes a second click within a few seconds.
+  const [confirmTop, setConfirmTop] = useState(false);
+  useEffect(() => {
+    if (!confirmTop) return;
+    const timer = setTimeout(() => setConfirmTop(false), 4000);
+    return () => clearTimeout(timer);
+  }, [confirmTop]);
 
   const districtId = user && user.jurisdiction.includes("/") ? user.jurisdiction : PILOT_DISTRICT;
 
@@ -43,8 +51,7 @@ export default function OrdersPage() {
   useEffect(() => {
     if (!user) return;
     refresh();
-    api.districtFacilities(districtId).then((fs) => setNames(Object.fromEntries(fs.map((f) => [f.facility_id, f.name])))).catch(() => undefined);
-  }, [user, refresh, districtId]);
+  }, [user, refresh]);
 
   // The notice is shown only after the list refresh, so it never sits over stale orders.
   async function act(fn: () => Promise<string | void>) {
@@ -80,6 +87,16 @@ export default function OrdersPage() {
   const draftOrders = (orders ?? []).filter((o) => o.status === "draft");
   const units = draftOrders.reduce((a, o) => a + (o.quantity ?? 0), 0);
   const facilities = new Set(draftOrders.flatMap((o) => [o.from_facility_id, o.to_facility_id])).size;
+  const top = draftOrders.slice(0, TOP);
+
+  function approveTop() {
+    if (!confirmTop) return setConfirmTop(true);
+    setConfirmTop(false);
+    act(async () => {
+      for (const o of top) await api.approveOrder(o.order_id);
+      return t("notice_approved_n", { n: num(top.length) });
+    });
+  }
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -97,8 +114,13 @@ export default function OrdersPage() {
                 <ClockCounterClockwise size={16} /> {t("escalate")}
               </button>
             )}
+            {top.length > 1 && (
+              <button className={confirmTop ? "btn-primary" : "btn-secondary"} disabled={busy} onClick={approveTop} data-testid="bulk-approve">
+                <Checks size={16} weight="bold" /> {confirmTop ? t("confirm_approve_top", { n: num(top.length) }) : t("approve_top", { n: num(top.length) })}
+              </button>
+            )}
             <button
-              className="btn-primary"
+              className={top.length > 1 ? "btn-secondary" : "btn-primary"}
               disabled={busy}
               data-testid="propose"
               onClick={() => act(async () => t("notice_proposed", { n: num((await api.proposeOrders(districtId)).length) }))}
@@ -131,7 +153,6 @@ export default function OrdersPage() {
             <OrderCard
               key={order.order_id}
               order={order}
-              names={names}
               busy={busy}
               onApprove={(id) => act(async () => void (await api.approveOrder(id)))}
               onReject={(id) => act(async () => void (await api.rejectOrder(id)))}

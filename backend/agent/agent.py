@@ -97,15 +97,18 @@ def _keyword_dispatch(question: str, officer: OfficerCtx, lang: str = "en") -> t
         return text, [top.order_id], top.order_id
 
     if any(w in lowered for w in INTENT_WORDS["risk"]):
-        rows = call("list_at_risk", district_id=district_id)
+        from backend.api.public import district_summary
+        gaps = next((r["escalate"] for r in district_summary() if r["district_id"] == district_id), {})
+        escalate = msg(lang, "agent_escalate", drugs=", ".join(drug_name(d, lang) for d in gaps)) + " " if gaps else ""
+        rows = call("list_at_risk", district_id=district_id, exclude_drugs=frozenset(gaps))
         if not rows:
-            return msg(lang, "agent_none_at_risk", district=district), [], None
+            return escalate + msg(lang, "agent_none_at_risk", district=district), list(gaps), None
         lines = "; ".join(
             msg(lang, "agent_at_risk_line", name=r["name"], facility=r["facility_id"], drug=drug_name(r["drug_id"], lang),
                 on_hand=r["on_hand"], demand=f"{r['weekly_demand']:.0f}")
             for r in rows[:5]
         )
-        return msg(lang, "agent_at_risk", district=district, lines=lines), [r["facility_id"] for r in rows[:5]], None
+        return escalate + msg(lang, "agent_at_risk", district=district, lines=lines), [r["facility_id"] for r in rows[:5]], None
 
     return msg(lang, "agent_help"), [], None
 

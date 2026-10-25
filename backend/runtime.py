@@ -110,17 +110,38 @@ def seed() -> int:
         )
         records[record.record_id] = record
     live.put_many("stock_records", records)
+    global _latest
+    _latest = None
     return len(latest)
 
 
+# ponytail: in-process index, correct while the backend runs one instance (Cloud Run max 1);
+# more instances would need a Firestore snapshot listener instead.
+_latest: tuple[object, dict[tuple[str, str], StockRecord]] | None = None
+
+
 def latest_records() -> dict[tuple[str, str], StockRecord]:
-    """Newest confirmed stock record per (facility, drug)."""
-    newest: dict[tuple[str, str], StockRecord] = {}
-    for r in factory.get("store_live").query("stock_records", {"status": RecordStatus.CONFIRMED}):
-        key = (r.facility_id, r.drug_id)
-        if key not in newest or r.reported_at > newest[key].reported_at:
-            newest[key] = r
-    return newest
+    """Newest confirmed stock record per (facility, drug). Read from the store once (a full
+    Firestore read of the district takes ~8 s), then kept current by note_confirmed()."""
+    global _latest
+    live = factory.get("store_live")
+    if _latest is None or _latest[0] is not live:
+        newest: dict[tuple[str, str], StockRecord] = {}
+        for r in live.query("stock_records", {"status": RecordStatus.CONFIRMED}):
+            note_confirmed(r, newest)
+        _latest = (live, newest)
+    return _latest[1]
+
+
+def note_confirmed(record: StockRecord, index: dict | None = None) -> None:
+    """Every write of a confirmed record goes through here so latest_records() stays current."""
+    if index is None:
+        if _latest is None:
+            return
+        index = _latest[1]
+    key = (record.facility_id, record.drug_id)
+    if key not in index or record.reported_at > index[key].reported_at:
+        index[key] = record
 
 
 def latest_stock(facility_ids: set[str]) -> dict[tuple[str, str], float]:
@@ -175,6 +196,7 @@ def handle_inbound(payload: dict) -> None:
         for record in pending:
             confirmed = apply_reply(record, {})
             live.put("stock_records", confirmed.record_id, confirmed)
+            note_confirmed(confirmed)
             factory.get("store_history").insert("stock_records", [confirmed.model_dump(mode="json")])
         messaging.send_text(sender, msg(lang, "confirmed_n", n=len(pending)) if pending else msg(lang, "nothing_pending"))
         return
@@ -192,6 +214,8 @@ def warm() -> None:
     from ml.data.facilities import served_facility_index as facility_index
     facility_index()  # directory load takes seconds; pay it at startup, not on the first request
     match("ors")  # builds the drug-name index (PDF parse + embeddings): minutes on a small CPU
+    weekly_demand()
+    latest_records()  # one full read of the stock store (~8 s on Firestore), then served from memory
 
 
 def start() -> None:

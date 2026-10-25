@@ -15,6 +15,7 @@ fixed during the build: `docs/build-log.md`.
 | 2026-10-01 | Gemini Developer API path fixed and measured; Indic-script medicine matching; service-worker fix; MIT license. |
 | 2026-10-21 | Team Visible named a top-10 finalist, Track 3. Repo cleanup: unused forecasting modules removed. |
 | 2026-10-24 | Register photos read by Gemini in the hosted app (every line, always confirmed); finale demo script and Q&A. |
+| 2026-10-25 | Officer redesign: morning briefing (escalate vs move stock), before/after transfer map, urgency-sorted orders, animated how-it-works; homepage load 8 s to instant. |
 | 2026-10-24/25 | Deployed on Google Cloud Run with Firestore, BigQuery, Pub/Sub, KMS, Secret Manager and Vertex AI; Gemini adds a guarded note to agent answers. |
 
 ## What is built
@@ -75,6 +76,19 @@ fixed during the build: `docs/build-log.md`.
 18. **Gemini explains, rules act** in the agent: tools are chosen by rule and Gemini only adds a short
     note, which is dropped if it brings a new number or mentions approving or sending. Keeps the
     "cannot be talked into an action" guarantee while showing Gemini reasoning over live data.
+19. **Designed for the district officer first, with a judge-ready first screen** (2026-10-25). The
+    nurse already has the right interface (WhatsApp); the officer needed "what do I do this
+    morning", not totals.
+20. **Shortages split into "escalate" and "move stock"** instead of one "at risk" count. 729 of 760
+    facilities showed as at risk because calcium demand in the real HMIS data jumps ~20x in Dec
+    2019 and supply lags. When a drug's district-wide stock is under the solver's 2-week planning
+    cover, no facility can spare any, so transfers cannot help: those drugs go to a state supply
+    request with a quantity (2 weeks of demand less stock). Kept the real data rather than hiding
+    the drugs or moving the snapshot week.
+21. **Orders triaged by urgency** (destination's days of cover), names first, bulk "approve the 5
+    most urgent" behind a second click; the map shows before/after the drafted transfers.
+22. **Latest-stock index kept in memory** on the backend (one instance), updated on every confirmed
+    write: the Firestore full read took ~8 s per request.
 
 ## Measured results
 

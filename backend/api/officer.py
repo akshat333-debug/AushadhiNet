@@ -58,9 +58,31 @@ def _audit(user: AuthUser, action: str, order: TransferOrder) -> None:
 
 @router.get("/orders/{district_id:path}")
 def list_orders(district_id: str, user: AuthUser = Depends(OFFICER)):
+    """Orders with what an officer triages by: facility names, the destination's days of
+    cover for that drug, and whether the drug is short district-wide (a transfer then only
+    spreads stock; procurement is the fix). Most urgent first."""
     check_jurisdiction(user, district_id)
-    orders = factory.get("store_live").query("orders", {})
-    return [o for o in orders if district_id in _order_districts(o)]
+    from ml.data.facilities import served_facility_index as facility_index
+    from backend.api.public import district_summary
+    from backend.runtime import latest_records, weekly_demand
+    index, latest = facility_index(), latest_records()
+    try:
+        demand = weekly_demand()
+    except FileNotFoundError:
+        demand = {}
+    gaps = next((r["escalate"] for r in district_summary() if r["district_id"] == district_id), {})
+
+    def enrich(o: TransferOrder) -> dict:
+        key = (o.to_facility_id, o.drug_id)
+        need = demand.get(key, 0.0)
+        record = latest.get(key)
+        cover = round(7 * record.on_hand / need, 1) if record is not None and need >= 1.0 else None
+        name = lambda fid: index[fid].name if fid in index else None
+        return {**o.model_dump(mode="json"), "from_name": name(o.from_facility_id), "to_name": name(o.to_facility_id),
+                "dest_cover_days": cover, "district_gap": o.drug_id in gaps}
+
+    rows = [enrich(o) for o in factory.get("store_live").query("orders", {}) if district_id in _order_districts(o)]
+    return sorted(rows, key=lambda r: (r["dest_cover_days"] is None, r["dest_cover_days"] or 0.0))
 
 
 @router.post("/orders/{order_id}/approve")
@@ -118,13 +140,14 @@ def district_facilities(district_id: str, user: AuthUser = Depends(OFFICER)):
     check_jurisdiction(user, district_id)
     from ml.data.facilities import served_facility_index as facility_index
     from backend.runtime import below_cover, latest_records
-    short: dict[str, int] = {}
+    short: dict[str, list[str]] = {}
     for r in latest_records().values():
         if below_cover(r):
-            short[r.facility_id] = short.get(r.facility_id, 0) + 1
+            short.setdefault(r.facility_id, []).append(r.drug_id)
     return [
         {"facility_id": f.facility_id, "name": f.name, "block": f.block, "type": f.facility_type.value,
-         "lat": f.lat, "lon": f.lon, "at_risk": f.facility_id in short, "short_count": short.get(f.facility_id, 0)}
+         "lat": f.lat, "lon": f.lon, "at_risk": f.facility_id in short, "short_count": len(short.get(f.facility_id, [])),
+         "short_drugs": sorted(short.get(f.facility_id, []))}
         for f in facility_index().values() if f.district_id == district_id
     ]
 

@@ -36,6 +36,15 @@ def test_text_report_is_recorded_and_acknowledged():
         assert any(s["drug_id"] == "ors" and s["on_hand"] == 3 for s in detail["stock"])
 
 
+def test_latest_stock_index_sees_reports_after_it_is_built():
+    from backend.runtime import latest_records
+    with TestClient(create_app()) as client:
+        assert latest_records()  # built from the store
+        phone = phone_for_facility("MH-0000221")
+        _send(client, phone, "ORS 7", "m-index")
+        assert latest_records()[("MH-0000221", "ors")].on_hand == 7
+
+
 def test_unregistered_number_and_unreadable_text_get_replies():
     with TestClient(create_app()) as client:
         _send(client, "whatsapp:+10000000000", "ORS 3", "m2")

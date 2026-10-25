@@ -45,3 +45,10 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Planned transfers on the map: dashes run from source to destination. */
+.flow-line { stroke-dasharray: 4 6; animation: flow-dash 1.2s linear infinite; }
+@keyframes flow-dash { to { stroke-dashoffset: -10; } }
+@keyframes grow { from { transform: scaleX(0); } }
+.pulse-ring { animation: pulse-ring 1.6s ease-out infinite; }
+@keyframes pulse-ring { from { stroke-opacity: 1; stroke-width: 2; } to { stroke-opacity: 0; stroke-width: 16; } }

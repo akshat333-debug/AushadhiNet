@@ -57,8 +57,9 @@ def list_orders(district_id: str) -> list:
     ]
 
 
-def list_at_risk(district_id: str, limit: int = 10) -> list[dict]:
-    """Facility x drug pairs under one week of cover in a district, lowest stock first."""
+def list_at_risk(district_id: str, limit: int = 10, exclude_drugs: frozenset[str] = frozenset()) -> list[dict]:
+    """Facility x drug pairs under one week of cover in a district, lowest stock first.
+    `exclude_drugs` drops district-wide gaps, which a transfer cannot fix."""
     from backend.runtime import below_cover, latest_records, weekly_demand
     from ml.data.facilities import served_facility_index as facility_index
     index = facility_index()
@@ -67,7 +68,8 @@ def list_at_risk(district_id: str, limit: int = 10) -> list[dict]:
         {"facility_id": r.facility_id, "name": index[r.facility_id].name, "drug_id": r.drug_id,
          "on_hand": r.on_hand, "weekly_demand": round(demand.get((r.facility_id, r.drug_id), 0.0), 1)}
         for r in latest_records().values()
-        if r.facility_id in index and index[r.facility_id].district_id == district_id and below_cover(r)
+        if r.facility_id in index and index[r.facility_id].district_id == district_id
+        and r.drug_id not in exclude_drugs and below_cover(r)
     ]
     return sorted(rows, key=lambda x: x["on_hand"] - x["weekly_demand"])[:limit]
 

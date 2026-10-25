@@ -50,6 +50,11 @@ export interface TransferOrder {
   drive_minutes: number;
   rationale: string;
   signature: string | null;
+  // added by the orders list endpoint for triage
+  from_name?: string | null;
+  to_name?: string | null;
+  dest_cover_days?: number | null;
+  district_gap?: boolean;
 }
 
 export interface DistrictSummaryRow {
@@ -57,6 +62,9 @@ export interface DistrictSummaryRow {
   facilities_reporting: number;
   facilities_at_risk: number;
   at_risk_by_drug: Record<string, number>;
+  escalate: Record<string, number>; // drug -> district weeks of cover, below the solver's 2-week plan
+  procurement_units: Record<string, number>; // drug -> units to request from the state
+  facilities_needing_transfer: number;
 }
 
 export interface Contact {
@@ -81,6 +89,7 @@ export interface FacilitySummary {
   lon: number;
   at_risk: boolean;
   short_count: number;
+  short_drugs: string[];
 }
 
 export interface StockRow {

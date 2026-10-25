@@ -41,6 +41,12 @@ Phone numbers are stored hashed. The public view shows district totals only, nev
 identifier, and a test enforces that. Federated training lets states improve one model without
 pooling raw data (it ties local-only accuracy, with privacy as the gain).
 
+**Why are almost all facilities short of calcium?**
+That is in the real HMIS data: reported calcium-tablet use jumps about 20x in December 2019 and
+supply lags behind it. We keep the real data and treat it as what it is, a district-wide gap: when
+a medicine's district stock is under two weeks of district demand, no facility can spare any, so
+the app sends it to the state as a supply request with a quantity instead of drafting transfers.
+
 **Does rebalancing actually help, if total supply is short?**
 It spreads scarcity: in the replay, stock-out weeks fall 6% while unmet units stay flat (+0.25%).
 It does not create supply. The same forecasts can drive procurement, which is the next step.

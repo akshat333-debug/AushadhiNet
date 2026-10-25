@@ -20,4 +20,14 @@ test.describe("Dashboard drill-down", () => {
     await page.getByTestId("map-node-mh/nashik").click();
     await expect(page.getByText("Sign in as an officer (top right) to see facilities.")).toBeVisible();
   });
+
+  test("morning briefing: escalations, then transfers shown on the map", async ({ page }) => {
+    await signIn(page, "District officer, Nashik");
+    await expect(page.getByTestId("escalate-list")).toContainText("Calcium tablet", { timeout: 30_000 });
+    const propose = page.getByRole("button", { name: "Propose transfers" });
+    await propose.or(page.getByRole("link", { name: "Review transfers" })).first().waitFor();
+    if (await propose.count()) await propose.click();
+    await page.getByTestId("map-mode").getByRole("button", { name: "After transfers" }).click();
+    await expect(page.getByTestId("map-after-note")).toContainText("covered once the drafts are approved");
+  });
 });

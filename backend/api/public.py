@@ -31,27 +31,52 @@ def facility_points(district_id: str = "mh/nashik") -> list[list[float]]:
 def district_summary() -> list[dict]:
     """One row per district: facilities reporting, facilities with any drug
     under one week of cover (latest report per drug), and the same count per
-    drug. Never emits a facility ID, name or address."""
-    from backend.runtime import below_cover, latest_records
+    drug. Shortages split two ways: `escalate` lists drugs whose district-wide
+    stock is below the solver's planning cover (2 weeks of district demand), so
+    no facility can spare any and transfers cannot help; only procurement can; `facilities_needing_transfer` counts facilities short
+    of something else, which nearby surplus can cover. Never emits a facility ID,
+    name or address."""
+    from backend.runtime import below_cover, latest_records, weekly_demand
     from ml.data.facilities import served_facility_index as facility_index
+    from ml.optimize.constraints import SolverConfig
     index = facility_index()
+    try:
+        demand = weekly_demand()
+    except FileNotFoundError:
+        demand = {}
 
     latest = latest_records()
 
     reporting: dict[str, set] = defaultdict(set)
-    at_risk: dict[str, set] = defaultdict(set)
+    short: dict[str, dict[str, set]] = defaultdict(lambda: defaultdict(set))  # district -> facility -> drugs
     by_drug: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    stock_sum: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+    demand_sum: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
     for (facility_id, drug_id), record in latest.items():
         facility = index.get(facility_id)
         if facility is None:
             continue
-        reporting[facility.district_id].add(facility_id)
+        d = facility.district_id
+        reporting[d].add(facility_id)
+        stock_sum[d][drug_id] += record.on_hand
+        demand_sum[d][drug_id] += demand.get((facility_id, drug_id), 0.0)
         if below_cover(record):
-            at_risk[facility.district_id].add(facility_id)
-            by_drug[facility.district_id][drug_id] += 1
+            short[d][facility_id].add(drug_id)
+            by_drug[d][drug_id] += 1
 
-    return [
-        {"district_id": d, "facilities_reporting": len(f), "facilities_at_risk": len(at_risk[d]),
-         "at_risk_by_drug": dict(sorted(by_drug[d].items(), key=lambda kv: -kv[1]))}
-        for d, f in sorted(reporting.items())
-    ]
+    def escalate(d: str) -> dict[str, float]:
+        return {drug: round(stock_sum[d][drug] / need, 2) for drug, need in demand_sum[d].items()
+                if drug in by_drug[d] and stock_sum[d][drug] < SolverConfig().cover_weeks * need}
+
+    rows = []
+    for d, f in sorted(reporting.items()):
+        gaps = escalate(d)
+        rows.append({
+            "district_id": d, "facilities_reporting": len(f), "facilities_at_risk": len(short[d]),
+            "at_risk_by_drug": dict(sorted(by_drug[d].items(), key=lambda kv: -kv[1])),
+            "escalate": dict(sorted(gaps.items(), key=lambda kv: kv[1])),
+            # units that bring the district back to the planning cover: what to request from the state
+            "procurement_units": {drug: round(SolverConfig().cover_weeks * demand_sum[d][drug] - stock_sum[d][drug]) for drug in gaps},
+            "facilities_needing_transfer": sum(1 for drugs in short[d].values() if drugs - gaps.keys()),
+        })
+    return rows

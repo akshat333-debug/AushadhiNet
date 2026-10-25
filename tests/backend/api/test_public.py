@@ -58,3 +58,21 @@ def test_public_endpoint_requires_no_auth():
     client = TestClient(create_app())
     response = client.get("/public/district-summary")
     assert response.status_code == 200  # publicly accessible, per project.md's public role
+
+
+def test_district_wide_gap_is_escalated_not_counted_as_a_transfer(monkeypatch):
+    import backend.runtime as runtime
+    from ml.data.facilities import load_facilities
+    a, b, c = (f.facility_id for f in load_facilities(state="Maharashtra", district="Nashik")[:3])
+    demand = {(a, "ors"): 10.0, (b, "ors"): 10.0, (a, "zinc-20mg"): 10.0, (c, "zinc-20mg"): 10.0}
+    monkeypatch.setattr(runtime, "weekly_demand", lambda: demand)
+    _seed_record(a, "ors", on_hand=0, record_id="e1")         # ORS: 5 in the district vs 20 needed
+    _seed_record(b, "ors", on_hand=5, record_id="e2")
+    _seed_record(a, "zinc-20mg", on_hand=0, record_id="e3")   # zinc: c holds plenty to move
+    _seed_record(c, "zinc-20mg", on_hand=100, record_id="e4")
+
+    row = next(r for r in TestClient(create_app()).get("/public/district-summary").json() if r["district_id"] == "mh/nashik")
+    assert row["escalate"] == {"ors": 0.25}
+    assert row["procurement_units"] == {"ors": 35}          # two weeks of 20 a week, less the 5 held
+    assert row["facilities_at_risk"] == 2                    # a and b
+    assert row["facilities_needing_transfer"] == 1           # only a, for zinc

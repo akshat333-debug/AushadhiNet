@@ -1,5 +1,6 @@
 "use client";
-import { motion } from "motion/react";
+import { useEffect, useState } from "react";
+import { animate, motion, useReducedMotion } from "motion/react";
 import { useI18n } from "@/lib/i18n";
 
 export function PageHeader({ title, sub, actions }: { title: string; sub?: string; actions?: React.ReactNode }) {
@@ -28,11 +29,24 @@ export function Reveal({ children, delay = 0, className }: { children: React.Rea
   );
 }
 
-export function Stat({ label, value, hint, tone = "neutral" }: { label: string; value: React.ReactNode; hint?: string; tone?: "neutral" | "risk" }) {
+/** A number that counts up from zero once it arrives, so totals read as live data. */
+export function CountUp({ value, format }: { value: number; format: (n: number) => string }) {
+  const reduce = useReducedMotion();
+  const [shown, setShown] = useState(reduce ? value : 0);
+  useEffect(() => {
+    if (reduce) return setShown(value);
+    const controls = animate(0, value, { duration: 0.9, ease: [0.16, 1, 0.3, 1], onUpdate: (n) => setShown(Math.round(n)) });
+    return () => controls.stop();
+  }, [value, reduce]);
+  return <>{format(shown)}</>;
+}
+
+export function Stat({ label, value, hint, tone = "neutral" }: { label: string; value: React.ReactNode; hint?: string; tone?: "neutral" | "risk" | "warn" }) {
+  const color = { neutral: "", risk: "text-rose-700 dark:text-rose-400", warn: "text-amber-700 dark:text-amber-400" }[tone];
   return (
     <div className="card p-4 md:p-5">
       <div className="label">{label}</div>
-      <div className={`mt-1.5 text-2xl font-semibold tracking-tight md:text-3xl ${tone === "risk" ? "text-rose-700 dark:text-rose-400" : ""}`}>{value}</div>
+      <div className={`mt-1.5 text-2xl font-semibold tracking-tight md:text-3xl ${color}`}>{value}</div>
       {hint && <div className="muted mt-1 text-xs">{hint}</div>}
     </div>
   );

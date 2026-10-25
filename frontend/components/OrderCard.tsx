@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { ArrowRight, Check, SealCheck, Truck, X } from "@phosphor-icons/react";
+import { ArrowRight, Check, Info, SealCheck, Truck, X } from "@phosphor-icons/react";
 import { TransferOrder } from "@/lib/api";
 import { useI18n, type MessageKey } from "@/lib/i18n";
 
@@ -14,13 +14,11 @@ const STATUS_STYLE: Record<string, string> = {
 
 export default function OrderCard({
   order,
-  names,
   busy,
   onApprove,
   onReject,
 }: {
   order: TransferOrder;
-  names: Record<string, string>;
   busy?: boolean;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
@@ -33,9 +31,14 @@ export default function OrderCard({
     const timer = setTimeout(() => setConfirming(false), 4000);
     return () => clearTimeout(timer);
   }, [confirming]);
+  const label = (id: string) => (id === order.from_facility_id ? order.from_name : order.to_name);
+  const days = order.dest_cover_days;
+  const urgency = order.status !== "draft" || days == null ? null : days < 1
+    ? { text: t("order_out_now"), style: "bg-rose-600 text-white dark:bg-rose-500 dark:text-zinc-950" }
+    : { text: t("order_runs_out", { n: num(days) }), style: days < 4 ? "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:ring-rose-900" : "bg-zinc-100 text-zinc-700 ring-1 ring-inset ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700" };
   const place = (id: string) => (
     <a href={`/facility/${id}`} className="group min-w-0">
-      <span className="block truncate font-medium group-hover:text-teal-700 dark:group-hover:text-teal-400">{names[id] ?? id}</span>
+      <span className="block truncate font-medium group-hover:text-teal-700 dark:group-hover:text-teal-400">{label(id) ?? id}</span>
       <span className="muted block font-mono text-xs" translate="no">{id}</span>
     </a>
   );
@@ -59,12 +62,15 @@ export default function OrderCard({
             {order.quantity != null && <div className="muted text-sm">{num(order.quantity)}</div>}
           </div>
         </div>
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ring-1 ring-inset ${STATUS_STYLE[order.status] ?? STATUS_STYLE.expired}`}
-          data-testid={`order-status-${order.order_id}`}
-        >
-          {t(`status_${order.status}` as MessageKey)}
-        </span>
+        <div className="flex flex-col items-end gap-1.5">
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ring-1 ring-inset ${STATUS_STYLE[order.status] ?? STATUS_STYLE.expired}`}
+            data-testid={`order-status-${order.order_id}`}
+          >
+            {t(`status_${order.status}` as MessageKey)}
+          </span>
+          {urgency && <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${urgency.style}`} data-testid="order-urgency">{urgency.text}</span>}
+        </div>
       </div>
 
       <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm">
@@ -72,6 +78,12 @@ export default function OrderCard({
         <ArrowRight size={16} className="text-zinc-400" />
         {place(order.to_facility_id)}
       </div>
+
+      {order.district_gap && order.status === "draft" && (
+        <p className="mt-3 flex gap-1.5 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+          <Info size={14} className="mt-px shrink-0" /> {t("order_gap_note")}
+        </p>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
         <span className="muted flex items-center gap-3 text-xs">

@@ -22,6 +22,8 @@ test.describe("WhatsApp simulator voice note", () => {
         source.buffer = await ctx.decodeAudioData(bytes.buffer);
         const out = ctx.createMediaStreamDestination();
         source.connect(out);
+        // Lets the test stop recording when the clip has played, not after a guessed delay.
+        (window as unknown as { voiceDone: Promise<unknown> }).voiceDone = new Promise((done) => (source.onended = done));
         source.start();
         return out.stream;
       };
@@ -30,7 +32,8 @@ test.describe("WhatsApp simulator voice note", () => {
     await expect(page.getByTestId("sim-phone")).not.toHaveValue("");
     await page.getByTestId("sim-voice").click();
     await expect(page.getByTestId("sim-voice")).toHaveAttribute("aria-pressed", "true");
-    await page.waitForTimeout(4_000);
+    await page.evaluate(() => (window as unknown as { voiceDone: Promise<unknown> }).voiceDone);
+    await page.waitForTimeout(500);
     await page.getByTestId("sim-voice").click();
     await expect(page.getByTestId("sim-voice-bubble").last()).toBeVisible({ timeout: 30_000 });
     const card = page.getByTestId("sim-messages").getByText("Heard in your voice note").last();

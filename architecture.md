@@ -36,7 +36,8 @@ Placeholders live in `.env.example` (`GCP_PROJECT=REPLACE_ME`, etc.). No other f
 ## 3. Repository layout
 ```
 backend/            FastAPI app
-  runtime.py        inbound-message routing, contacts registry, risk helpers, draft proposals; local seeding
+  runtime.py        inbound-message routing (stock, BEDS, location check-ins), contacts registry, risk helpers, draft proposals; local seeding
+  capacity.py       beds and staff per district: full facilities + referrals, staff gaps + deputations (demo baseline in demo mode)
   api/              routes: webhooks (twilio), simulator (local, or cloud demo mode), officer, public, agent, pubsub push (cloud)
   providers/        speech, llm, embed, translate, tts, store_live, store_history, queue, sign, messaging
   ingest/           extraction schemas, confidence gate, NLEM matcher, confirmation cards
@@ -54,7 +55,7 @@ frontend/           Next.js app
 infra/              docker-compose.yml, Dockerfiles, terraform/ (state module), cloudbuild.yaml
 tests/              mirrors packages; e2e/ (Playwright)
 data/               README, manifest and raw/ (open-licence source files, committed); synthetic/ is built, not committed
-docs/               review1/ + api docs
+docs/               review1/, api/, finale/ (demo script, Q&A), pitch/ (deck, video), screenshots/
 ```
 
 ## 4. Data flow (Input → Processing → Store → ML → Output)
@@ -64,8 +65,9 @@ docs/               review1/ + api docs
 4. Confirmed record → Firestore (live) + BigQuery (history).
 5. When an officer clicks "Propose transfers" or asks the agent: next-week forecast from reported history → stock-out probabilities using live stock → the solver proposes transfers (donors keep 2 weeks of cover) → stored as `draft`, replacing the district's earlier drafts. No scheduled job runs this yet.
 6. Officer PWA and agent: queries go through read-only tools; `propose_order` can only create drafts. Only a human click on `POST /officer/orders/{id}/approve` (role and jurisdiction checked against the order's own facilities) moves an order to `approved`.
-7. Approved order → signed → alerts sent in the recipient's language plus a route plan → escalation timer starts → dashboard updates in real time.
-8. Federation (offline job): each state client trains on its own partition → sends clipped, noised updates → Flower server aggregates with FedProx → global model is sent back.
+7. Beds and staff: `BEDS 4/6` writes a `BedCensus`; a shared location writes a `CheckIn` with `geofence_ok` (200 m). `GET /officer/capacity/{district}` runs the referral solver on facilities at least 90% full and the CP-SAT deputation solver on roles nobody covers today; these are suggestions, not orders.
+8. Approved order → signed → alerts sent in the recipient's language plus a route plan → escalation timer starts → dashboard updates in real time.
+9. Federation (offline job): each state client trains on its own partition → sends clipped, noised updates → Flower server aggregates with FedProx → global model is sent back.
 
 ## 5. Evaluation integrity (enforced in code)
 - `eval/protocol.lock` fixes the time windows, the held-out district (Dhule) and held-out state (Meghalaya), the seeds and the generator's content hash. It is committed before any file under `ml/forecast/` exists.

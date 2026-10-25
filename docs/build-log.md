@@ -303,3 +303,10 @@ Reviewing the cloud path found more than the three gaps listed after the Terrafo
 - 7 languages: frontend dictionaries type-checked against English; backend/i18n.py holds WhatsApp replies, cards, agent templates and medicine/place names. Text parser accepted only Latin letters -- now any script and native digits. A script checked every language's example report, confirm word and agent questions against the real backend.
 - Bugs found while doing it: CARTO basemaps now need an API key (switched to OSM + CSS filters); a scroll effect returned a Promise in newer Chromium and crashed the agent page; order cards' exit animation left stale, clickable Approve buttons after a re-propose (the e2e test caught it approving an expired order); Leaflet panes would cover the sticky header.
 - Guidelines audit fixes: decorative icons aria-hidden, skip link, aria-live threads, color-scheme, localized dates, paged drill-down, two-step reject.
+
+## Finale week (2026-10-24 to 10-26)
+- Deployed on Google Cloud Run (Firestore, BigQuery, Pub/Sub push, KMS, Secret Manager, Vertex AI); Gemini register photos, Chirp 2 voice notes, officer redesign, national reach view.
+- Audit (2026-10-26): 12 fixes, among them awaited Pub/Sub publishes, inbound handling off the event loop, a simulator media rate cap, alerts in each contact's language, an order lock against approve/expire races, and the IVR webhook removed.
+- Beds and staff wired: `BEDS 4/6` and shared-location check-ins on WhatsApp, `/officer/capacity`, referral and deputation suggestions. The isolation test caught the first version importing bed and staff norms from the sealed generator; the norms now live in `backend/capacity.py`.
+- Render: backend suspended; the frontend (the submitted link) calls the Cloud Run backend.
+- Verified: 356 backend tests; 17/17 Playwright against Cloud Run; 8/8 against the Render link.

@@ -1,5 +1,5 @@
-# Not deployed: the Render services were retired on 2026-10-26 (Cloud Run is live). Kept as an
-# example of running the zero-credential local mode on any Docker host.
+# Only the frontend runs on Render (2026-10-26), so the submitted link works; it calls the Cloud Run
+# backend. The backend service here is suspended, kept as an example of the zero-credential local mode.
 # Render blueprint: backend + frontend, both from the repo's Dockerfiles.
 # Deploy with Render Dashboard -> New -> Blueprint, pointed at this repo.
 #
@@ -45,4 +45,4 @@ services:
     autoDeploy: true
     envVars:
       - key: NEXT_PUBLIC_API_BASE
-        value: https://aushadhinet-backend.onrender.com
+        value: https://aushadhinet-backend-449585498230.asia-south1.run.app

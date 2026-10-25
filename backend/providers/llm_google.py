@@ -68,7 +68,7 @@ class GoogleLLMProvider:
         try:
             response = self._client.models.generate_content(
                 model=self._model, contents=prompt,
-                config=types.GenerateContentConfig(http_options=types.HttpOptions(timeout=int(timeout_s * 1000))),
+                config=types.GenerateContentConfig(http_options=types.HttpOptions(timeout=int(max(timeout_s, 10) * 1000))),  # the API rejects deadlines under 10 s
             )
         except Exception as e:  # noqa: BLE001
             raise ProviderError(f"Gemini generation failed: {e}") from e

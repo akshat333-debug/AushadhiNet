@@ -132,7 +132,7 @@ def _with_gemini_note(text: str, question: str, lang: str) -> str:
         "recommendation to approve, send or order anything."
     )
     try:
-        note = factory.get("llm").generate(prompt, timeout_s=8).text.strip()  # the officer is waiting
+        note = factory.get("llm").generate(prompt, timeout_s=10).text.strip()  # the officer is waiting
     except ProviderError as e:
         _log.warning("agent note skipped: %s", str(e)[:200])
         return text

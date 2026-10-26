@@ -9,13 +9,14 @@ facility directory, never from a caller-supplied district.
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from backend.deps import AuthUser, check_jurisdiction, require_role
-from backend.domain import AuditEvent, OrderStatus, TransferOrder
+from backend.domain import AuditEvent, OrderKind, OrderStatus, TransferOrder
 from backend.providers import factory
 from backend.runtime import ORDER_LOCK
 
@@ -24,6 +25,7 @@ from backend.action.escalate import sweep
 from backend.action.sign_order import sign
 
 router = APIRouter(prefix="/officer", tags=["officer"])
+log = logging.getLogger(__name__)
 OFFICER = require_role("block", "district", "state")
 
 
@@ -59,63 +61,126 @@ def _audit(user: AuthUser, action: str, order: TransferOrder) -> None:
 
 @router.get("/orders/{district_id:path}")
 def list_orders(district_id: str, user: AuthUser = Depends(OFFICER)):
-    """Orders with what an officer triages by: facility names, the destination's days of
-    cover for that drug, and whether the drug is short district-wide (a transfer then only
-    spreads stock; procurement is the fix). Most urgent first; expired drafts are left out."""
+    """Orders with what an officer needs to approve safely: facility names, stock at both ends
+    after earlier approvals, days of cover before and after (the destination counting every
+    draft to it, the source after this one), how old the reports are, and whether the drug is
+    short district-wide. Most urgent first; expired drafts are left out."""
     check_jurisdiction(user, district_id)
     from ml.data.facilities import served_facility_index as facility_index
     from backend.api.public import district_summary
-    from backend.runtime import latest_records, weekly_demand
+    from backend.runtime import latest_records, projected_stock, weekly_demand
     index, latest = facility_index(), latest_records()
     try:
         demand = weekly_demand()
     except FileNotFoundError:
         demand = {}
-    gaps = next((r["escalate"] for r in district_summary() if r["district_id"] == district_id), {})
-
-    def enrich(o: TransferOrder) -> dict:
-        key = (o.to_facility_id, o.drug_id)
-        need = demand.get(key, 0.0)
-        record = latest.get(key)
-        cover = round(7 * record.on_hand / need, 1) if record is not None and need >= 1.0 else None
-        name = lambda fid: index[fid].name if fid in index else None
-        return {**o.model_dump(mode="json"), "from_name": name(o.from_facility_id), "to_name": name(o.to_facility_id),
-                "dest_cover_days": cover, "district_gap": o.drug_id in gaps}
+    gaps = {r["district_id"]: r["escalate"] for r in district_summary()}
+    from backend.runtime import in_scope
 
     # Expired drafts (superseded solver runs) are most of the store and grow with every proposal; skip them.
     live = factory.get("store_live")
     orders = [o for status in OrderStatus if status != OrderStatus.EXPIRED for o in live.query("orders", {"status": status})]
-    rows = [enrich(o) for o in orders if district_id in _order_districts(o)]
+    orders = [o for o in orders if any(in_scope(d, district_id) for d in _order_districts(o))]
+    stock = projected_stock({fid for o in orders for fid in (o.from_facility_id, o.to_facility_id)})
+    incoming: dict[tuple, int] = {}
+    for o in orders:
+        if o.status == OrderStatus.DRAFT and o.quantity:
+            incoming[(o.to_facility_id, o.drug_id)] = incoming.get((o.to_facility_id, o.drug_id), 0) + o.quantity
+    now = datetime.now(timezone.utc)
+
+    def cover(key, units):
+        need = demand.get(key, 0.0)
+        return round(7 * units / need, 1) if need >= 1.0 and units is not None else None
+
+    def enrich(o: TransferOrder) -> dict:
+        dst, src = (o.to_facility_id, o.drug_id), (o.from_facility_id, o.drug_id)
+        dst_units = stock.get(dst) if dst in stock else None
+        src_units = stock.get(src) if src in stock else None
+        draft = o.status == OrderStatus.DRAFT
+        report = latest.get(dst)
+        name = lambda fid: index[fid].name if fid in index else None
+        return {**o.model_dump(mode="json"), "from_name": name(o.from_facility_id), "to_name": name(o.to_facility_id),
+                "dest_on_hand": dst_units, "dest_cover_days": cover(dst, dst_units),
+                "dest_cover_after_days": cover(dst, None if dst_units is None else dst_units + (incoming.get(dst, 0) if draft else 0)),
+                "src_on_hand_after": None if src_units is None else src_units - (o.quantity or 0) * draft,
+                "src_cover_after_days": cover(src, None if src_units is None else src_units - (o.quantity or 0) * draft),
+                "report_age_days": None if report is None else (now - report.reported_at).days,
+                "district_gap": o.drug_id in gaps.get(index[o.to_facility_id].district_id if o.to_facility_id in index else "", {})}
+
+    rows = [enrich(o) for o in orders]
     return sorted(rows, key=lambda r: (r["dest_cover_days"] is None, r["dest_cover_days"] or 0.0))
 
 
 @router.post("/orders/{order_id}/approve")
 def approve_order(order_id: str, user: AuthUser = Depends(OFFICER)):
+    """Signs a draft, after checking the source still holds the units once earlier approvals
+    are counted, then sends both facilities the signed order. If the alerts fail the order
+    stays approved without `alerted_at`, and approving again resends them."""
     order = _authorised_order(order_id, user)
-    if order.status == OrderStatus.APPROVED:
+    if order.status == OrderStatus.APPROVED and order.alerted_at is not None:
         return order  # idempotent: no double-signing, no duplicate alerts
-    if order.status != OrderStatus.DRAFT:
+    if order.status not in (OrderStatus.DRAFT, OrderStatus.APPROVED):
         raise HTTPException(409, f"cannot approve an order that is {order.status.value}")
 
-    signed = sign(order, approved_by=f"officer:{user.uid}")
     live = factory.get("store_live")
-    with ORDER_LOCK:  # a proposal may have expired it, or a second click approved it, while it was signed
-        current = live.get("orders", order_id)
-        if current.status == OrderStatus.APPROVED:
-            return current
-        if current.status != OrderStatus.DRAFT:
-            raise HTTPException(409, f"cannot approve an order that is {current.status.value}")
-        live.put("orders", order_id, signed)
-    _audit(user, "approve_order", signed)
+    if order.status == OrderStatus.DRAFT:
+        signed = sign(order, approved_by=f"officer:{user.uid}")
+        with ORDER_LOCK:  # a proposal may have expired it, or a second click approved it, while it was signed
+            current = live.get("orders", order_id)
+            if current.status == OrderStatus.APPROVED:
+                return current
+            if current.status != OrderStatus.DRAFT:
+                raise HTTPException(409, f"cannot approve an order that is {current.status.value}")
+            if current.kind == OrderKind.DRUG_TRANSFER:
+                from backend.runtime import projected_stock
+                available = projected_stock({current.from_facility_id}).get((current.from_facility_id, current.drug_id), 0.0)
+                if current.quantity > available:
+                    raise HTTPException(409, f"the source now has {available:g} units after earlier approvals and reports, "
+                                             f"fewer than the {current.quantity} ordered: propose transfers again")
+            live.put("orders", order_id, signed)
+        _audit(user, "approve_order", signed)
+    else:
+        signed = order
 
     from ml.data.facilities import served_facility_index as facility_index
     from backend.runtime import phone_for_facility
     index = facility_index()
-    send_transfer_alerts(
-        signed, index[signed.from_facility_id], index[signed.to_facility_id],
-        phone_for_facility(signed.from_facility_id), phone_for_facility(signed.to_facility_id),
-    )
-    return signed
+    try:
+        # shortcut: a failure resends both facilities' alerts on retry, so one may get a duplicate;
+        # per-recipient delivery tracking needs Twilio status callbacks.
+        send_transfer_alerts(
+            signed, index[signed.from_facility_id], index[signed.to_facility_id],
+            phone_for_facility(signed.from_facility_id), phone_for_facility(signed.to_facility_id),
+        )
+    except Exception as e:  # noqa: BLE001 -- any provider failure: the approval stands, the alert is retried
+        log.warning("alerts for %s failed: %s", order_id, e)
+        raise HTTPException(502, "Approved and signed, but the WhatsApp alerts did not go out. Approve again to resend them.")
+    with ORDER_LOCK:
+        alerted = live.get("orders", order_id).model_copy(update={"alerted_at": datetime.now(timezone.utc)})
+        live.put("orders", order_id, alerted)
+    return alerted
+
+
+@router.post("/orders/{order_id}/received")
+def receive_order(order_id: str, user: AuthUser = Depends(OFFICER)):
+    """Records that the destination got the goods (the nurse can also reply RECEIVED <code>)."""
+    order = _authorised_order(order_id, user)
+    received = mark_received(order)
+    _audit(user, "receive_order", received)
+    return received
+
+
+def mark_received(order: TransferOrder) -> TransferOrder:
+    if order.status == OrderStatus.RECEIVED:
+        return order
+    if order.status not in (OrderStatus.APPROVED, OrderStatus.DISPATCHED):
+        raise HTTPException(409, f"cannot receive an order that is {order.status.value}")
+    live = factory.get("store_live")
+    with ORDER_LOCK:
+        received = live.get("orders", order.order_id).model_copy(
+            update={"status": OrderStatus.RECEIVED, "received_at": datetime.now(timezone.utc)})
+        live.put("orders", order.order_id, received)
+    return received
 
 
 @router.post("/orders/{order_id}/reject")

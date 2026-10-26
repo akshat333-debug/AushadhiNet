@@ -23,7 +23,7 @@ def _register_llm_fixture(prompt_prefix: str, media_bytes: bytes, schema_name: s
 def test_confident_photo_read_still_waits_for_the_reporters_yes():
     from backend.ingest.prompts import STOCK_REGISTER_PROMPT
 
-    image_bytes = b"end-to-end-register-photo"
+    image_bytes = b"\xff\xd8\xffend-to-end-register-photo"
     _register_llm_fixture(
         STOCK_REGISTER_PROMPT, image_bytes, "StockPage",
         fields={"rows": [{"drug_name": "ORS (New WHO)", "on_hand": 60, "confidence": {"on_hand": 0.95, "drug_name": 0.92}}]},
@@ -47,7 +47,7 @@ def test_confident_photo_read_still_waits_for_the_reporters_yes():
 def test_low_confidence_photo_stays_pending_and_sends_a_card():
     from backend.ingest.prompts import STOCK_REGISTER_PROMPT
 
-    image_bytes = b"blurry-register-photo"
+    image_bytes = b"\xff\xd8\xffblurry-register-photo"
     _register_llm_fixture(
         STOCK_REGISTER_PROMPT, image_bytes, "StockPage",
         fields={"rows": [{"drug_name": "ORS (New WHO)", "on_hand": 60, "confidence": {"on_hand": 0.5, "drug_name": 0.92}}]},
@@ -108,7 +108,7 @@ def test_fixture_audio_message_is_read_and_held_for_yes_end_to_end():
     from backend.ingest.prompts import STOCK_VOICE_PROMPT
     from backend.providers.speech_local import FIXTURES_DIR as SPEECH_FIXTURES
 
-    audio_bytes = b"end-to-end-marathi-voice-note"
+    audio_bytes = b"OggSend-to-end-marathi-voice-note"
     key = hashlib.sha256(audio_bytes).hexdigest()[:16]
     SPEECH_FIXTURES.mkdir(parents=True, exist_ok=True)
     (SPEECH_FIXTURES / f"{key}.json").write_text(json.dumps({"text": "Zinc pannas goli", "language": "mr", "confidence": 0.9}))

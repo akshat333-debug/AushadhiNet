@@ -15,6 +15,10 @@ from backend.domain import Grain
 from eval.protocol import Protocol
 
 
+# The protocol lock names the block by its town; the facility directory spells it "Trimbak".
+_BLOCK_ALIASES = {"trimbakeshwar": "trimbak"}
+
+
 @dataclass(frozen=True)
 class Split:
     train_start: date
@@ -26,23 +30,33 @@ class Split:
     held_out_entity: str  # district_id or block name, excluded from ALL splits
     date_column: str  # "month" or "week"
 
+    def _not_held_out(self, df: pd.DataFrame) -> pd.Series:
+        """The held-out entity must be removable, or the holdout silently does nothing (it did,
+        for facility-week panels, until 2026-10-26: they had no block column)."""
+        if self.date_column == "month":
+            return df["district_id"] != self.held_out_entity
+        if "block" in df.columns:
+            block = df["block"]
+        elif "facility_id" in df.columns:
+            from ml.data.facilities import served_facility_index
+            blocks = {fid: f.block for fid, f in served_facility_index().items()}
+            block = df["facility_id"].astype(str).map(blocks)
+        else:
+            raise ValueError("a facility-week panel needs a block or facility_id column to exclude the held-out block")
+        name = _BLOCK_ALIASES.get(self.held_out_entity, self.held_out_entity)
+        return block.fillna("").astype(str).str.strip().str.lower() != name
+
     def train_mask(self, df: pd.DataFrame) -> pd.Series:
         col = pd.to_datetime(df[self.date_column])
-        entity_col = "district_id" if self.date_column == "month" else "block"
         in_window = (col >= pd.Timestamp(self.train_start)) & (col <= pd.Timestamp(self.train_end))
-        if entity_col in df.columns:
-            in_window &= df[entity_col] != self.held_out_entity
-        return in_window
+        return in_window & self._not_held_out(df)
 
     def val_mask(self, df: pd.DataFrame) -> pd.Series:
         if self.val_start is None:
             return pd.Series(False, index=df.index)
         col = pd.to_datetime(df[self.date_column])
-        entity_col = "district_id" if self.date_column == "month" else "block"
         in_window = (col >= pd.Timestamp(self.val_start)) & (col <= pd.Timestamp(self.val_end))
-        if entity_col in df.columns:
-            in_window &= df[entity_col] != self.held_out_entity
-        return in_window
+        return in_window & self._not_held_out(df)
 
     def test_mask(self, df: pd.DataFrame) -> pd.Series:
         col = pd.to_datetime(df[self.date_column])

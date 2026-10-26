@@ -26,6 +26,7 @@ IST = ZoneInfo("Asia/Kolkata")
 FULL = 0.9    # occupancy at which a facility is flagged and referrals are suggested
 TARGET = 0.8  # referrals bring a full facility down to this; receiving facilities fill up to it
 SHOW = 10     # rows per list in the officer's summary
+FRESH_DAYS = 1  # a bed census older than this is unknown, not current capacity
 
 # "BEDS 4/6", "beds 4 of 6", "बेड ४/६": occupied, then total. \d matches native digits too.
 _BEDS_RE = re.compile(
@@ -94,9 +95,11 @@ def _live(day: date) -> tuple[dict, list]:
     full, fine while they hold only real reports (the baseline is never stored); filter by
     date in the query once a district reports daily."""
     live = factory.get("store_live")
-    beds = {r.facility_id: (r.beds_occupied, r.beds_total) for r in sorted(live.query("bed_census", {}), key=lambda r: r.as_of_date)}
-    checkins = [{"facility_id": c.facility_id, "role": c.role, "staff": c.staff_id_hash, "distance_m": c.distance_m}
-                for c in live.query("checkins", {}) if c.at.astimezone(IST).date() == day]
+    beds = {r.facility_id: (r.beds_occupied, r.beds_total) for r in sorted(live.query("bed_census", {}), key=lambda r: r.as_of_date)
+            if (day - r.as_of_date).days <= FRESH_DAYS}
+    # One person checking in twice is one person: their latest check-in today counts.
+    latest = {c.staff_id_hash: c for c in sorted(live.query("checkins", {}), key=lambda c: c.at) if c.at.astimezone(IST).date() == day}
+    checkins = [{"facility_id": c.facility_id, "role": c.role, "staff": c.staff_id_hash, "distance_m": c.distance_m} for c in latest.values()]
     return beds, checkins
 
 
@@ -114,7 +117,8 @@ def district_capacity(district_id: str) -> dict:
     base_beds, base_checkins = _baseline(district_id, day) if demo else ({}, [])
     live_beds, live_checkins = _live(day)
     beds = {**base_beds, **{fid: v for fid, v in live_beds.items() if fid in index}}
-    checkins = [c for c in live_checkins if c["facility_id"] in index] + base_checkins  # live first: they lead the lists
+    reported = {c["facility_id"] for c in live_checkins}  # a facility's own check-ins replace its generated ones
+    checkins = [c for c in live_checkins if c["facility_id"] in index] + [c for c in base_checkins if c["facility_id"] not in reported]
 
     on_site = [c for c in checkins if c["distance_m"] <= settings.geofence_radius_m]
     present: dict[tuple[str, StaffRole], list[str]] = {}

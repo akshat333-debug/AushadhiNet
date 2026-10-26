@@ -4,12 +4,17 @@ demonstration). Scored on validation only (never the frozen test window
 -- architecture.md §5 reserves that for eval/run_final.py alone).
 
 Federated and centralised arms share ONE set of feature-normalisation
-statistics (computed once from the pooled training panel) across every
-client and the held-out evaluation, since a shared weight vector is only
-meaningful in a shared feature space -- see client.py's docstring for the
-real bug this fixes. The local-only arm intentionally uses the held-out
-state's own statistics for both fitting and evaluating it, since that is
-the single-state-only baseline it is meant to represent.
+statistics across every client and the evaluation, since a shared weight
+vector is only meaningful in a shared feature space (see client.py). Those
+statistics are aggregated from each state's row count, sums and sums of
+squares, so no state's rows leave it. The local-only arm uses the data-poor
+state's own TRAINING statistics, for fitting and for scoring validation.
+
+What this is: an in-process simulation of federated training (Flower's
+client API, FedProx), not a deployed multi-project federation; the data-poor
+state takes part in training (a few-shot participating state, not an unseen
+one); and the scored runs use noise multiplier 0, so they carry no
+differential-privacy guarantee.
 """
 from __future__ import annotations
 
@@ -27,11 +32,19 @@ from ml.federated.server import run as run_federated
 _STATE_CODE_MAP = {"maharashtra": "MH", "haryana": "HR", "assam": "AS", "meghalaya": "ML"}
 
 
-def _global_stats(panel: pd.DataFrame, target_col: str) -> tuple[np.ndarray, np.ndarray]:
-    X_raw, _, _ = _design_matrix(panel, target_col)
-    mean = X_raw.mean(axis=0) if X_raw.size else np.zeros(0)
-    std = np.where(X_raw.std(axis=0) > 1e-9, X_raw.std(axis=0), 1.0) if X_raw.size else np.ones(0)
-    return mean, std
+def _stats(parts: list[pd.DataFrame], target_col: str) -> tuple[np.ndarray, np.ndarray]:
+    """Mean and std from each part's n, sum and sum of squares: what a state can share without
+    sharing rows. Equal to computing them on the pooled rows (population std)."""
+    n, total, squares = 0, 0.0, 0.0
+    for df in parts:
+        X_raw, _, _ = _design_matrix(df, target_col)
+        if X_raw.size:
+            n, total, squares = n + len(X_raw), total + X_raw.sum(axis=0), squares + (X_raw ** 2).sum(axis=0)
+    if not n:
+        return np.zeros(0), np.ones(0)
+    mean = total / n
+    std = np.sqrt(np.maximum(squares / n - mean ** 2, 0.0))
+    return mean, np.where(std > 1e-9, std, 1.0)
 
 
 def compare(panel: pd.DataFrame | None = None, rounds: int = 5, target_col: str = "distributed") -> pd.DataFrame:
@@ -49,14 +62,15 @@ def compare(panel: pd.DataFrame | None = None, rounds: int = 5, target_col: str 
     if held_out_code not in val_parts:
         return pd.DataFrame(columns=["arm", "state", "wape", "n"])
 
-    global_mean, global_std = _global_stats(train, target_col)
+    global_mean, global_std = _stats(list(train_parts.values()), target_col)
+    local_mean, local_std = _stats([train_parts[held_out_code]], target_col)
     rows = []
 
-    # Arm 1: local-only -- the data-poor state trains and is evaluated
-    # entirely on its own data and its own feature scale.
-    local_client = LinearHeadClient(held_out_code, train_parts[held_out_code])
+    # Arm 1: local-only -- the data-poor state trains on its own data, and validation is scaled
+    # with its training statistics (rescaling with validation's own was a leak, fixed 2026-10-26).
+    local_client = LinearHeadClient(held_out_code, train_parts[held_out_code], feature_mean=local_mean, feature_std=local_std)
     local_params, _, _ = local_client.fit(local_client.get_parameters({}), {})
-    local_eval = LinearHeadClient(held_out_code, val_parts[held_out_code])
+    local_eval = LinearHeadClient(held_out_code, val_parts[held_out_code], feature_mean=local_mean, feature_std=local_std)
     wape_local, n, _ = local_eval.evaluate(local_params, {})
     rows.append({"arm": "local_only", "state": held_out_code, "wape": wape_local, "n": n})
 

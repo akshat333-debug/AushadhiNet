@@ -100,7 +100,7 @@ def test_photo_report_is_read_held_for_yes_then_recorded():
     from tests.backend.ingest.test_extract import _register_llm_fixture
     from backend.ingest.prompts import STOCK_REGISTER_PROMPT
 
-    photo = b"photo-of-a-register-page"
+    photo = b"\xff\xd8\xffphoto-of-a-register-page"
     _register_llm_fixture(STOCK_REGISTER_PROMPT, photo, "StockPage", fields={"rows": [
         {"drug_name": "ORS", "on_hand": 61, "confidence": {"on_hand": 0.99, "drug_name": 0.99}}]}, confidence={})
     with TestClient(create_app()) as client:
@@ -120,7 +120,7 @@ def test_photo_report_is_read_held_for_yes_then_recorded():
 def test_voice_note_with_two_items_is_heard_held_for_yes_then_recorded():
     import base64, hashlib, json
     from backend.providers.speech_local import FIXTURES_DIR
-    audio = b"voice-note-ors-and-zinc"
+    audio = b"\x1aE\xdf\xa3voice-note-ors-and-zinc"
     FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
     (FIXTURES_DIR / f"{hashlib.sha256(audio).hexdigest()[:16]}.json").write_text(
         json.dumps({"text": "ओआरएस 50 जिंक 120", "language": "hi-IN", "confidence": 0.87}))

@@ -54,6 +54,10 @@ export interface TransferOrder {
   from_name?: string | null;
   to_name?: string | null;
   dest_cover_days?: number | null;
+  dest_on_hand?: number | null;
+  dest_cover_after_days?: number | null; // counting every draft to this destination
+  src_on_hand_after?: number | null;
+  report_age_days?: number | null;
   district_gap?: boolean;
 }
 
@@ -150,6 +154,7 @@ export interface ForecastRow {
   p90: number;
   stockout_prob: number;
   horizon: number;
+  origin_date: string;
 }
 
 export interface FacilityDetail {
@@ -161,6 +166,7 @@ export interface FacilityDetail {
 export const api = {
   listOrders: (districtId: string) => request<TransferOrder[]>(`/officer/orders/${districtId}`),
   approveOrder: (orderId: string) => request<TransferOrder>(`/officer/orders/${orderId}/approve`, { method: "POST" }),
+  receiveOrder: (orderId: string) => request<TransferOrder>(`/officer/orders/${orderId}/received`, { method: "POST" }),
   rejectOrder: (orderId: string) => request<TransferOrder>(`/officer/orders/${orderId}/reject`, { method: "POST" }),
   proposeOrders: (districtId: string) => request<TransferOrder[]>(`/officer/propose/${districtId}`, { method: "POST" }),
   runEscalation: () => request<TransferOrder[]>("/officer/escalation/sweep", { method: "POST" }),

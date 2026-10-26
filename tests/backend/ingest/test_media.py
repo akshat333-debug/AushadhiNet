@@ -26,7 +26,7 @@ def test_oversized_jpeg_rejected():
 
 def test_valid_jpeg_under_cap_accepted():
     settings = _settings()
-    data = b"x" * 1000
+    data = b"\xff\xd8\xff" + b"x" * 1000
     validate("image/jpeg", len(data), data, settings=settings)  # must not raise
 
 
@@ -37,5 +37,16 @@ def test_declared_size_mismatch_rejected():
 
 def test_valid_audio_accepted():
     settings = _settings()
-    data = b"x" * 500
+    data = b"OggS" + b"x" * 500
     validate("audio/ogg", len(data), data, settings=settings)
+
+
+def test_renamed_file_rejected_by_signature():
+    data = b"MZ" + b"x" * 100  # a Windows executable sent as a "photo"
+    with pytest.raises(ProviderError):
+        validate("image/jpeg", len(data), data, settings=_settings())
+
+
+def test_browser_voice_note_accepted():
+    data = b"\x1aE\xdf\xa3" + b"x" * 100
+    validate("audio/webm;codecs=opus", len(data), data, settings=_settings())

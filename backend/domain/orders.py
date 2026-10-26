@@ -41,6 +41,8 @@ class TransferOrder(BaseModel):
     approved_at: datetime | None = None
     signature: str | None = None
     escalation_level: int = 0
+    alerted_at: datetime | None = None   # both facilities sent the signed order; unset means retry the alerts
+    received_at: datetime | None = None
 
     @model_validator(mode="after")
     def _validate(self) -> "TransferOrder":

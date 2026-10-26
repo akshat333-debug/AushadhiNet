@@ -49,6 +49,9 @@ def test_orders_are_most_urgent_first_with_gaps_flagged_and_expired_left_out(mon
     assert [r["order_id"] for r in rows] == ["o-b-zinc", "o-b-ors", "o-c-ors"]
     assert [r["dest_cover_days"] for r in rows] == [0.0, 0.7, 7.0]
     assert [r["district_gap"] for r in rows] == [True, False, False]
+    # The map's "projected after" counts quantities: 7 + 5 units drafted is still under 2 days.
+    assert [r["dest_cover_after_days"] for r in rows] == [0.5, 1.2, 7.5]
+    assert rows[1]["src_on_hand_after"] == 995 and rows[1]["report_age_days"] == 0
 
 
 def test_an_order_expired_while_being_signed_is_not_overwritten(monkeypatch):

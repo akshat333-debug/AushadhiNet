@@ -37,7 +37,8 @@ export default function OrdersPage() {
     return () => clearTimeout(timer);
   }, [confirmTop]);
 
-  const districtId = user && user.jurisdiction.includes("/") ? user.jurisdiction : PILOT_DISTRICT;
+  // District officers work on their district; a state officer works state-wide (cross-district transfers).
+  const districtId = user?.role === "state" ? user.jurisdiction : user && user.jurisdiction.includes("/") ? user.jurisdiction : PILOT_DISTRICT;
 
   const refresh = useCallback(async () => {
     try {
@@ -157,6 +158,7 @@ export default function OrdersPage() {
               busy={busy}
               onApprove={(id) => act(async () => void (await api.approveOrder(id)))}
               onReject={(id) => act(async () => void (await api.rejectOrder(id)))}
+              onReceive={(id) => act(async () => void (await api.receiveOrder(id)))}
             />
           ))}
       </div>

@@ -12,6 +12,9 @@ LANG_NAMES = {"en": "English", "hi": "Hindi", "mr": "Marathi", "bn": "Bengali", 
 
 MESSAGES: dict[str, dict[str, str]] = {
     "en": {
+        "receipt_ok": "Receipt recorded for transfer {code}. Thank you.",
+        "receipt_unknown": "No transfer {code} is on its way to this facility. Check the code in the order message.",
+        "bad_quantity": "Not recorded: {lines}. Send whole numbers with no minus sign or decimal, e.g. 'ORS 1000'.",
         "beds_recorded": "Beds recorded for {facility}: {occupied} of {total} occupied.",
         "beds_invalid": "Occupied beds cannot be more than total beds. Send as 'BEDS <occupied>/<total>', e.g. 'BEDS 4/6'.",
         "checkin_ok": "Checked in at {facility}, {time}.",
@@ -41,6 +44,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "That is outside your jurisdiction: {detail}",
     },
     "hi": {
+        "receipt_ok": "स्थानांतरण {code} की प्राप्ति दर्ज की गई। धन्यवाद।",
+        "receipt_unknown": "इस केंद्र के लिए कोई स्थानांतरण {code} रास्ते में नहीं है। आदेश संदेश में कोड जाँचें।",
+        "bad_quantity": "दर्ज नहीं किया गया: {lines}। बिना माइनस या दशमलव के पूरी संख्या भेजें, जैसे 'ORS 1000'।",
         "beds_recorded": "{facility} के बेड दर्ज किए गए: {total} में से {occupied} भरे हैं।",
         "beds_invalid": "भरे हुए बेड कुल बेड से ज़्यादा नहीं हो सकते। 'BEDS <भरे>/<कुल>' के रूप में भेजें, जैसे 'BEDS 4/6'।",
         "checkin_ok": "{facility} पर हाज़िरी दर्ज, {time}।",
@@ -70,6 +76,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "यह आपके अधिकार क्षेत्र से बाहर है: {detail}",
     },
     "mr": {
+        "receipt_ok": "हस्तांतरण {code} मिळाल्याची नोंद झाली. धन्यवाद.",
+        "receipt_unknown": "या केंद्रासाठी {code} हे हस्तांतरण मार्गावर नाही. आदेश संदेशातील कोड तपासा.",
+        "bad_quantity": "नोंदवले नाही: {lines}. वजा चिन्ह किंवा दशांश नसलेली पूर्ण संख्या पाठवा, उदा. 'ORS 1000'.",
         "beds_recorded": "{facility} चे बेड नोंदवले: {total} पैकी {occupied} भरलेले.",
         "beds_invalid": "भरलेले बेड एकूण बेडपेक्षा जास्त असू शकत नाहीत. 'BEDS <भरलेले>/<एकूण>' असे पाठवा, उदा. 'BEDS 4/6'.",
         "checkin_ok": "{facility} येथे हजेरी नोंदवली, {time}.",
@@ -99,6 +108,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "हे तुमच्या कार्यक्षेत्राबाहेर आहे: {detail}",
     },
     "bn": {
+        "receipt_ok": "স্থানান্তর {code} প্রাপ্তি নথিভুক্ত হয়েছে। ধন্যবাদ।",
+        "receipt_unknown": "এই কেন্দ্রের জন্য কোনো স্থানান্তর {code} পথে নেই। আদেশ বার্তার কোডটি দেখুন।",
+        "bad_quantity": "নথিভুক্ত হয়নি: {lines}। বিয়োগ চিহ্ন বা দশমিক ছাড়া পূর্ণ সংখ্যা পাঠান, যেমন 'ORS 1000'।",
         "beds_recorded": "{facility}-এর শয্যা নথিভুক্ত: {total}টির মধ্যে {occupied}টি ভর্তি।",
         "beds_invalid": "ভর্তি শয্যা মোট শয্যার বেশি হতে পারে না। 'BEDS <ভর্তি>/<মোট>' আকারে পাঠান, যেমন 'BEDS 4/6'।",
         "checkin_ok": "{facility}-এ হাজিরা নথিভুক্ত, {time}।",
@@ -128,6 +140,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "এটি আপনার এক্তিয়ারের বাইরে: {detail}",
     },
     "ta": {
+        "receipt_ok": "இடமாற்றம் {code} பெறப்பட்டது பதிவு செய்யப்பட்டது. நன்றி.",
+        "receipt_unknown": "இந்த நிலையத்திற்கு {code} என்ற இடமாற்றம் வரவில்லை. ஆணைச் செய்தியில் உள்ள குறியீட்டைச் சரிபார்க்கவும்.",
+        "bad_quantity": "பதிவு செய்யப்படவில்லை: {lines}. கழித்தல் குறி அல்லது தசமம் இல்லாத முழு எண்ணை அனுப்பவும், எ.கா. 'ORS 1000'.",
         "beds_recorded": "{facility}க்கு படுக்கைகள் பதிவு: {total}இல் {occupied} நிரம்பியுள்ளன.",
         "beds_invalid": "நிரம்பிய படுக்கைகள் மொத்தத்தை விட அதிகமாக இருக்க முடியாது. 'BEDS <நிரம்பியவை>/<மொத்தம்>' என அனுப்பவும், எ.கா. 'BEDS 4/6'.",
         "checkin_ok": "{facility}இல் வருகை பதிவு, {time}.",
@@ -157,6 +172,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "இது உங்கள் அதிகார வரம்பிற்கு வெளியே உள்ளது: {detail}",
     },
     "te": {
+        "receipt_ok": "బదిలీ {code} అందినట్లు నమోదైంది. ధన్యవాదాలు.",
+        "receipt_unknown": "ఈ కేంద్రానికి {code} బదిలీ రావడం లేదు. ఆర్డర్ సందేశంలోని కోడ్‌ను తనిఖీ చేయండి.",
+        "bad_quantity": "నమోదు కాలేదు: {lines}. మైనస్ గుర్తు లేదా దశాంశం లేని పూర్ణ సంఖ్య పంపండి, ఉదా. 'ORS 1000'.",
         "beds_recorded": "{facility} పడకలు నమోదు: {total}లో {occupied} నిండాయి.",
         "beds_invalid": "నిండిన పడకలు మొత్తం పడకల కంటే ఎక్కువ ఉండకూడదు. 'BEDS <నిండినవి>/<మొత్తం>' రూపంలో పంపండి, ఉదా. 'BEDS 4/6'.",
         "checkin_ok": "{facility}లో హాజరు నమోదైంది, {time}.",
@@ -186,6 +204,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "ఇది మీ అధికార పరిధికి వెలుపల ఉంది: {detail}",
     },
     "kn": {
+        "receipt_ok": "ವರ್ಗಾವಣೆ {code} ಸ್ವೀಕೃತಿ ದಾಖಲಾಗಿದೆ. ಧನ್ಯವಾದಗಳು.",
+        "receipt_unknown": "ಈ ಕೇಂದ್ರಕ್ಕೆ {code} ವರ್ಗಾವಣೆ ಬರುತ್ತಿಲ್ಲ. ಆದೇಶ ಸಂದೇಶದಲ್ಲಿನ ಕೋಡ್ ಪರಿಶೀಲಿಸಿ.",
+        "bad_quantity": "ದಾಖಲಾಗಿಲ್ಲ: {lines}. ಮೈನಸ್ ಚಿಹ್ನೆ ಅಥವಾ ದಶಮಾಂಶ ಇಲ್ಲದ ಪೂರ್ಣ ಸಂಖ್ಯೆ ಕಳುಹಿಸಿ, ಉದಾ. 'ORS 1000'.",
         "beds_recorded": "{facility} ಹಾಸಿಗೆಗಳು ದಾಖಲಾಗಿವೆ: {total}ರಲ್ಲಿ {occupied} ಭರ್ತಿ.",
         "beds_invalid": "ಭರ್ತಿಯಾದ ಹಾಸಿಗೆಗಳು ಒಟ್ಟು ಹಾಸಿಗೆಗಳಿಗಿಂತ ಹೆಚ್ಚಿರಲು ಸಾಧ್ಯವಿಲ್ಲ. 'BEDS <ಭರ್ತಿ>/<ಒಟ್ಟು>' ಎಂದು ಕಳುಹಿಸಿ, ಉದಾ. 'BEDS 4/6'.",
         "checkin_ok": "{facility}ನಲ್ಲಿ ಹಾಜರಾತಿ ದಾಖಲಾಗಿದೆ, {time}.",

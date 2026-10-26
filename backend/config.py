@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     geofence_radius_m: float = Field(200.0, validation_alias="GEOFENCE_RADIUS_M")
     max_upload_mb: int = Field(10, validation_alias="MAX_UPLOAD_MB")
     allowed_mime: str = Field(
-        "image/jpeg,image/png,audio/ogg,audio/amr,audio/mpeg",
+        "image/jpeg,image/png,image/webp,audio/ogg,audio/amr,audio/mpeg,audio/webm,audio/mp4",  # browsers record webm (Chrome) or mp4 (Safari)
         validation_alias="ALLOWED_MIME",
     )
     escalation_hours: int = Field(24, validation_alias="ESCALATION_HOURS")

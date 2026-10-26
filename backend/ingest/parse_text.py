@@ -19,8 +19,11 @@ from backend.ingest.nlem import match as nlem_match
 
 # Any script: Devanagari/Tamil/etc. vowel signs are combining marks, which \w does not
 # match, so the name is "anything not starting with a digit". \d also matches native
-# digits such as "५०", which int() reads.
-_LINE_RE = re.compile(r"^\s*(?P<drug>[^\s\d].*?)\s*[:\-]?\s*(?P<qty>\d+)\s*$")
+# digits such as "५०", which int() reads. A dash is a separator only when glued to the name
+# ("ORS-5") or spaced out ("ORS - 5"); "ORS -5" is a negative quantity and is rejected.
+_LINE_RE = re.compile(r"^\s*(?P<drug>[^\s\d].*?)\s*(?:[:]|(?<=\S)-|-(?=\s))?\s*(?P<qty>-?\d[\d,.]*?)\.?\s*$")
+# Whole numbers only, with Western (1,000,000) or Indian (1,00,000) digit grouping.
+_QTY_RE = re.compile(r"\d{1,3}(?:,\d{3})+|\d{1,3}(?:,\d{2})*,\d{3}|\d+")
 # Several items on one line ("ORS 50 Zinc 120", or a voice transcript): split after a number
 # when a new name follows, but not before a unit ("Paracetamol 500 mg 30" stays one item).
 _ITEM_SPLIT = re.compile(r"(?<=\d)[\s,;]+(?!(?:mg|mcg|ml|gm?|iu|%)(?:\b|\s|$))(?=[^\d\s,;])", re.IGNORECASE)
@@ -29,14 +32,19 @@ _ITEM_SPLIT = re.compile(r"(?<=\d)[\s,;]+(?!(?:mg|mcg|ml|gm?|iu|%)(?:\b|\s|$))(?
 def from_text(body: str, facility_id: str, reporter_phone_hash: str) -> ExtractionResult:
     raw_message_id = hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
     records: list[StockRecord] = []
+    rejected: list[str] = []
 
     for line in (part for row in body.splitlines() for part in _ITEM_SPLIT.split(row)):
         m = _LINE_RE.match(line)
         if not m:
             continue
-        drug_name, qty = m.group("drug").strip(), int(m.group("qty"))
+        drug_name, raw_qty = m.group("drug").strip(), m.group("qty")
         if not drug_name:
             continue
+        if not _QTY_RE.fullmatch(raw_qty):  # "-5", "10.5", "1,0": never guess a stock count
+            rejected.append(line.strip())
+            continue
+        qty = int(raw_qty.replace(",", ""))
         local = find_local_drug(drug_name)
         if local is not None:
             drug_id, drug_conf = local, 1.0  # exact localized name from backend/i18n.py
@@ -56,7 +64,7 @@ def from_text(body: str, facility_id: str, reporter_phone_hash: str) -> Extracti
 
     if not records:
         overall = Confidence(field_confidence={}, overall=0.0, source=ConfidenceSource.MANUAL)
-        return ExtractionResult(records=[], confidence=overall, transcript=body)
+        return ExtractionResult(records=[], confidence=overall, transcript=body, rejected=rejected)
 
     weakest = min(records, key=lambda r: r.confidence.overall)
-    return ExtractionResult(records=records, confidence=weakest.confidence, transcript=body)
+    return ExtractionResult(records=records, confidence=weakest.confidence, transcript=body, rejected=rejected)

@@ -17,6 +17,7 @@ from backend.runtime import note_confirmed
 from backend.ingest.cards import build_photo_card
 from backend.ingest.extract import from_audio, from_image
 from backend.ingest.gate import apply as gate_apply
+from backend.ingest.media import validate as validate_media
 from backend.ingest.parse_text import from_text
 
 log = logging.getLogger(__name__)
@@ -44,7 +45,14 @@ def handle_stock_message(payload: dict, facility_id: str):
     if payload.get("num_media", 0) > 0 and payload.get("media_url"):
         media_bytes = _download_media(payload["media_url"], settings)
         content_type = payload.get("media_content_type", "")
-        if content_type.startswith("audio/"):
+        try:
+            validate_media(content_type, len(media_bytes), media_bytes)
+        except ProviderError as e:
+            log.warning("media rejected, nurse asked to type it: %s", e)
+            content_type, media_bytes = "", None
+        if media_bytes is None:
+            result = from_text("", facility_id, payload["reporter_phone_hash"])  # nothing usable: the reply asks to type it
+        elif content_type.startswith("audio/"):
             try:
                 result = from_audio(media_bytes, content_type, facility_id, payload["reporter_phone_hash"], payload.get("lang"))
             except ProviderError as e:
@@ -74,6 +82,10 @@ def handle_stock_message(payload: dict, facility_id: str):
 
     if decision.card is not None:
         messaging.send_buttons(payload["from"], decision.card.text, decision.card.buttons)
+    decision.rejected = result.rejected
+    if result.rejected:
+        from backend.i18n import msg
+        messaging.send_text(payload["from"], msg(lang, "bad_quantity", lines="; ".join(result.rejected)))
     return decision
 
 

@@ -6,7 +6,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 
 from backend.domain import Confidence, ConfidenceSource, RecordStatus, StockRecord
@@ -25,6 +25,7 @@ class ExtractionResult:
     records: list[StockRecord]
     confidence: Confidence
     transcript: str | None
+    rejected: list[str] = field(default_factory=list)  # lines with a quantity we will not guess at (negative, decimal)
 
 
 def _to_stock_record(extraction: StockExtraction, facility_id: str, reporter_phone_hash: str, raw_message_id: str, source: ConfidenceSource) -> StockRecord:

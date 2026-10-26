@@ -47,3 +47,10 @@ def test_propose_returns_empty_when_no_risk():
     ]
     orders = propose(facilities, ["ors"], {"ors": False}, {})
     assert orders == []
+
+
+def test_forecasts_refuse_a_horizon_they_do_not_compute():
+    import pytest
+    from ml.forecast.service import latest_forecasts
+    with pytest.raises(ValueError):
+        latest_forecasts(["F1"], ["ors"], horizon_weeks=4, panel=pd.DataFrame())

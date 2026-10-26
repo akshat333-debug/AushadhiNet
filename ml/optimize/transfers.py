@@ -84,13 +84,13 @@ def solve(
     all_infeasible_reasons: list[str] = []
 
     for drug_id, surplus_g in surplus.groupby("drug_id"):
-        deficit_g = deficit[deficit["drug_id"] == drug_id]
+        deficit_g = deficit[(deficit["drug_id"] == drug_id) & (deficit["needed_qty"] >= cfg.min_transfer_units)]
         if deficit_g.empty:
             continue
 
         surplus_g = surplus_g.copy()
         surplus_g["offerable"] = surplus_g["on_hand"].apply(lambda q: available_after_buffer(q, cfg))
-        surplus_g = surplus_g[surplus_g["offerable"] > 0]
+        surplus_g = surplus_g[(surplus_g["offerable"] > 0) & (surplus_g["offerable"] >= cfg.min_transfer_units)]
         if surplus_g.empty:
             continue
 
@@ -127,7 +127,7 @@ def solve(
 
         for arc_idx, (si, di, minutes) in arc_lookup.items():
             qty = smcf.flow(arc_idx)
-            if qty <= 0:
+            if qty <= 0 or qty < cfg.min_transfer_units:  # a sliver left over after the big flows is not worth a trip
                 continue
             srow, drow = surplus_g.iloc[si], deficit_g.iloc[di]
             batches = _fefo_batches(srow.get("batches", []) or [], qty)
@@ -142,6 +142,11 @@ def solve(
                 status=OrderStatus.DRAFT, created_at=datetime.now(timezone.utc), created_by="solver",
             ))
 
+    if cfg.max_sources is not None:
+        by_recipient: dict[tuple, list] = {}
+        for o in orders:
+            by_recipient.setdefault((o.to_facility_id, o.drug_id), []).append(o)
+        orders = [o for group in by_recipient.values() for o in sorted(group, key=lambda o: -o.quantity)[:cfg.max_sources]]
     if orders:
         return orders, None
     if all_infeasible_reasons:

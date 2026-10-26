@@ -10,7 +10,7 @@ from functools import lru_cache
 import pandas as pd
 
 from backend.domain import Facility, FacilityType
-from backend.domain.ids import district_id, facility_id
+from backend.domain.ids import district_id, facility_id, state_code as state_code_of
 
 DEFAULT_CSV = (
     pathlib.Path(__file__).resolve().parents[2]
@@ -25,7 +25,6 @@ _TYPE_MAP = {
     "dis_h": FacilityType.DH,
 }
 
-_STATE_CODE = {"maharashtra": "MH", "haryana": "HR", "assam": "AS", "meghalaya": "ML"}
 
 
 def load_facilities(
@@ -84,7 +83,7 @@ def load_facilities(
             continue  # a handful of source rows carry sentinel/garbage coordinates
 
         state_name = str(row.state_name).strip()
-        state_code = _STATE_CODE.get(state_name.lower(), state_name[:2].upper())
+        state_code = state_code_of(state_name)
         counters[state_code] = counters.get(state_code, 0) + 1
         fac_id = facility_id(state_name, counters[state_code])
 
@@ -133,8 +132,7 @@ def served_facility_index() -> dict[str, Facility]:
 def coverage(csv_path: pathlib.Path | str = DEFAULT_CSV) -> list[dict]:
     """Facility counts per state from the national directory, for the public reach view.
     Read as plain columns (not Facility objects), so it costs a second and a few MB.
-    Keyed by full state name: the two-letter IDs merge some states (Uttar Pradesh and
-    Uttarakhand both give "ut"), which is harmless for the served state but not for counts."""
+    Keyed by full state name, as the directory spells it."""
     df = pd.read_csv(csv_path, usecols=["State Name", "District Name", "Facility Type"], low_memory=False)
     df["kind"] = df["Facility Type"].astype(str).str.strip().str.lower().map(_TYPE_MAP)
     df = df.dropna(subset=["kind"])

@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import logging
 import pathlib
+import re
 import threading
 from datetime import datetime, timezone
 from functools import lru_cache
 
 import pandas as pd
+from pydantic import BaseModel
 
 from backend.domain import Confidence, ConfidenceSource, Grain, RecordStatus, StockRecord
 from backend.providers import factory
@@ -155,21 +157,56 @@ def latest_stock(facility_ids: set[str]) -> dict[tuple[str, str], float]:
     return {k: float(v.on_hand) for k, v in latest_records().items() if k[0] in facility_ids}
 
 
-def propose_for_district(district_id: str) -> list:
+COMMITTED = ("approved", "dispatched", "received")
+MIN_SHIPMENT = 10  # units: below this the live app drafts no transfer (the demo once proposed one glove)
+MAX_SOURCES = 5    # donors per recipient and medicine. Nashik, 2026-10-26: 160 drafts (smallest 1 unit) became 77, keeping 68% of the units
+
+
+def projected_stock(facility_ids: set[str]) -> dict[tuple[str, str], float]:
+    """Latest reported stock, minus units promised away and plus units on their way, for
+    every transfer approved after that report. A nurse's next report already includes the
+    move, so only orders newer than it count. This is what stops the same units being
+    approved twice, or proposed again after approval."""
+    from backend.domain import OrderKind, OrderStatus
+    latest = latest_records()
+    stock = {k: float(v.on_hand) for k, v in latest.items() if k[0] in facility_ids}
+    live = factory.get("store_live")
+    for status in COMMITTED:
+        for o in live.query("orders", {"status": OrderStatus(status)}):
+            if o.kind != OrderKind.DRUG_TRANSFER or o.approved_at is None:
+                continue
+            for fid, sign in ((o.from_facility_id, -1), (o.to_facility_id, 1)):
+                record = latest.get((fid, o.drug_id))
+                if fid in facility_ids and (record is None or o.approved_at > record.reported_at):
+                    stock[(fid, o.drug_id)] = stock.get((fid, o.drug_id), 0.0) + sign * o.quantity
+    return stock
+
+
+def in_scope(district_id: str, scope: str) -> bool:
+    """A scope is a district ("mh/nashik") or a whole state ("mh")."""
+    return district_id == scope or district_id.startswith(f"{scope}/")
+
+
+def propose_for_district(scope: str) -> list:
+    """Transfer drafts for a district, or for a whole state, where surplus in one district can
+    cover a shortage in the next (cross-district orders then need a state officer to approve,
+    backend/api/officer.py). Only facilities with stock history take part."""
     from ml.data.facilities import served_facility_index as facility_index
     from ml.optimize.service import propose
-    facilities = [f for f in facility_index().values() if f.district_id == district_id]
     panel = forecast_panel()
+    known = set(panel["facility_id"].unique())
+    facilities = [f for f in facility_index().values() if in_scope(f.district_id, scope) and f.facility_id in known]
     ids = {f.facility_id for f in facilities}
     drug_ids = sorted(panel.loc[panel["facility_id"].isin(ids), "drug_id"].unique())
     if not drug_ids:
         return []
-    return propose(facilities, drug_ids, {}, latest_stock(ids), panel=panel)
+    from ml.optimize.constraints import SolverConfig
+    return propose(facilities, drug_ids, {}, projected_stock(ids), cfg=SolverConfig(min_transfer_units=MIN_SHIPMENT, max_sources=MAX_SOURCES), panel=panel)
 
 
 def replace_drafts(district_id: str, drafts: list) -> list:
-    """Stores a fresh solver run as the district's drafts; earlier unactioned
-    solver drafts for the district are marked expired so proposals don't pile up."""
+    """Stores a fresh solver run as the scope's drafts; earlier unactioned solver drafts
+    from the same district or state are marked expired so proposals don't pile up."""
     from backend.domain import OrderStatus
     from ml.data.facilities import served_facility_index as facility_index
     index = facility_index()
@@ -178,13 +215,41 @@ def replace_drafts(district_id: str, drafts: list) -> list:
     with ORDER_LOCK:
         expired = {old.order_id: old.model_copy(update={"status": OrderStatus.EXPIRED})
                    for old in live.query("orders", {"status": OrderStatus.DRAFT})
-                   if getattr(index.get(old.from_facility_id), "district_id", None) == district_id}
+                   if in_scope(getattr(index.get(old.from_facility_id), "district_id", ""), district_id)}
         live.put_many("orders", expired)
     live.put_many("orders", {order.order_id: order for order in drafts})
     return drafts
 
 
+class _Seen(BaseModel):
+    at: datetime
+
+
+_inbound_lock = threading.Lock()
+_in_flight: set[str] = set()
+
+
 def handle_inbound(payload: dict) -> None:
+    """Twilio and Pub/Sub both redeliver on timeouts, so each message id is handled once.
+    shortcut: the in-flight set is per process, correct while the backend runs one instance."""
+    sid = payload.get("message_sid")
+    if not sid:
+        return _handle_inbound(payload)
+    live = factory.get("store_live")
+    with _inbound_lock:
+        if sid in _in_flight or live.get("inbound_seen", sid) is not None:
+            log.info("duplicate delivery of %s ignored", sid)
+            return
+        _in_flight.add(sid)
+    try:
+        _handle_inbound(payload)
+        live.put("inbound_seen", sid, _Seen(at=datetime.now(timezone.utc)))  # after success, so a failed attempt can be retried
+    finally:
+        with _inbound_lock:
+            _in_flight.discard(sid)
+
+
+def _handle_inbound(payload: dict) -> None:
     from backend.api.worker import handle_bed_census, handle_stock_message
     from backend.capacity import parse_beds
     from backend.i18n import CONFIRM_WORDS, drug_name, msg
@@ -201,6 +266,10 @@ def handle_inbound(payload: dict) -> None:
     body = (payload.get("body") or "").strip()
     if payload.get("latitude") is not None:
         _check_in(payload, facility_id, body, lang)
+        return
+    received = None if payload.get("num_media") else re.fullmatch(r"\s*RECEIVED\s+([0-9a-f]{8})\s*", body, re.IGNORECASE)
+    if received:
+        _receive(facility_id, received.group(1).lower(), sender, lang)
         return
     beds = None if payload.get("num_media") else parse_beds(body)
     if beds is not None:
@@ -222,12 +291,32 @@ def handle_inbound(payload: dict) -> None:
         messaging.send_text(sender, msg(lang, "confirmed_n", n=len(pending)) if pending else msg(lang, "nothing_pending"))
         return
 
+    # A new report replaces any earlier one still waiting for YES, so YES (or a typed correction)
+    # only ever applies to the card the nurse is looking at.
+    live = factory.get("store_live")
+    for stale in live.query("stock_records", {"facility_id": facility_id, "status": RecordStatus.PENDING}):
+        live.put("stock_records", stale.record_id, stale.model_copy(update={"status": RecordStatus.REJECTED}))
     decision = handle_stock_message(payload, facility_id)
     if decision.confirmed:
         items = ", ".join(f"{drug_name(r.drug_id, lang)} {r.on_hand}" for r in decision.confirmed)
         messaging.send_text(sender, msg(lang, "recorded", facility=facility_id, items=items))
-    elif decision.card is None:
+    elif decision.card is None and not decision.rejected:
         messaging.send_text(sender, msg(lang, "unreadable"))
+
+
+def _receive(facility_id: str, code: str, sender: str, lang: str) -> None:
+    """The destination confirms an approved transfer arrived, by the code in its alert."""
+    from backend.api.officer import mark_received
+    from backend.domain import OrderStatus
+    from backend.i18n import msg
+    live = factory.get("store_live")
+    match = [o for status in (OrderStatus.APPROVED, OrderStatus.DISPATCHED)
+             for o in live.query("orders", {"to_facility_id": facility_id, "status": status}) if o.order_id.startswith(code)]
+    if len(match) != 1:
+        factory.get("messaging").send_text(sender, msg(lang, "receipt_unknown", code=code))
+        return
+    mark_received(match[0])
+    factory.get("messaging").send_text(sender, msg(lang, "receipt_ok", code=code))
 
 
 def _check_in(payload: dict, facility_id: str, body: str, lang: str) -> None:

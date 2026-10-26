@@ -26,8 +26,12 @@ def latest_forecasts(
     using lag-1 naive. LightGBM wins at DISTRICT_MONTH grain but loses here
     (last 13 train weeks: naive 0.220 WAPE, best LightGBM variant 0.239),
     see docs/build-log.md. `on_hand` overrides the ledger's closing stock with live
-    reports when given, so a new WhatsApp report changes the risk.
+    reports when given, so a new WhatsApp report changes the risk; demand itself comes only
+    from the ledger (a report carries stock, not consumption). Only next week is supported:
+    nothing here scales demand to a longer horizon.
     """
+    if horizon_weeks != 1:
+        raise ValueError("latest_forecasts serves next week only (horizon_weeks=1)")
     panel = panel if panel is not None else build_panel(Grain.FACILITY_WEEK)
     subset = panel[panel["facility_id"].isin(facility_ids) & panel["drug_id"].isin(drug_ids)].sort_values("week")
     grouped = subset.groupby(["facility_id", "drug_id"])
@@ -55,7 +59,7 @@ def latest_forecasts(
             forecast_id=str(uuid.uuid4()), grain=Grain.FACILITY_WEEK, entity_id=row.facility_id,
             drug_id=row.drug_id, origin_date=row.origin.date(), horizon=horizon_weeks,
             p50=float(row.p50), p10=float(row.p10), p90=float(row.p90), stockout_prob=float(prob),
-            model="seasonal_naive", model_version="0.1", features_hash="n/a",
+            model="naive_lag1", model_version="0.1", features_hash="n/a",
         )
         for row, prob in zip(stats.itertuples(), probs)
     ]

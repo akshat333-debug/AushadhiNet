@@ -49,6 +49,8 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   const district = user && user.jurisdiction.includes("/") ? user.jurisdiction : PILOT;
+  // A state officer drafts and sees transfers state-wide, so surplus can cross district lines.
+  const scope = user?.role === "state" ? user.jurisdiction : district;
 
   useEffect(() => {
     api.districtSummary().then(setSummary).catch((e) => setError((e as Error).message));
@@ -59,20 +61,26 @@ export default function DashboardPage() {
     if (!ready) return;
     if (user) {
       api.districtFacilities(district).then(setFacilities).catch(() => setFacilities([]));
-      api.listOrders(district).then((os) => setDrafts(os.filter((o) => o.status === "draft"))).catch(() => setDrafts([]));
+      api.listOrders(scope).then((os) => setDrafts(os.filter((o) => o.status === "draft"))).catch(() => setDrafts([]));
     } else {
       api.facilityPoints(PILOT).then((ps) => setPublicPoints(ps.map(([lat, lon]) => ({ lat, lon })))).catch(() => setPublicPoints([]));
     }
-  }, [ready, user, district]);
+  }, [ready, user, district, scope]);
 
-  const row = summary?.find((r) => r.district_id === district) ?? summary?.[0];
+  // No fallback to another district's row: that would show its numbers under this district's name.
+  const row = summary?.find((r) => r.district_id === district);
+  const noData = summary !== null && !row;
   const gaps = useMemo(() => row?.escalate ?? {}, [row]);
   const topDrugs = useMemo(() => Object.entries(row?.at_risk_by_drug ?? {}).slice(0, 8), [row]);
   const maxCount = topDrugs[0]?.[1] ?? 1;
   const reporting = row?.facilities_reporting ?? 0;
 
   const byId = useMemo(() => new Map((facilities ?? []).map((f) => [f.facility_id, f])), [facilities]);
-  const covered = useMemo(() => new Set((drafts ?? []).map((o) => `${o.to_facility_id}|${o.drug_id}`)), [drafts]);
+  // Covered only when the drafted quantities lift the destination above a week of cover, not just because a draft exists.
+  const covered = useMemo(
+    () => new Set((drafts ?? []).filter((o) => (o.dest_cover_after_days ?? 0) >= 7).map((o) => `${o.to_facility_id}|${o.drug_id}`)),
+    [drafts],
+  );
   const none = useMemo(() => new Set<string>(), []);
   const points: MapPoint[] | null = useMemo(
     () => (user ? facilities && facilities.map((f) => {
@@ -94,7 +102,7 @@ export default function DashboardPage() {
   async function propose() {
     setBusy(true);
     try {
-      setDrafts(await api.proposeOrders(district));
+      setDrafts(await api.proposeOrders(scope));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -185,7 +193,9 @@ export default function DashboardPage() {
                     </button>
                   )}
                 </div>
-                {!row ? (
+                {noData ? (
+                  <p className="muted mt-1.5 text-sm" data-testid="no-district-data">{t("no_district_data", { district: place(district) })}</p>
+                ) : !row ? (
                   <Skeleton className="mt-3 h-20" />
                 ) : gapCount ? (
                   <>
@@ -208,7 +218,7 @@ export default function DashboardPage() {
                 <h2 className="h2 flex items-center gap-2">
                   <Truck size={18} weight="duotone" className="text-rose-600 dark:text-rose-400" /> {t("brief_move_title")}
                 </h2>
-                {!drafts || !row ? (
+                {noData ? null : !drafts || !row ? (
                   <Skeleton className="mt-3 h-12" />
                 ) : (
                   <>

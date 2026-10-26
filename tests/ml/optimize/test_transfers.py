@@ -104,3 +104,21 @@ def test_infeasible_instance_returns_empty_list_and_reason_never_partial_illegal
     orders, reason = solve(surplus, deficit, [[0]], ["F2"], SolverConfig())
     assert orders == []
     assert reason is not None
+
+
+def test_minimum_shipment_and_donor_cap_cut_slivers():
+    """Four donors with 8, 9, 30 and 40 spare for one 80-unit need: with a 10-unit minimum and at
+    most 2 donors, only the two real shipments are drafted."""
+    surplus = pd.DataFrame([
+        {"facility_id": f"F{i}", "drug_id": "ors", "on_hand": q, "drug_cold_chain": False, "has_cold_chain": False, "batches": []}
+        for i, q in enumerate((8, 9, 30, 40))
+    ])
+    deficit = pd.DataFrame([{"facility_id": "D", "drug_id": "ors", "needed_qty": 80, "drug_cold_chain": False, "has_cold_chain": False}])
+    drive = [[0] * 5 for _ in range(5)]
+    for i in range(4):
+        drive[i][4] = drive[4][i] = 10 + i
+    cfg = SolverConfig(cover_weeks=None, min_transfer_units=10, max_sources=2)
+    orders, _ = solve(surplus, deficit, drive, ["F0", "F1", "F2", "F3", "D"], cfg)
+    assert sorted((o.from_facility_id, o.quantity) for o in orders) == [("F2", 30), ("F3", 40)]
+    unlimited, _ = solve(surplus, deficit, drive, ["F0", "F1", "F2", "F3", "D"], SolverConfig(cover_weeks=None))
+    assert len(unlimited) == 4

@@ -16,6 +16,12 @@ class SolverConfig:
     # recipient is topped up to cover_weeks x p50. None = legacy one-week stock-out-probability rule.
     # 2.0 chosen on the replay dev window by AC6's metric, stock-out weeks (eval/tune_replay.py).
     cover_weeks: float | None = 2.0
+    # Smallest shipment worth a trip; 0 keeps the frozen replay (AC6) exactly as scored. shortcut:
+    # one unit count for every medicine, until pack sizes per medicine are in the drug master.
+    min_transfer_units: int = 0
+    # At most this many donors per recipient and medicine, keeping the largest shipments: donors
+    # each keep 2 weeks of cover, so without it one clinic drew slivers from 40 donors. None = no cap.
+    max_sources: int | None = None
 
 
 def edge_feasible(

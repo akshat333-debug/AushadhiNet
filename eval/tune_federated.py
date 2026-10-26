@@ -15,7 +15,7 @@ from eval.protocol import load_protocol
 from eval.splits import for_grain
 from ml.data.panel import build as build_panel
 from ml.federated.client import LinearHeadClient
-from ml.federated.experiments import _STATE_CODE_MAP, _global_stats
+from ml.federated.experiments import _STATE_CODE_MAP, _stats
 from ml.federated.partition import by_state
 
 INNER_CUTOFF = pd.Timestamp("2018-09-01")
@@ -31,7 +31,7 @@ def main() -> dict[float, dict[str, float]]:
     held = _STATE_CODE_MAP[protocol.federated_benchmark.held_out_state]
     held_all = by_state(train)[held]
 
-    mean, std = _global_stats(inner_tr, "distributed")
+    mean, std = _stats(list(by_state(inner_tr).values()), "distributed")
     results = {}
     for lam in LAMBDAS:
         local = LinearHeadClient(held, by_state(inner_tr)[held], ridge_lambda=lam)

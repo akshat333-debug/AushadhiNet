@@ -28,4 +28,6 @@ def render(order: TransferOrder, from_facility: Facility, to_facility: Facility,
     lines.append(f"Rationale: {order.rationale}")
     if order.signature:
         lines.append(f"Signature: {order.signature[:16]}...")
+    if order.drug_id:
+        lines.append(f"Destination: when it arrives, reply RECEIVED {order.order_id[:8]}")
     return "\n".join(lines)

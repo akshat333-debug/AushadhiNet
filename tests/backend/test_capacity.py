@@ -27,7 +27,8 @@ def test_check_in_caption_names_the_role():
 
 
 def _send(client, **message):
-    client.post("/simulator/message", json={"from_phone": PHONE, "message_id": "m", **message})
+    import uuid
+    client.post("/simulator/message", json={"from_phone": PHONE, "message_id": uuid.uuid4().hex, **message})
     return client.get("/simulator/outbox", params={"phone": PHONE}).json()[-1]["body"]
 
 
@@ -85,9 +86,28 @@ def test_live_beds_replace_the_baseline_and_drive_referrals(monkeypatch):
     with TestClient(create_app()) as client:
         from backend.runtime import phone_for_facility
         for f, occupied in zip(phcs, (6, 1)):
-            client.post("/simulator/message", json={"from_phone": phone_for_facility(f.facility_id), "body": f"BEDS {occupied}/6", "message_id": "b"})
+            client.post("/simulator/message", json={"from_phone": phone_for_facility(f.facility_id), "body": f"BEDS {occupied}/6", "message_id": f"b{occupied}"})
         beds = client.get("/officer/capacity/mh/nashik", headers=OFFICER).json()["beds"]
     assert get_settings().mode == "local"
     assert (beds["facilities"], beds["occupied"], beds["total"], beds["full_count"]) == (2, 7, 12, 1)
     # 6/6 full: refer down to 80% (4 beds), the other PHC has room up to 80% (4 - 1 = 3)
     assert [(r["from_id"], r["to_id"], r["patients"]) for r in beds["referrals"]] == [(phcs[0].facility_id, phcs[1].facility_id, 2)]
+
+
+def test_one_person_counts_once_stale_beds_are_unknown_and_live_check_ins_replace_the_baseline(monkeypatch):
+    import backend.capacity as capacity
+    from datetime import date, timedelta
+    from ml.data.facilities import served_facility_index
+    f = served_facility_index()["MH-0000221"]
+    monkeypatch.setattr(capacity, "_baseline", lambda district, day: ({}, [
+        {"facility_id": "MH-0000221", "role": StaffRole.MO, "staff": f"mo{i}", "distance_m": 10.0} for i in range(3)]))
+    with TestClient(create_app()) as client:
+        _send(client, latitude=f.lat, longitude=f.lon)
+        _send(client, latitude=f.lat, longitude=f.lon)  # the same phone twice
+        from backend.api.worker import handle_bed_census
+        old = handle_bed_census({"message_sid": "old"}, "MH-0000221", beds_total=30, beds_occupied=30)
+        live = factory.get("store_live")
+        live.put("bed_census", old.record_id, old.model_copy(update={"as_of_date": date.today() - timedelta(days=30)}))
+        summary = client.get("/officer/capacity/mh/nashik", headers=OFFICER).json()
+    assert summary["staff"]["present"] == 1  # one live person; the 3 generated MOs no longer count
+    assert summary["beds"]["facilities"] == 0  # a month-old census is not today's capacity

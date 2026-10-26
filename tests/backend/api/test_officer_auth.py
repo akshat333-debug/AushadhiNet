@@ -2,12 +2,13 @@
 facilities, never from a caller-supplied district."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from fastapi.testclient import TestClient
 
 from backend.app import create_app
-from backend.domain import BatchLine, OrderKind, OrderStatus, TransferOrder
+from backend.domain import (BatchLine, Confidence, ConfidenceSource, OrderKind, OrderStatus, RecordStatus, StockRecord,
+                            TransferOrder)
 from backend.providers import factory
 
 NASHIK_A, NASHIK_B, DHULE, WARDHA = "MH-0000221", "MH-0000223", "MH-0000337", "MH-0000338"
@@ -23,7 +24,13 @@ def _seed_order(order_id="o1", from_id=NASHIK_A, to_id=NASHIK_B):
         drug_id="ors", quantity=10, batches=[BatchLine(batch_no="B1", quantity=10)],
         drive_minutes=25.0, rationale="test", created_at=datetime.now(timezone.utc), created_by="solver",
     )
-    factory.get("store_live").put("orders", order_id, order)
+    live = factory.get("store_live")
+    live.put("orders", order_id, order)
+    live.put("stock_records", f"s-{from_id}", StockRecord(  # the source holds the units, so approval can commit them
+        record_id=f"s-{from_id}", facility_id=from_id, drug_id="ors", reported_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        as_of_date=date(2026, 1, 1), on_hand=100, status=RecordStatus.CONFIRMED,
+        confidence=Confidence(field_confidence={"on_hand": 1.0}, overall=1.0, source=ConfidenceSource.MANUAL),
+        reporter_phone_hash="h", raw_message_id="m"))
     return order
 
 

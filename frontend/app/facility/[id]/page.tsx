@@ -134,6 +134,11 @@ export default function FacilityPage({ params }: { params: Promise<{ id: string 
             })}
           </tbody>
         </table>
+        {detail.forecasts[0] && (
+          <p className="muted border-t border-zinc-100 px-4 py-2.5 text-xs dark:border-zinc-800" data-testid="forecast-note">
+            {t("forecast_note", { date: date(detail.forecasts[0].origin_date) })}
+          </p>
+        )}
       </Reveal>
     </div>
   );

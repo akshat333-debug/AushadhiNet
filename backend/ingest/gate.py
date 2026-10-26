@@ -5,7 +5,7 @@ as confirmed based on a guess.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from backend.domain import RecordStatus
 
@@ -17,6 +17,7 @@ class GateDecision:
     confirmed: list
     pending: list
     card: ConfirmationCard | None
+    rejected: list = field(default_factory=list)  # lines with an unusable quantity, named back to the reporter
 
 
 def apply(records: list, threshold: float, lang: str = "en") -> GateDecision:

@@ -9,8 +9,8 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
       the WhatsApp simulator, every line read, always confirmed by the nurse, local fallback on 429/503.
 - [x] **Deployed on Google Cloud** (2026-10-24): Cloud Run + Firestore + BigQuery + Pub/Sub + KMS +
       Secret Manager + Vertex AI, Terraform-provisioned; 14/14 e2e on the Cloud Run URLs.
-- [ ] Finale day: `--min-instances=1` on the backend during the slot, back to 0 after (cold start
-      measured at 63 s on 2026-10-25).
+- [x] Backend warm (`--min-instances=1`) from 2026-10-26 for the judging window.
+- [ ] **After results (30 Oct): set it back to 0** (`gcloud run services update aushadhinet-backend --min-instances=0 --region asia-south1 --project aushadhinet`), about Rs 5 an hour until then.
 - [x] Render backend suspended (2026-10-26); the Render frontend (submitted link) calls the Cloud Run backend. 8/8 e2e on it.
 - [x] Gemini adds a guarded plain-language note to agent answers on Cloud Run (2026-10-25); the tools still decide every fact and action.
 - [ ] **Real register photos (needs the team):** 15-50 phone photos of handwritten stock lists

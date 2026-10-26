@@ -107,10 +107,10 @@ stock, so approved units are not offered twice. The donor's next WhatsApp report
 the move. Tested in `tests/backend/test_flow_integrity.py`.
 
 **This district has no surplus. Show a neighbouring district supplying it.**
-Sign in as the State officer: proposals then run state-wide, so surplus in Dhule can cover a
-shortage in Nashik, and a district officer cannot approve that order (it touches two districts).
-The live demo has stock data for Nashik only, so this is shown in `tests/backend/test_cross_district.py`,
-not on screen. Say that plainly.
+Sign in as State officer, Maharashtra and propose: proposals run state-wide, so Dhule surplus covers
+Nashik shortages, and a district officer cannot approve those orders (they touch two districts).
+Say plainly that the 15 Dhule facilities carry generated demo stock (mirroring nearby Nashik demand)
+for this demo; only Nashik's ledger is part of the evaluation.
 
 **Which model produced this recommendation, and when was its demand data last updated?**
 Lag-1 naive on the synthetic ledger; the facility page states the ledger week. Stock is live from
@@ -129,3 +129,13 @@ supply fix is the state request. The live app now drafts no shipment under 10 un
 **Show the two facilities receiving the order, then acknowledge receipt.**
 Approve on Orders: both facilities get the signed order in the simulator (pick each facility). The
 destination replies `RECEIVED <code>` from the order message, or the officer taps Mark received.
+
+**Is the agent just keyword matching?**
+For the common questions, yes, on purpose: fixed templates over the same tools answer fast and the same
+way every time. Anything else goes to Gemini function calling over six read-only functions, each
+jurisdiction-checked; an answer with a number no function returned is dropped. Requests to approve or
+send never reach a model.
+
+**Are beds and staff only suggestions?**
+No longer: an officer approves a referral or deputation, and it becomes a KMS-signed order sent to both
+facilities on WhatsApp, like a transfer. Bed and staff numbers per facility type are IPHS-style norms.

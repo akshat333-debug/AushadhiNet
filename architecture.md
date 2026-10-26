@@ -17,7 +17,7 @@ Requirements: `project.md`. Data: `data/README.md`. Layer diagram: `docs/review1
 | Embeddings | Vertex AI text embeddings + Vector Search (numpy cosine search locally) | NLEM drug-name normalisation |
 | Forecasting | `lightgbm` 4.7 plus naive baselines | LightGBM (offline eval), lag-1 naive (served) |
 | Optimisation | `ortools` 9.15 (`SimpleMinCostFlow`, CP-SAT for deputation) | Fast, exact, and Google's own solver |
-| Agent | `google-adk` 2.x | Gemini function calling with tool governance |
+| Agent | `google-genai` function calling (manual loop) + fixed templates | Templates answer common questions predictably; Gemini picks among read-only, jurisdiction-checked functions for the rest |
 | Federation | `flwr` 1.37 client API (FedProx) + a clipping/noise wrapper, run as an in-process simulation; scored runs use noise 0, so no DP guarantee | Standard; a real deployment would run one client per state project |
 | Messaging | Twilio WhatsApp sandbox (`twilio` SDK) | Real WhatsApp in hours; the adapter can be swapped to the Meta Cloud API |
 | Signing | Cloud KMS (HMAC-SHA256 with a local key when offline) | Tamper-evident transfer orders |

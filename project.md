@@ -24,9 +24,9 @@ A nurse reports stock, beds and staff presence by WhatsApp voice or photo in any
 - **FR1 Capture:** WhatsApp voice note, register photo, text; bed census message; geo-tagged staff check-in; IVR (Dialogflow CX) for feature phones; web WhatsApp simulator for demo.
 - **FR2 Extraction:** Chirp 2 transcription; Gemini schema-constrained extraction with per-field confidence; NLEM drug normalisation via embeddings; fields below threshold trigger one-tap confirmation, never silent write.
 - **FR3 Storage:** live state (Firestore) and history (BigQuery); open, versioned ingestion contract; adapters for DVDMS export and HMIS.
-- **FR4 Forecasting:** facility × drug × week consumption and stock-out probability at 2/4/6 weeks; bed-occupancy and staffing-gap forecasts; hierarchical reconciliation; anomaly flags.
+- **FR4 Forecasting:** facility × drug × week consumption and stock-out probability at 2/4/6 weeks; bed-occupancy and staffing-gap forecasts; hierarchical reconciliation; anomaly flags. *(Built: next week only, lag-1 naive at facility-week; the other horizons and the bed/staff forecasts are not built. See state.md.)*
 - **FR5 Optimisation:** min-cost-flow drug transfers (drive time, cold chain, buffers, FEFO, expiry); staff deputation; patient referral to free beds.
-- **FR6 Agent:** Gemini function-calling agent (ADK) answering officer questions and drafting orders; read-only tools plus approval-gated write; every call audit-logged.
+- **FR6 Agent:** Gemini function-calling agent (built with `google-genai` directly, not ADK) answering officer questions and drafting orders; read-only tools plus approval-gated write; every call audit-logged.
 - **FR7 Action:** signed transfer orders with batch manifest; local-language WhatsApp and TTS alerts; route plan (Maps Routes); escalation ladder facility → block → district → state; public aggregate view.
 - **FR8 Federation:** per-state data plane; Flower server; FedProx + DP-SGD; comparison of local-only vs federated vs centralised.
 - **FR9 Dashboard:** map-first national → state → district → facility drill-down; alerts; order queue.

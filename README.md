@@ -23,23 +23,27 @@ compared across facilities in time to act.
 
 ## Fit to the Track 3 brief
 
+Every claim below is one of three kinds: **live** (in the deployed app, on a simulated Nashik pilot:
+real facility list, synthetic stock ledger), **offline** (measured in a frozen evaluation) or
+**planned** (designed, not built).
+
 | The brief asks for | AushadhiNet |
 |---|---|
 | Real-time visibility into **medicine stocks** | Nurses report on WhatsApp by text, voice note (Chirp 2) or register photo (Gemini) in 7 languages; every machine read is confirmed before it is saved |
 | ... **bed availability** | `BEDS 4/6` on the same WhatsApp number; the officer sees facilities at least 90% full |
 | ... **medical personnel attendance** | Staff check in by sharing their WhatsApp location; more than 200 m from the facility is flagged |
-| Across India's **entire PHC network** | All 1,90,609 facilities of the MoHFW directory (36 states and UTs) are loaded; Nashik (760 facilities) is live |
-| **Forecast demand** | Next-week demand and stock-out probability per facility and medicine; model chosen on a frozen, held-out protocol on real HMIS data |
+| Across India's **entire PHC network** | Live for Nashik's 760 facilities. All 1,90,609 facilities of the MoHFW directory (36 states and UTs) are loaded with unique IDs, ready to onboard: listed, not reporting |
+| **Forecast demand** | Live: next-week demand per facility and medicine from the last ledger week (it beat LightGBM at facility-week grain); stock-out probability from live stock. Offline: LightGBM beats naive by 19% on real HMIS district-month data |
 | **Early warnings for stock-outs** | Morning briefing: medicines short district-wide are escalated to the state with quantities; facilities under a week of cover are flagged |
-| **Automated cross-district redistribution** | OR-Tools drafts medicine transfers (officer approves, KMS-signed, both ends alerted), patient referrals to facilities with free beds and staff deputations (CP-SAT) |
-| **Shared predictive modelling across states** | One Google Cloud project per state from one Terraform module; federated training shares model updates, not records |
+| **Automated cross-district redistribution** | Live: OR-Tools drafts medicine transfers within a district, or state-wide across district lines; a cross-district order needs an officer covering both districts. Approval checks the donor still has the units, then signs (Cloud KMS) and alerts both ends; the receiver confirms arrival. Referral and deputation suggestions for beds and staff. The live demo has stock data for one district, so cross-district orders are shown in tests, not on screen |
+| **Shared predictive modelling across states** | Offline: a federated-training simulation (Flower client API, FedProx) on real HMIS data from 4 states shares model updates, not records; it ties local-only training. Planned: one Google Cloud project per state (the Terraform module provisions one) running it for real |
 
 ## How it works
 
 1. **Report**: nurses use WhatsApp, in 7 Indian languages: medicine stock as text, a voice note or a photo of the register; `BEDS 4/6` for beds; a shared location to check in.
-2. **Forecast**: next-week demand and stock-out probability per facility and medicine. On India's real HMIS data (district level) LightGBM beats the naive baseline by 19%; on facility-week stock the last-week baseline scored better, so that is what the app serves.
-3. **Rebalance or escalate**: a medicine short across the whole district goes to the state as a supply request with a quantity. A local imbalance gets OR-Tools transfer drafts from nearby surplus, most urgent first. Full facilities get referral suggestions; roles nobody covers today get deputation suggestions.
-4. **Approve**: a district officer approves each transfer (KMS-signed, both facilities alerted on WhatsApp in their language). A guardrailed AI agent explains risk and drafts proposals but has no tool to approve or send.
+2. **Forecast**: next-week demand per facility and medicine is last ledger week's use (lag-1 naive), which beat LightGBM at this grain; stock-out probability uses live stock. WhatsApp reports update stock and risk, not demand. LightGBM's 19% gain is a separate, district-month benchmark on real HMIS data.
+3. **Rebalance and escalate**: a medicine short across the whole district goes to the state as a supply request with a quantity; transfers can still even it out meanwhile. Local imbalances get OR-Tools transfer drafts from nearby surplus (at least 10 units, at most 5 donors per need), most urgent first; a state officer can run it state-wide, across district lines. Full facilities get referral suggestions; roles nobody covers today get deputation suggestions.
+4. **Approve and receive**: an officer approves each transfer only if the donor still has the units after earlier approvals; it is KMS-signed and both facilities are alerted in their language (a failed alert is retried). The receiver replies `RECEIVED <code>`. A guardrailed AI agent explains risk and drafts proposals but has no tool to approve or send.
 5. **Transparency and reach**: a public view shows district totals with no facility identifiers, and every state in the national directory with what is live there.
 
 | Nurse on WhatsApp | Officer's morning briefing |
@@ -52,15 +56,16 @@ compared across facilities in time to act.
 
 | Metric | Value |
 |---|---|
-| Live pilot | **Nashik: 760 facilities x 16 essential HMIS medicines**, plus beds and staff at its 186 PHCs, CHCs and hospitals |
+| Live demo (simulated pilot: real facility list, synthetic stock) | **Nashik: 760 facilities x 16 essential HMIS medicines**, plus beds and staff at its 186 PHCs, CHCs and hospitals |
 | Ready to onboard (MoHFW facility directory, 2016) | **1,90,609 facilities, 678 districts, 36 states and UTs** |
 | Medicines escalated to the state (short district-wide, with quantities) | **4** |
-| Facilities whose shortage a transfer can fix | **7**, covered by OR-Tools drafts on the live demo |
-| Forecast error vs naive baseline (real HMIS, district level, held-out window) | **0.871 vs 1.078, 19% better** |
-| Stock-out weeks in 26-week replay (simulation) | **-6.0%** |
+| Transfer drafts for Nashik (live) | **77**, each at least 10 units, at most 5 donors per need: 68% of the units an unconstrained run moves in 160 drafts |
+| Forecast error vs naive baseline (offline: real HMIS, district-month, held-out window; not the model the app serves) | **0.871 vs 1.078, 19% better** |
+| 26-week replay (offline simulation, 760 facilities) | Stock-out weeks **-6.0%** (10,774 to 10,131), but unmet units **+0.25%**, fill rate 67.83% to 67.75%, and **14,815 transfers** (about 570 a week). Rebalancing spreads scarcity; it adds no supply |
+| Federation (offline simulation, 4 states, data-poor Meghalaya) | Local-only 0.993, federated 0.996, centralised 1.000 WAPE: **a tie, no accuracy gain** |
 | Gemini register reading (206 synthetic lines, 4 scripts) | **98.1% medicine, 100% quantity** |
 | Languages, end to end (UI, WhatsApp replies, voice, agent) | **7** (en, hi, mr, bn, ta, te, kn) |
-| Automated tests | **373** (356 backend + 17 Playwright E2E, run against the live site) |
+| Automated tests | **392** (375 backend + 17 Playwright E2E, run against the live site) |
 
 ## Try it in 2 minutes
 
@@ -104,7 +109,7 @@ with zero cloud credentials (`docker compose`, or any Docker host via `render.ya
   data.gov.in) gives 190,609 facilities in 678 districts of 36 states and UTs. A district goes live
   with its nurses' WhatsApp numbers: no new hardware, no new app, no data entry.
 - **One Google Cloud project per state** from the same Terraform module, so a state's facility data
-  stays in its own project. Federated training shares model updates, not records (it matches
+  stays in its own project. In simulation, federated training shares model updates, not records (it matches
   local-only accuracy on real HMIS data from 4 states).
 - **Languages are data, not code.** Seven Indian languages today; adding one is a translation file.
   Chirp 2 detects the spoken language, so nurses can mix languages in one voice note.
@@ -116,10 +121,10 @@ with zero cloud credentials (`docker compose`, or any Docker host via `render.ya
 
 | Week | What happens |
 |---|---|
-| 1 | `terraform apply` creates the state's Google Cloud project (37 resources); Cloud Build deploys. This deployment took one day. |
+| 1 | `terraform apply` provisions the state's 37 resources in its Google Cloud project; Cloud Build deploys. This deployment took one day. |
 | 2 | Load one block's nurse WhatsApp numbers; connect a Twilio WhatsApp number and Firebase sign-in for officers (both wired in code). |
 | 3 | Nurses report daily by text, voice or photo; real register photos measure extraction accuracy. |
-| 4 | The officer approves transfers and sends supply requests; compare stock-out weeks with the same weeks last year. |
+| 4 | The officer approves transfers and sends supply requests; compare stock-out weeks with a matched block not yet using it, over the same weeks (year-on-year comparisons mix in demand and reporting changes). |
 
 Docs: [project.md](project.md) (requirements), [architecture.md](architecture.md), [state.md](state.md) (status and results), [docs/build-log.md](docs/build-log.md) (build log).
 
@@ -141,7 +146,7 @@ Requires: Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 20+.
 uv sync --extra ml --extra dev    # add --extra gcp only for cloud mode
 cp .env.example .env               # defaults are all local-mode; no keys needed
 uv run python -m eval.seal_generator   # rebuilds data/synthetic/, fails if hash != protocol.lock
-uv run pytest -q                   # 356 tests, about 4 minutes
+uv run pytest -q                   # 375 tests, about 4 minutes
 uv run uvicorn backend.app:app --reload --port 8000
 
 # 2. Frontend (separate terminal)
@@ -220,10 +225,18 @@ numbers behind these headlines):
   federated 0.996, centralised 1.000; all about 21% better than lag-1 naive (1.261). Federation
   **ties** local-only, it does not beat it. Chosen on an inner split of train (`eval/tune_federated.py`)
   so this validation number was not tuned against. Earlier raw-space run: 1.122 / 1.182 / 1.336.
+  What it is: an in-process simulation, not a deployment across state projects; Meghalaya also trains
+  (a data-poor participating state, not an unseen one); noise multiplier 0, so no differential-privacy
+  guarantee is claimed. Fixed 2026-10-26: the local-only arm scaled validation with validation's own
+  statistics (now its training statistics: 0.9928 became 0.9931), and shared statistics are now
+  built from per-state counts, sums and sums of squares rather than pooled rows (identical numbers).
 - App forecasts (facility × week, synthetic ledger) use lag-1 naive, not LightGBM. On the last 13
   training weeks naive scores WAPE 0.220 vs 0.239 for the best LightGBM variant (residual on
   median-of-3) and 0.307 for the monthly model's settings, so the app uses whichever measured best at its
   grain. (Re-measured after the drug-mapping re-seal; the pre-seal numbers were 0.243 / 0.255 / 0.397.)
+  These facility-week numbers and the replay's `cover_weeks` choice were made before the held-out
+  block was enforced: the facility panel had no block column and the lock spells it differently from
+  the directory, so Trimbak was never excluded. It is enforced from 2026-10-26 (`eval/splits.py`).
 - Stock-out replay (AC6, synthetic Nashik ledger, frozen 26-week test window, 760 facilities x 16
   items): weekly solver transfers cut facility-weeks with a stock-out from **10,774 to 10,131 (-6.0%)**
   versus no lateral transfers. Total unmet demand does not fall (+0.25%): redistribution spreads scarce
@@ -237,7 +250,7 @@ numbers behind these headlines):
 ## Testing
 
 ```bash
-uv run pytest -q                          # backend + ml + eval: 356 tests
+uv run pytest -q                          # backend + ml + eval: 375 tests
 cd frontend && npx playwright test        # frontend e2e, needs both dev servers (playwright.config.ts starts them)
 ```
 
@@ -271,6 +284,14 @@ tests/       mirrors every package above, plus frontend/tests/e2e
 ## What's not done yet
 
 - Local-mode state (stock, orders, outbox) is in memory and resets when the backend restarts.
+- Sign-in is a demo token picker (`DEMO_MODE`); Firebase Auth verification exists in the backend but
+  no officer accounts are set up. Contacts are derived dev numbers, not a verified registry.
+- One backend instance: duplicate-message checks, the order lock and the simulator rate limit are
+  per process. Scaling out needs Firestore transactions for them.
+- Orders go approved, then received; there is no separate dispatch step yet. Batches, expiry and cold
+  chain are modelled in the solver, but the live data has no batch or cold-chain fields, so FEFO is
+  tested in unit tests only. Travel times are straight-line estimates.
+- Demand is not learned from WhatsApp reports: a report carries stock, not consumption.
 
 - The 220 handwriting-extraction evaluation images are **programmatically rendered text**, not real
   photographs of handwritten registers (see `scripts/generate_labelled_registers.py`'s docstring).

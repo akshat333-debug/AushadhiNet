@@ -68,6 +68,14 @@ agent answers, native-script reports). Audited against the Vercel web interface 
   WhatsApp; `/officer/capacity/{district}` and the briefing's "Beds and staff today" card with
   referral and deputation suggestions from the OR-Tools solvers. Demo mode fills unreported
   facilities with a generated baseline (labelled, never stored). 356 backend tests, 17 e2e.
+- Mock-judge fixes (2026-10-26): approval checks the donor's projected stock (approved-since-report
+  transfers counted), proposals use it too; failed alerts are retried by approving again; receipt via
+  `RECEIVED <code>` or Mark received; YES confirms only the latest card; duplicate message ids ignored;
+  media checked by type, size and file signature; quantities like 1,000 read whole, -5 and 10.5 refused
+  with a reply; one person counts once in attendance, census older than a day is unknown; ISO state
+  codes (no ID collisions); live drafts at least 10 units, at most 5 donors per need (160 to 77);
+  state-wide proposals cross district lines; the held-out block is enforced; federated local-only arm
+  scaled with training statistics (0.9931). 375 backend tests.
 - Limits: backend max 1 instance (in-memory simulator outbox; caps cost), frontend max 2, both scale
   to zero. Budget alert Rs 850/month (alerts only).
 - Not configured: Firebase Auth and Twilio (demo sign-in and the simulator stand in), Maps

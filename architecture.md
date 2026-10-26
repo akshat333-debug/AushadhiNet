@@ -18,7 +18,7 @@ Requirements: `project.md`. Data: `data/README.md`. Layer diagram: `docs/review1
 | Forecasting | `lightgbm` 4.7 plus naive baselines | LightGBM (offline eval), lag-1 naive (served) |
 | Optimisation | `ortools` 9.15 (`SimpleMinCostFlow`, CP-SAT for deputation) | Fast, exact, and Google's own solver |
 | Agent | `google-adk` 2.x | Gemini function calling with tool governance |
-| Federation | `flwr` 1.37 (FedProx strategy) + a DP clipping/noise wrapper | Standard, runs locally and on Vertex |
+| Federation | `flwr` 1.37 client API (FedProx) + a clipping/noise wrapper, run as an in-process simulation; scored runs use noise 0, so no DP guarantee | Standard; a real deployment would run one client per state project |
 | Messaging | Twilio WhatsApp sandbox (`twilio` SDK) | Real WhatsApp in hours; the adapter can be swapped to the Meta Cloud API |
 | Signing | Cloud KMS (HMAC-SHA256 with a local key when offline) | Tamper-evident transfer orders |
 | Infra | Docker Compose (local), Cloud Run, Terraform, Cloud Build | One command locally; serverless in the cloud |
@@ -49,7 +49,7 @@ ml/
   data/             HMIS parsers (M19 stock flows, M10/M11 disease), facility graph, weather
   forecast/         baselines, features, lgbm, stockout, service
   optimize/         min-cost-flow transfers, deputation, referral
-  federated/        flower client/server, fedprox + DP, experiments
+  federated/        flower client/server, fedprox, clipping/noise wrapper, experiments (simulation)
 eval/               protocol.lock (splits, seeds, generator hash), tuning (val/dev only), scoring runners, replay simulator, reports
 frontend/           Next.js app
 infra/              docker-compose.yml, Dockerfiles, terraform/ (state module), cloudbuild.yaml
@@ -67,7 +67,7 @@ docs/               review1/, api/, finale/ (demo script, Q&A), pitch/ (deck, vi
 6. Officer PWA and agent: queries go through read-only tools; `propose_order` can only create drafts. Only a human click on `POST /officer/orders/{id}/approve` (role and jurisdiction checked against the order's own facilities) moves an order to `approved`.
 7. Beds and staff: `BEDS 4/6` writes a `BedCensus`; a shared location writes a `CheckIn` with `geofence_ok` (200 m). `GET /officer/capacity/{district}` runs the referral solver on facilities at least 90% full and the CP-SAT deputation solver on roles nobody covers today; these are suggestions, not orders.
 8. Approved order → signed → alerts sent in the recipient's language plus a route plan → escalation timer starts → dashboard updates in real time.
-9. Federation (offline job): each state client trains on its own partition → sends clipped, noised updates → Flower server aggregates with FedProx → global model is sent back.
+9. Federation (offline simulation, not deployed): each state client trains on its own partition → sends model updates (clipping and noise available, noise 0 in scored runs) → the server aggregates with FedProx → the global model is sent back. The app's forecasts do not use it.
 
 ## 5. Evaluation integrity (enforced in code)
 - `eval/protocol.lock` fixes the time windows, the held-out district (Dhule) and held-out state (Meghalaya), the seeds and the generator's content hash. It is committed before any file under `ml/forecast/` exists.
@@ -86,7 +86,7 @@ docs/               review1/, api/, finale/ (demo script, Q&A), pitch/ (deck, vi
 | CSRF | Bearer-token API (no cookies) for officer routes |
 | Personal data | Staff names and phone numbers are stored per state only. The public view is aggregate-only. Phone numbers are hashed in logs |
 | Order tampering | Orders are signed; signatures are verified on delivery and display |
-| Data sovereignty | One GCP project per state; only DP-noised updates leave it; VPC Service Controls perimeter (Terraform) |
+| Data sovereignty | Planned: one GCP project per state, with only model updates leaving it. Today one project serves the demo |
 | Dependencies | Pinned lockfiles (`uv.lock`, `package-lock.json`); `pip-audit` and `npm audit` in CI |
 | Audit | Every agent tool call, approval and alert goes to an append-only audit table |
 

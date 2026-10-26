@@ -110,7 +110,10 @@ export default function OrderCard({
             <Check size={14} weight="bold" /> {t("mark_received")}
           </button>
         )}
-        {order.status === "draft" && (
+        {order.status === "draft" && order.can_approve === false && (
+          <span className="muted text-xs" data-testid="needs-state-officer">{t("needs_state_officer")}</span>
+        )}
+        {order.status === "draft" && order.can_approve !== false && (
           <div className="flex gap-2">
             <button
               className={`${confirming ? "bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-500 dark:text-zinc-950" : ""} btn-danger px-3 py-1.5 text-xs`}

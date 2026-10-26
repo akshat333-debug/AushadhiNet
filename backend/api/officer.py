@@ -44,6 +44,14 @@ def _order_districts(order: TransferOrder) -> set[str]:
     return districts
 
 
+def _covers(user: AuthUser, district: str) -> bool:
+    try:
+        check_jurisdiction(user, district)
+        return True
+    except HTTPException:
+        return False
+
+
 def _authorised_order(order_id: str, user: AuthUser) -> TransferOrder:
     order = factory.get("store_live").get("orders", order_id)
     if order is None:
@@ -108,6 +116,7 @@ def list_orders(district_id: str, user: AuthUser = Depends(OFFICER)):
                 "src_on_hand_after": None if src_units is None else src_units - (o.quantity or 0) * draft,
                 "src_cover_after_days": cover(src, None if src_units is None else src_units - (o.quantity or 0) * draft),
                 "report_age_days": None if report is None else (now - report.reported_at).days,
+                "can_approve": all(_covers(user, d) for d in _order_districts(o)),
                 "district_gap": o.drug_id in gaps.get(index[o.to_facility_id].district_id if o.to_facility_id in index else "", {})}
 
     rows = [enrich(o) for o in orders]

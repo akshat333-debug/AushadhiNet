@@ -12,7 +12,8 @@ test.describe("Order approval", () => {
     await page.goto("/orders");
     await page.getByTestId("propose").click();
     await expect(page.getByTestId("notice")).toContainText("draft transfer(s) proposed", { timeout: 60_000 });
-    const approve = page.locator('[data-testid^="approve-"]').first();
+    // Cross-district drafts (from a state-wide proposal) show no Approve button to a district officer.
+    const approve = page.locator('[data-testid^="order-card-"] [data-testid^="approve-"]').first();
     const orderId = (await approve.getAttribute("data-testid"))!.replace("approve-", "");
     await approve.click();
     await expect(page.getByTestId(`order-card-${orderId}`)).toHaveCount(0);

@@ -42,7 +42,8 @@ def test_state_proposal_crosses_the_district_line_and_needs_a_state_officer(monk
     drafts = client.post("/officer/propose/mh", headers=state).json()
     assert [(d["from_facility_id"], d["to_facility_id"]) for d in drafts] == [(DHULE, NASHIK)]
     order_id = drafts[0]["order_id"]
-    assert order_id in [o["order_id"] for o in client.get("/officer/orders/mh/nashik", headers=district).json()]
+    listed = {o["order_id"]: o for o in client.get("/officer/orders/mh/nashik", headers=district).json()}
+    assert listed[order_id]["can_approve"] is False  # the district officer sees it, without an Approve button
 
     assert client.post(f"/officer/orders/{order_id}/approve", headers=district).status_code == 403
     assert client.post(f"/officer/orders/{order_id}/approve", headers=state).status_code == 200

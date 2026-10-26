@@ -88,7 +88,7 @@ export default function OrdersPage() {
   const draftOrders = (orders ?? []).filter((o) => o.status === "draft");
   const units = draftOrders.reduce((a, o) => a + (o.quantity ?? 0), 0);
   const facilities = new Set(draftOrders.flatMap((o) => [o.from_facility_id, o.to_facility_id])).size;
-  const top = draftOrders.slice(0, TOP);
+  const top = draftOrders.filter((o) => o.can_approve !== false).slice(0, TOP);
 
   function approveTop() {
     if (!confirmTop) return setConfirmTop(true);

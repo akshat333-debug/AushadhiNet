@@ -58,6 +58,7 @@ export interface TransferOrder {
   dest_cover_after_days?: number | null; // counting every draft to this destination
   src_on_hand_after?: number | null;
   report_age_days?: number | null;
+  can_approve?: boolean; // false for a cross-district order this officer does not fully cover
   district_gap?: boolean;
 }
 

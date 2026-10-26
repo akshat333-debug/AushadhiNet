@@ -203,6 +203,7 @@ const en = {
   no_district_data: "No reports from {district} yet.",
   forecast_note: "Demand: units used in the last ledger week ({date}), carried forward one week. Live reports update stock and risk, not demand.",
   agent_q_capacity: "Which facilities are full today?",
+  needs_state_officer: "Crosses a district line: a state officer approves",
 };
 
 export type Messages = typeof en;

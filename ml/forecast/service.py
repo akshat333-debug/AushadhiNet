@@ -21,13 +21,16 @@ def latest_forecasts(
     horizon_weeks: int = 1,
     panel: pd.DataFrame | None = None,
     on_hand: dict[tuple[str, str], float] | None = None,
+    recent_use: dict[tuple[str, str], tuple[float, object]] | None = None,
 ) -> list[Forecast]:
     """Next-week facility x drug demand forecasts at FACILITY_WEEK grain,
     using lag-1 naive. LightGBM wins at DISTRICT_MONTH grain but loses here
     (last 13 train weeks: naive 0.220 WAPE, best LightGBM variant 0.239),
     see docs/build-log.md. `on_hand` overrides the ledger's closing stock with live
-    reports when given, so a new WhatsApp report changes the risk; demand itself comes only
-    from the ledger (a report carries stock, not consumption). Only next week is supported:
+    reports when given, so a new WhatsApp report changes the risk. `recent_use` maps
+    (facility, drug) to (units used per week, since date), measured from the facility's own
+    consecutive reports (backend/runtime.py): where present it replaces the ledger's last
+    week as next week's demand, so a surge in use raises the risk. Only next week is supported:
     nothing here scales demand to a longer horizon.
     """
     if horizon_weeks != 1:
@@ -45,6 +48,10 @@ def latest_forecasts(
         return []
 
     stats["spread"] = stats["spread"].fillna(0.0)
+    use = recent_use or {}
+    stats["reported"] = [(f, d) in use for f, d in zip(stats["facility_id"], stats["drug_id"])]
+    stats["p50"] = [use[(f, d)][0] if r else p for f, d, r, p in zip(stats["facility_id"], stats["drug_id"], stats["reported"], stats["p50"])]
+    stats["origin"] = [pd.Timestamp(use[(f, d)][1]) if r else o for f, d, r, o in zip(stats["facility_id"], stats["drug_id"], stats["reported"], stats["origin"])]
     stats["p10"] = (stats["p50"] - 1.2816 * stats["spread"]).clip(lower=0.0)
     stats["p90"] = stats["p50"] + 1.2816 * stats["spread"]
     live = on_hand or {}
@@ -59,7 +66,7 @@ def latest_forecasts(
             forecast_id=str(uuid.uuid4()), grain=Grain.FACILITY_WEEK, entity_id=row.facility_id,
             drug_id=row.drug_id, origin_date=row.origin.date(), horizon=horizon_weeks,
             p50=float(row.p50), p10=float(row.p10), p90=float(row.p90), stockout_prob=float(prob),
-            model="naive_lag1", model_version="0.1", features_hash="n/a",
+            model="reported_use" if row.reported else "naive_lag1", model_version="0.1", features_hash="n/a",
         )
         for row, prob in zip(stats.itertuples(), probs)
     ]

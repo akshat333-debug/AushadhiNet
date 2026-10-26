@@ -89,11 +89,42 @@ def test_the_same_units_cannot_be_approved_twice():
         _order("o-b", 50)
         assert client.post("/officer/orders/o-a/approve", headers=OFFICER).status_code == 200
         response = client.post("/officer/orders/o-b/approve", headers=OFFICER)
-        assert response.status_code == 409 and "has 10 units" in response.json()["detail"]
+        assert response.status_code == 409 and "holds 10 units" in response.json()["detail"]
         from backend.runtime import projected_stock
         assert projected_stock({SRC, DST})[(SRC, "ors")] == 10  # what the next proposal sees
-        _send(client, body="ORS 10")  # the nurse's next report already reflects the transfer
+        _send(client, body="ORS 60")  # an unchanged count before the units leave: still reserved
         assert projected_stock({SRC})[(SRC, "ors")] == 10
+        client.post("/officer/orders/o-a/dispatched", headers=OFFICER)
+        _send(client, body="ORS 10")  # counted after they left: the report already excludes them
+        assert projected_stock({SRC})[(SRC, "ors")] == 10
+
+
+def test_a_new_count_before_dispatch_does_not_free_promised_units():
+    """Judge's case: 100 reported, 80 approved, 100 reported again before dispatch, another 80 asked."""
+    with TestClient(create_app()) as client:
+        _send(client, body="ORS 100")
+        _order("o-1", 80)
+        assert client.post("/officer/orders/o-1/approve", headers=OFFICER).status_code == 200
+        _send(client, body="ORS 100")
+        _order("o-2", 80)
+        assert client.post("/officer/orders/o-2/approve", headers=OFFICER).status_code == 409
+
+
+def test_units_on_their_way_cannot_be_sent_onward_before_they_arrive():
+    """Judge's case: B holds nothing, 80 approved to B, B asked to send 60 on to C."""
+    with TestClient(create_app()) as client:
+        _send(client, body="ORS 100")
+        _send(client, phone=phone_for_facility(DST), body="ORS 0")
+        _order("o-in", 80)
+        assert client.post("/officer/orders/o-in/approve", headers=OFFICER).status_code == 200
+        factory.get("store_live").put("orders", "o-on", TransferOrder(
+            order_id="o-on", kind=OrderKind.DRUG_TRANSFER, from_facility_id=DST, to_facility_id=SRC, drug_id="ors",
+            quantity=60, batches=[BatchLine(batch_no="B1", quantity=60)], drive_minutes=10.0,
+            rationale="test", created_at=datetime.now(timezone.utc), created_by="solver"))
+        assert client.post("/officer/orders/o-on/approve", headers=OFFICER).status_code == 409
+        from backend.runtime import projected_stock
+        assert projected_stock({DST})[(DST, "ors")] == 80  # planning still sees what is on its way
+        assert projected_stock({DST}, incoming=False)[(DST, "ors")] == 0
 
 
 def test_failed_alerts_leave_the_order_approved_and_retry_resends(monkeypatch):
@@ -143,3 +174,79 @@ def test_voice_note_numbers_survive_the_outbox_cap(monkeypatch):
     for i in range(5):
         m.send_text("p", f"t{i}")
     assert [s.seq for s in m.sent] == [2, 3, 4]
+
+
+def test_source_confirms_dispatch_on_whatsapp():
+    with TestClient(create_app()) as client:
+        _send(client, body="ORS 60")
+        _order("bcdef123-order", 20)
+        assert client.post("/officer/orders/bcdef123-order/approve", headers=OFFICER).status_code == 200
+        assert _send(client, body="SENT bcdef123")[-1].startswith("Dispatch recorded for transfer bcdef123")
+        stored = factory.get("store_live").get("orders", "bcdef123-order")
+        assert stored.status == OrderStatus.DISPATCHED and stored.dispatched_at is not None
+
+
+def test_saved_report_with_a_failed_reply_is_not_saved_twice_on_redelivery(monkeypatch):
+    """Judge's case: the record is saved, the acknowledgement fails, the message comes again."""
+    from backend.providers import messaging_local
+    with TestClient(create_app()) as client:
+        real = messaging_local.LocalMessaging.send_text
+        calls = {"n": 0}
+
+        def flaky(self, to, body):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise RuntimeError("WhatsApp down")
+            return real(self, to, body)
+        monkeypatch.setattr(messaging_local.LocalMessaging, "send_text", flaky)
+        from backend.runtime import handle_inbound
+        payload = {"from": PHONE, "reporter_phone_hash": "h", "body": "ORS 88", "num_media": 0, "message_sid": "SM-flaky"}
+        with pytest.raises(RuntimeError):
+            handle_inbound(payload)
+        handle_inbound(payload)
+        assert sum(r.on_hand == 88 for r in factory.get("store_live").query("stock_records", {"facility_id": SRC})) == 1
+
+
+def test_one_card_shows_every_item_waiting_for_yes():
+    with TestClient(create_app()) as client:
+        card = _send(client, body="Zync 40\nParacetmol 80")[-1]
+        assert "40" in card and "80" in card
+
+
+def test_a_same_day_bed_correction_wins_whatever_order_the_store_returns(monkeypatch):
+    from backend import capacity
+    from backend.capacity import today
+    from backend.domain import BedCensus, Confidence, ConfidenceSource
+    from datetime import timedelta
+    now = datetime.now(timezone.utc)
+    rows = [BedCensus(record_id=f"b{i}", facility_id=SRC, as_of_date=today(), reported_at=now + timedelta(minutes=i),
+                      beds_total=6, beds_occupied=occ, status=RecordStatus.CONFIRMED, raw_message_id="m",
+                      confidence=Confidence(field_confidence={}, overall=1.0, source=ConfidenceSource.MANUAL))
+            for i, occ in enumerate((6, 0))]
+    for order in (rows, rows[::-1]):
+        class Store:
+            def query(self, collection, filters):
+                return list(order) if collection == "bed_census" else []
+        monkeypatch.setattr(capacity.factory, "get", lambda name: Store())
+        assert capacity._live(today())[0][SRC] == (0, 6)
+
+
+def test_reported_use_moves_demand_and_forecast():
+    """Two counts a day apart, 70 used: next week's demand is the facility's own use, not the ledger's."""
+    from datetime import timedelta
+    from backend.domain import Confidence, ConfidenceSource, StockRecord
+    from backend.runtime import latest_records, note_confirmed, recent_use, weekly_demand
+    with TestClient(create_app()):
+        latest_records()
+        start = datetime.now(timezone.utc)
+        for days, on_hand in ((0, 100), (1, 90)):
+            note_confirmed(StockRecord(
+                record_id=f"u{days}", facility_id=SRC, drug_id="ors", reported_at=start + timedelta(days=days),
+                as_of_date=(start + timedelta(days=days)).date(), on_hand=on_hand, status=RecordStatus.CONFIRMED,
+                confidence=Confidence(field_confidence={"on_hand": 1.0}, overall=1.0, source=ConfidenceSource.MANUAL),
+                reporter_phone_hash="nurse", raw_message_id=f"u{days}"))
+        assert recent_use()[(SRC, "ors")][0] == pytest.approx(70)
+        assert weekly_demand()[(SRC, "ors")] == pytest.approx(70)
+        from backend.agent.tools import get_forecast
+        f = get_forecast(SRC, "ors")[0]
+        assert f.model == "reported_use" and f.p50 == pytest.approx(70)

@@ -21,10 +21,10 @@ export default function CapacityCard({ district }: { district: string }) {
   }, [district]);
 
   // Approving signs the order and sends it to both facilities on WhatsApp, like a transfer.
-  async function approve(kind: "referral" | "deputation", fromId: string, toId: string) {
-    setBusy(`${kind}-${fromId}-${toId}`);
+  async function approve(kind: "referral" | "deputation", fromId: string, toId: string, role?: string) {
+    setBusy(`${kind}-${fromId}-${toId}-${role ?? ""}`);
     try {
-      await api.approveCapacity(kind, fromId, toId);
+      await api.approveCapacity(kind, fromId, toId, role);
       setCap(await api.capacity(district));
     } catch (e) {
       setError((e as Error).message);
@@ -32,7 +32,7 @@ export default function CapacityCard({ district }: { district: string }) {
       setBusy(null);
     }
   }
-  const action = (kind: "referral" | "deputation", r: { from_id: string; to_id: string; order_id?: string | null; minutes: number }) =>
+  const action = (kind: "referral" | "deputation", r: { from_id: string; to_id: string; order_id?: string | null; minutes: number; role?: string }) =>
     r.order_id ? (
       <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-teal-700 dark:text-teal-400" data-testid={`${kind}-approved`}>
         <SealCheck size={14} weight="fill" /> {t("status_approved")}
@@ -43,7 +43,7 @@ export default function CapacityCard({ district }: { district: string }) {
         <button
           className="btn-secondary px-2 py-0.5 text-xs"
           disabled={busy !== null}
-          onClick={() => approve(kind, r.from_id, r.to_id)}
+          onClick={() => approve(kind, r.from_id, r.to_id, r.role)}
           data-testid={`approve-${kind}`}
         >
           <Check size={12} weight="bold" /> {t("approve")}

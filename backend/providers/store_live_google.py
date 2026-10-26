@@ -9,8 +9,9 @@ from backend.providers.base import ProviderError
 
 def _collection_models() -> dict[str, type[BaseModel]]:
     """Firestore stores plain JSON; callers expect the same models the local store returns."""
+    from backend.action.alerts import VoiceClip
     from backend.domain import AuditEvent, BedCensus, CheckIn, Contact, Facility, StockRecord, TransferOrder
-    return {
+    return {"voice_clips": VoiceClip,
         "audit_events": AuditEvent, "bed_census": BedCensus, "checkins": CheckIn, "contacts": Contact,
         "facilities": Facility, "orders": TransferOrder, "stock_records": StockRecord,
     }

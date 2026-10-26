@@ -1,11 +1,11 @@
 [
  [
   "intro",
-  "India's primary health centres still run out of basic medicines like O R S, zinc and iron tablets, often while a clinic a few kilometres away has spare stock. AushadhiNet gives a district officer a daily answer: what to ask the state for, and what to move between facilities. It runs on Google Cloud, and is demonstrated on all seven hundred and sixty health facilities of Nashik district."
+  "India's primary health centres still run out of basic medicines like O R S, zinc and iron tablets, often while a clinic a few kilometres away has spare stock. AushadhiNet gives district and state officers a daily answer: what to ask for, what to move, and where beds and staff are short. It runs on Google Cloud, demonstrated on all seven hundred and sixty health facilities of Nashik district."
  ],
  [
   "sim",
-  "Nurses don't need a new app. They report stock on WhatsApp. A typed line with two medicines is read and recorded at once. She can also just speak. Google's Chirp model hears her Hindi voice note, and the items wait for her yes. Or she photographs the register, and Gemini reads every line. A model can be confidently wrong, so nothing heard or read is saved until the nurse confirms."
+  "Nurses don't need a new app. They report on WhatsApp. A typed line is read and recorded at once. She can also speak: Google's Chirp model hears her Hindi voice note. Or she photographs the register, and Gemini reads every line. A model can be confidently wrong, so the card shows every medicine and quantity it read, and nothing is saved until she replies yes. Beds are one line, BEDS four of six, and staff check in by sharing their location."
  ],
  [
   "lang",
@@ -13,26 +13,30 @@
  ],
  [
   "briefing",
-  "The district officer starts the morning here. Four medicines are short across the whole district. Moving stock cannot fix that, so AushadhiNet drafts the supply request to the state, with quantities, ready to copy. Everything else is a local imbalance that a neighbour can cover."
+  "The officer's morning starts here. Four medicines are short across the whole district: AushadhiNet drafts the supply request to the state, with quantities, ready to copy. Everything else is a local imbalance a neighbour can cover. Demand comes from each facility's own counts once it has reported twice, so a surge in use raises the risk the same day."
  ],
  [
   "map",
-  "Google O R Tools drafts transfers from nearby surplus. This is today. And this is after the drafted transfers: the pulsing rings are the facilities they fix."
+  "Google O R Tools drafts transfers from nearby surplus, at least ten units and at most five donors per need. This is today, and this is after the drafts. Signed in as the state officer, the same run crosses district lines: here surplus in Dhule, labelled demo stock, is drafted to Nashik, and only an officer covering both districts can approve it."
  ],
  [
   "orders",
-  "Orders are sorted by how soon a facility runs out. A human always decides. The officer approves the most urgent ones, each order is signed with Cloud K M S, and both facilities are told on WhatsApp."
+  "A human always decides. Approval checks the donor physically holds the units and has not promised them already. Each order is signed with Cloud K M S and both facilities are told on WhatsApp, with a voice note. The donor replies SENT with the order code, the receiver replies RECEIVED, and until the units leave they stay reserved, whatever the donor reports meanwhile. If an alert fails, the card says so and offers resend."
+ ],
+ [
+  "capacity",
+  "Beds and staff work the same way. Facilities at least ninety percent full get referral suggestions; a role nobody covers today gets a deputation from a facility with spare staff. Approving one makes a signed order too, with the role and head count inside the signature."
  ],
  [
   "agent",
-  "The officer can also ask the agent why a facility is at risk. It answers from live stock and forecasts, and Gemini can add a plain language note, checked so it never invents a number. Asked to ignore its rules and approve everything, it refuses. It has no approve or send tool at all."
+  "The officer can ask the agent about any facility by name. Common questions use fixed templates; comparisons go to Gemini function calling over read only tools. An answer is kept only if a tool answered and every number came from a tool. Asked to ignore its rules and approve everything, it refuses: it has no approve or send tool at all."
  ],
  [
   "public",
-  "Citizens see district totals, never a facility name. And every state is already in the system: one lakh ninety thousand facilities in six hundred and seventy eight districts, from the national directory. A district goes live with its nurses' WhatsApp numbers, and each state gets its own Google Cloud project from the same Terraform."
+  "Citizens see district totals, never a facility name. Every state is already listed: one lakh ninety thousand facilities from the national directory. A district goes live with its nurses' numbers, an opening count and its issue history. And states can learn together without sharing rows: two state nodes train one shared model, and our API serves it."
  ],
  [
   "outro",
-  "On real government health data, our forecaster beats the naive baseline by nineteen percent at district level, and in a twenty six week replay, rebalancing cut stock out weeks by six percent without adding supply. AushadhiNet runs on Google Cloud Run, with Firestore, BigQuery, Pub Sub, Cloud K M S, Vertex A I, Gemini and Chirp. Next is a four week pilot in one Nashik block. Earlier warnings, smarter sharing, people in control. Thank you."
+  "Honest numbers. On real government data our forecaster beats the naive baseline by nineteen percent at district level. In a twenty six week replay of the policy we deploy, stock out weeks fall by about five percent, with about two hundred and thirty transfers a week, and unmet demand rises slightly: rebalancing spreads scarcity, it does not add supply. Federation ties local training; its value is privacy, not accuracy. Next is a four week pilot in one Nashik block, compared with a matched block. Earlier warnings, smarter sharing, people in control. Thank you."
  ]
 ]

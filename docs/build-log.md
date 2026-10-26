@@ -335,3 +335,36 @@ A mock judge scored 58/100 and probed the operational flow. Confirmed and fixed:
 - Simulator plays voice alerts (`GET /simulator/media`).
 - Cloud Build keeps the backend warm via `_BACKEND_MIN_INSTANCES`; set back to 0 after results.
 - Screenshots retaken from the production build; deck slides 1, 5, 6, 7 and 9 updated.
+
+## Third mock-judge review (2026-10-26, 70/100)
+
+Reproduced and fixed, each with a test in `tests/backend/test_flow_integrity.py`, `test_pilot_path.py`
+or `agent/test_function_calling.py`:
+- 100 reported, 80 approved, 100 reported again before dispatch, another 80 approved: 160 promised
+  against 100. Reservations now last until the source replies `SENT <code>`; a count before that still
+  holds them.
+- A facility with 0 on hand and 80 on its way could approve 60 onward. Approval now counts only
+  physical stock; planning still sees the incoming units.
+- The agent's "latest stock" listed yesterday's 100, today's 20 and a pending 999. `get_stock` is now
+  the latest confirmed count; history is a separate tool.
+- The number guard accepted "999 units" because 999 was in the question, with no tool called. An
+  answer now needs a tool result, and every number must come from one.
+- Deputation role and head count lived in the unsigned rationale; editing them kept the signature
+  valid. They are now order fields inside the signed payload (older orders still verify).
+- Same-day bed reports were picked by store order; they now carry a timestamp.
+- Two concurrent proposals both stayed active; the insert is now inside the lock.
+- A saved report whose reply failed was saved again on redelivery; record ids now come from the
+  message id.
+- A two-item text report showed only the first item on its card; the card lists every item with its
+  quantity.
+- After a failed alert and a reload, the card offered only Mark received; it now says the alerts did
+  not go out and offers Resend.
+- The after-transfers map read the raw proposal response (no projected cover); it now reloads the
+  enriched order list.
+
+Built: demand from each facility's own counts (`recent_use`); `SENT <code>` and Mark sent; numbered
+replies (`1` = YES); alerts only to registered numbers outside demo mode; voice alerts served at
+`/public/voice/...` for Twilio; "no demand history yet" on facilities without a ledger; units and
+scenario dates on order cards; replay of the deployed policy (-4.9% stock-out weeks, +0.41% unmet,
+6,016 transfers vs 14,815); a two-process federation demo whose model the API serves (WAPE 0.90 on
+Meghalaya's latest validation month).

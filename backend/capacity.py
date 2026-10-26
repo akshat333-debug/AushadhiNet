@@ -90,12 +90,17 @@ def _baseline(district_id: str, day: date) -> tuple[dict, list]:
     return beds, checkins
 
 
+def _census_order(r) -> tuple:
+    """Oldest first, so the newest report of a facility wins; same-day reports by their time."""
+    return r.as_of_date, r.reported_at or datetime.min.replace(tzinfo=IST)
+
+
 def _live(day: date) -> tuple[dict, list]:
     """Beds and today's check-ins reported on WhatsApp. shortcut: reads both collections in
     full, fine while they hold only real reports (the baseline is never stored); filter by
     date in the query once a district reports daily."""
     live = factory.get("store_live")
-    beds = {r.facility_id: (r.beds_occupied, r.beds_total) for r in sorted(live.query("bed_census", {}), key=lambda r: r.as_of_date)
+    beds = {r.facility_id: (r.beds_occupied, r.beds_total) for r in sorted(live.query("bed_census", {}), key=_census_order)
             if (day - r.as_of_date).days <= FRESH_DAYS}
     # One person checking in twice is one person: their latest check-in today counts.
     latest = {c.staff_id_hash: c for c in sorted(live.query("checkins", {}), key=lambda c: c.at) if c.at.astimezone(IST).date() == day}
@@ -152,7 +157,7 @@ def district_capacity(district_id: str) -> dict:
     nobody = [fid for fid in roster if not any(c["facility_id"] == fid for c in on_site)]
     # Suggestions an officer already approved today carry their order, so the card shows them as done.
     from backend.domain import OrderKind, OrderStatus
-    done = {(o.kind, o.from_facility_id, o.to_facility_id): o.order_id
+    done = {(o.kind, o.from_facility_id, o.to_facility_id, o.role): o.order_id
             for status in (OrderStatus.APPROVED, OrderStatus.RECEIVED)
             for o in factory.get("store_live").query("orders", {"status": status})
             if o.kind in (OrderKind.REFERRAL, OrderKind.DEPUTATION) and o.approved_at and o.approved_at.astimezone(IST).date() == day}
@@ -167,7 +172,7 @@ def district_capacity(district_id: str) -> dict:
             "full_count": len(full),
             "referrals": [{"from_id": r.from_facility_id, "from_name": name(r.from_facility_id), "to_id": r.to_facility_id,
                            "to_name": name(r.to_facility_id), "patients": r.patient_count, "minutes": round(r.drive_minutes),
-                           "order_id": done.get((OrderKind.REFERRAL, r.from_facility_id, r.to_facility_id))}
+                           "order_id": done.get((OrderKind.REFERRAL, r.from_facility_id, r.to_facility_id, None))}
                           for r in referrals[:SHOW]],
         },
         "staff": {
@@ -179,7 +184,7 @@ def district_capacity(district_id: str) -> dict:
             "off_site": [{"facility_id": c["facility_id"], "name": name(c["facility_id"]), "role": c["role"].value,
                           "distance_m": round(c["distance_m"])} for c in checkins if c["distance_m"] > settings.geofence_radius_m][:SHOW],
             "deputations": [{"role": role, "staff": n, "from_id": src, "from_name": name(src), "to_id": dst, "to_name": name(dst), "minutes": round(m),
-                             "order_id": done.get((OrderKind.DEPUTATION, src, dst))}
+                             "order_id": done.get((OrderKind.DEPUTATION, src, dst, role))}
                             for (m, role, src, dst), n in sorted(Counter(
                                 (d.drive_minutes, role_of.get(d.staff_id_hash, ""), d.from_facility_id, d.to_facility_id) for d in deputations).items())[:SHOW]],
         },

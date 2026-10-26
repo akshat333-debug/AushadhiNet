@@ -58,6 +58,7 @@ export default function FacilityPage({ params }: { params: Promise<{ id: string 
     if (newer) latest.set(s.drug_id, s);
   }
   const forecast = new Map(detail.forecasts.map((f) => [f.drug_id, f]));
+  const reported = detail.forecasts.filter((f) => f.model === "reported_use");
   const rows = Array.from(latest.values()).sort((a, b) => (forecast.get(b.drug_id)?.stockout_prob ?? 0) - (forecast.get(a.drug_id)?.stockout_prob ?? 0));
   const high = rows.filter((r) => (forecast.get(r.drug_id)?.stockout_prob ?? 0) >= 0.5).length;
   const f = detail.facility;
@@ -134,9 +135,13 @@ export default function FacilityPage({ params }: { params: Promise<{ id: string 
             })}
           </tbody>
         </table>
-        {detail.forecasts[0] && (
+        {detail.has_history === false ? (
+          <p className="muted border-t border-zinc-100 px-4 py-2.5 text-xs dark:border-zinc-800" data-testid="no-history">{t("no_history")}</p>
+        ) : detail.forecasts[0] && (
           <p className="muted border-t border-zinc-100 px-4 py-2.5 text-xs dark:border-zinc-800" data-testid="forecast-note">
-            {t("forecast_note", { date: date(detail.forecasts[0].origin_date) })}
+            {reported.length
+              ? t("forecast_note_reported", { n: num(reported.length), date: date(reported.reduce((m, f) => (f.origin_date > m ? f.origin_date : m), "")) })
+              : t("forecast_note", { date: date(detail.forecasts[0].origin_date) })}
           </p>
         )}
       </Reveal>

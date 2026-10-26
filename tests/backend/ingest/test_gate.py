@@ -65,6 +65,6 @@ def test_apply_reply_confirms_and_raises_confidence_to_1():
 
 def test_card_text_names_the_specific_low_field():
     record = _record(on_hand=0.99, expiry=0.4)
-    card = build(record, ["expiry"])
+    card = build([record], ["expiry"])
     assert "expiry" in card.text
     assert card.record_id == record.record_id

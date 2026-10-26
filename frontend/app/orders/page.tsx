@@ -66,6 +66,7 @@ export default function OrdersPage() {
         setLimit(PAGE);
       }
     } catch (err) {
+      await refresh(); // a failed approval may still have changed the order (approved, alerts pending)
       setError((err as Error).message);
     } finally {
       setBusy(false);
@@ -159,6 +160,7 @@ export default function OrdersPage() {
               onApprove={(id) => act(async () => void (await api.approveOrder(id)))}
               onReject={(id) => act(async () => void (await api.rejectOrder(id)))}
               onReceive={(id) => act(async () => void (await api.receiveOrder(id)))}
+              onDispatch={(id) => act(async () => void (await api.dispatchOrder(id)))}
             />
           ))}
       </div>

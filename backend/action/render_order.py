@@ -21,7 +21,9 @@ def render(order: TransferOrder, from_facility: Facility, to_facility: Facility,
         for b in order.batches:
             expiry = b.expiry.date().isoformat() if b.expiry else "n/a"
             lines.append(f"  - {b.batch_no}: {b.quantity} units, expiry {expiry}")
-    if order.staff_id_hash:
+    if order.role:
+        lines.append(f"Staff deputation: {order.staff_count or 1} {order.role} for today")
+    elif order.staff_id_hash:
         lines.append(f"Staff deputation: {order.staff_id_hash}")
     if order.patient_count:
         lines.append(f"Patients referred: {order.patient_count}")
@@ -29,5 +31,6 @@ def render(order: TransferOrder, from_facility: Facility, to_facility: Facility,
     if order.signature:
         lines.append(f"Signature: {order.signature[:16]}...")
     if order.drug_id:
+        lines.append(f"Source: when it leaves, reply SENT {order.order_id[:8]}")
         lines.append(f"Destination: when it arrives, reply RECEIVED {order.order_id[:8]}")
     return "\n".join(lines)

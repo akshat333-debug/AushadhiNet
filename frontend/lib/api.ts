@@ -50,6 +50,10 @@ export interface TransferOrder {
   drive_minutes: number;
   rationale: string;
   signature: string | null;
+  alerted_at?: string | null; // unset on an approved order: the WhatsApp alerts did not go out yet
+  role?: string | null;
+  staff_count?: number | null;
+  patient_count?: number | null;
   // added by the orders list endpoint for triage
   from_name?: string | null;
   to_name?: string | null;
@@ -58,6 +62,9 @@ export interface TransferOrder {
   dest_cover_after_days?: number | null; // counting every draft to this destination
   src_on_hand_after?: number | null;
   report_age_days?: number | null;
+  report_date?: string | null; // the date the destination's stock count is for
+  scenario_stock?: boolean; // the count is loaded scenario data, not a nurse's report
+  unit?: string | null; // tablet, sachet, bottle...
   can_approve?: boolean; // false for a cross-district order this officer does not fully cover
   district_gap?: boolean;
 }
@@ -157,12 +164,14 @@ export interface ForecastRow {
   stockout_prob: number;
   horizon: number;
   origin_date: string;
+  model: string; // "reported_use": demand from the facility's own counts; "naive_lag1": last ledger week
 }
 
 export interface FacilityDetail {
   facility: { facility_id: string; name: string; district_id: string; block: string | null; facility_type: string };
   stock: StockRow[];
   forecasts: ForecastRow[];
+  has_history?: boolean; // false: the facility can report, but has no demand history to forecast from yet
 }
 
 export const api = {
@@ -170,10 +179,11 @@ export const api = {
   approveOrder: (orderId: string) => request<TransferOrder>(`/officer/orders/${orderId}/approve`, { method: "POST" }),
   receiveOrder: (orderId: string) => request<TransferOrder>(`/officer/orders/${orderId}/received`, { method: "POST" }),
   rejectOrder: (orderId: string) => request<TransferOrder>(`/officer/orders/${orderId}/reject`, { method: "POST" }),
+  dispatchOrder: (orderId: string) => request<TransferOrder>(`/officer/orders/${orderId}/dispatched`, { method: "POST" }),
   proposeOrders: (districtId: string) => request<TransferOrder[]>(`/officer/propose/${districtId}`, { method: "POST" }),
   runEscalation: () => request<TransferOrder[]>("/officer/escalation/sweep", { method: "POST" }),
-  approveCapacity: (kind: "referral" | "deputation", fromId: string, toId: string) =>
-    request<TransferOrder>("/officer/capacity/approve", { method: "POST", body: JSON.stringify({ kind, from_id: fromId, to_id: toId }) }),
+  approveCapacity: (kind: "referral" | "deputation", fromId: string, toId: string, role?: string) =>
+    request<TransferOrder>("/officer/capacity/approve", { method: "POST", body: JSON.stringify({ kind, from_id: fromId, to_id: toId, role }) }),
   capacity: (districtId: string) => request<Capacity>(`/officer/capacity/${districtId}`),
   districtFacilities: (districtId: string) => request<FacilitySummary[]>(`/officer/districts/${districtId}/facilities`),
   facilityDetail: (facilityId: string) => request<FacilityDetail>(`/officer/facility/${encodeURIComponent(facilityId)}`),

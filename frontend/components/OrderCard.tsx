@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { ArrowRight, Check, Info, SealCheck, Truck, X } from "@phosphor-icons/react";
+import { ArrowClockwise, ArrowRight, Check, Info, SealCheck, Truck, X } from "@phosphor-icons/react";
 import { TransferOrder } from "@/lib/api";
 import { useI18n, type MessageKey } from "@/lib/i18n";
 
 const STATUS_STYLE: Record<string, string> = {
   draft: "bg-amber-50 text-amber-800 ring-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:ring-amber-900",
   approved: "bg-teal-50 text-teal-800 ring-teal-200 dark:bg-teal-950/60 dark:text-teal-300 dark:ring-teal-900",
+  dispatched: "bg-indigo-50 text-indigo-800 ring-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-300 dark:ring-indigo-900",
   received: "bg-sky-50 text-sky-800 ring-sky-200 dark:bg-sky-950/50 dark:text-sky-300 dark:ring-sky-900",
   rejected: "bg-zinc-100 text-zinc-600 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700",
   expired: "bg-zinc-100 text-zinc-500 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-500 dark:ring-zinc-700",
@@ -19,14 +20,17 @@ export default function OrderCard({
   onApprove,
   onReject,
   onReceive,
+  onDispatch,
 }: {
   order: TransferOrder;
   busy?: boolean;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   onReceive?: (id: string) => void;
+  onDispatch?: (id: string) => void;
 }) {
-  const { t, num, drug } = useI18n();
+  const { t, num, drug, date } = useI18n();
+  const qty = (n: number) => (order.unit ? `${num(n)} × ${order.unit}` : t("order_units", { n: num(n) }));
   // Rejecting can't be undone, so it takes a second click within a few seconds.
   const [confirming, setConfirming] = useState(false);
   useEffect(() => {
@@ -62,7 +66,7 @@ export default function OrderCard({
           </span>
           <div>
             <div className="font-semibold">{order.drug_id ? drug(order.drug_id) : order.kind}</div>
-            {order.quantity != null && <div className="muted text-sm">{t("order_units", { n: num(order.quantity) })}</div>}
+            {order.quantity != null && <div className="muted text-sm">{qty(order.quantity)}</div>}
           </div>
         </div>
         <div className="flex flex-col items-end gap-1.5">
@@ -82,11 +86,21 @@ export default function OrderCard({
         {place(order.to_facility_id)}
       </div>
 
-      {order.status === "draft" && (order.dest_cover_after_days != null || (order.report_age_days ?? 0) >= 1) && (
+      {order.status === "draft" && (order.dest_cover_after_days != null || order.report_date) && (
         <p className="muted mt-3 text-xs leading-relaxed" data-testid="order-after">
           {order.dest_cover_after_days != null && order.src_on_hand_after != null &&
-            t("order_after", { dst: num(order.dest_cover_after_days, 1), src: num(order.src_on_hand_after) })}
-          {(order.report_age_days ?? 0) >= 1 && <span className="ml-1 text-amber-700 dark:text-amber-400">· {t("order_report_age", { n: num(order.report_age_days!) })}</span>}
+            t("order_after", { dst: num(order.dest_cover_after_days, 1), src: qty(order.src_on_hand_after) })}
+          {order.scenario_stock && order.report_date ? (
+            <span className="ml-1">· {t("order_scenario_date", { date: date(order.report_date) })}</span>
+          ) : (order.report_age_days ?? 0) >= 1 && (
+            <span className="ml-1 text-amber-700 dark:text-amber-400">· {t("order_report_age", { n: num(order.report_age_days!) })}</span>
+          )}
+        </p>
+      )}
+
+      {order.status === "approved" && !order.alerted_at && (
+        <p className="mt-3 flex gap-1.5 rounded-lg bg-rose-50 px-2.5 py-1.5 text-xs text-rose-900 dark:bg-rose-950/40 dark:text-rose-200" data-testid="alerts-pending">
+          <Info size={14} className="mt-px shrink-0" /> {t("alerts_pending")}
         </p>
       )}
 
@@ -105,7 +119,17 @@ export default function OrderCard({
             </span>
           )}
         </span>
-        {order.status === "approved" && onReceive && (
+        {order.status === "approved" && !order.alerted_at && order.can_approve !== false && (
+          <button className="btn-primary px-3 py-1.5 text-xs" disabled={busy} onClick={() => onApprove(order.order_id)} data-testid={`resend-${order.order_id}`}>
+            <ArrowClockwise size={14} weight="bold" /> {t("resend_alerts")}
+          </button>
+        )}
+        {order.status === "approved" && order.kind === "drug_transfer" && onDispatch && (
+          <button className="btn-secondary px-3 py-1.5 text-xs" disabled={busy} onClick={() => onDispatch(order.order_id)} data-testid={`dispatch-${order.order_id}`}>
+            <Truck size={14} /> {t("mark_dispatched")}
+          </button>
+        )}
+        {(order.status === "approved" || order.status === "dispatched") && onReceive && (
           <button className="btn-secondary px-3 py-1.5 text-xs" disabled={busy} onClick={() => onReceive(order.order_id)} data-testid={`receive-${order.order_id}`}>
             <Check size={14} weight="bold" /> {t("mark_received")}
           </button>

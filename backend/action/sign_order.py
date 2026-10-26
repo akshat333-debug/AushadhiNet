@@ -23,6 +23,8 @@ def _canonical_payload(order: TransferOrder) -> bytes:
         "staff_id_hash": order.staff_id_hash, "patient_count": order.patient_count,
         "created_at": order.created_at.isoformat(),
     }
+    # Deputation details are signed too; added only when set, so orders signed before they existed still verify.
+    payload.update({k: v for k, v in (("role", order.role), ("staff_count", order.staff_count)) if v is not None})
     return json.dumps(payload, sort_keys=True).encode("utf-8")
 
 

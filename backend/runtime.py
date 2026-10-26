@@ -108,11 +108,24 @@ def seed_neighbour() -> int:
 
 
 @lru_cache(maxsize=1)
-def weekly_demand() -> dict[tuple[str, str], float]:
+def _ledger_demand() -> dict[tuple[str, str], float]:
     """Mean units dispensed per week over the last 4 ledger weeks, per (facility, drug)."""
     panel = forecast_panel()
     recent = panel[panel["week"] > panel["week"].max() - pd.Timedelta(weeks=4)]
     return recent.groupby(["facility_id", "drug_id"])["dispensed"].mean().to_dict()
+
+
+_demand_cache: tuple[int, dict] | None = None
+
+
+def weekly_demand() -> dict[tuple[str, str], float]:
+    """Units used per week: a facility's own reported use where its counts show it, else the ledger.
+    Rebuilt only when a new count changed some facility's use (callers ask once per record)."""
+    global _demand_cache
+    use = recent_use()
+    if _demand_cache is None or _demand_cache[0] != _use_version:
+        _demand_cache = (_use_version, {**_ledger_demand(), **{k: u for k, (u, _) in use.items()}})
+    return _demand_cache[1]
 
 
 def below_cover(record) -> bool:
@@ -129,6 +142,17 @@ def phone_for_facility(facility_id: str) -> str:
     # ponytail: dev numbering derived from the ID; a real deployment keeps a contacts registry in Firestore.
     digits = "".join(c for c in facility_id if c.isdigit())
     return f"whatsapp:+9198{digits[-8:].zfill(8)}"
+
+
+def contact_phone(facility_id: str) -> str | None:
+    """The facility's registered WhatsApp number (the contacts registry). Only local and demo
+    mode fall back to the derived dev number; a real deployment alerts verified numbers only."""
+    from backend.config import get_settings
+    registered = factory.get("store_live").query("contacts", {"facility_id": facility_id})
+    if registered:
+        return sorted(c.phone for c in registered)[0]
+    settings = get_settings()
+    return phone_for_facility(facility_id) if settings.mode == "local" or settings.demo_mode else None
 
 
 def facility_for_phone(phone: str) -> str | None:
@@ -190,11 +214,13 @@ _latest: tuple[object, dict[tuple[str, str], StockRecord]] | None = None
 def latest_records() -> dict[tuple[str, str], StockRecord]:
     """Newest confirmed stock record per (facility, drug). Read from the store once (a full
     Firestore read of the district takes ~8 s), then kept current by note_confirmed()."""
-    global _latest
+    global _latest, _use_version
     live = factory.get("store_live")
     if _latest is None or _latest[0] is not live:
         newest: dict[tuple[str, str], StockRecord] = {}
-        for r in live.query("stock_records", {"status": RecordStatus.CONFIRMED}):
+        _observed.clear()
+        _use_version += 1
+        for r in sorted(live.query("stock_records", {"status": RecordStatus.CONFIRMED}), key=lambda r: r.reported_at):
             note_confirmed(r, newest)
         _latest = (live, newest)
     # A copy: reports update the index from other threads, and adding a key while a caller loops
@@ -210,7 +236,32 @@ def note_confirmed(record: StockRecord, index: dict | None = None) -> None:
         index = _latest[1]
     key = (record.facility_id, record.drug_id)
     if key not in index or record.reported_at > index[key].reported_at:
+        if key in index:
+            _note_use(index[key], record)
         index[key] = record
+
+
+SCENARIO_REPORTERS = {"seed", "demo-neighbour"}  # loaded ledger stock, not a nurse's count
+_observed: dict[tuple[str, str], tuple[float, object]] = {}
+_use_version = 0
+
+
+def _note_use(before: StockRecord, after: StockRecord) -> None:
+    """Units used per week between two of a facility's own counts, a day or more apart. A count
+    that went up (a delivery) says nothing about use, and a loaded scenario count is not a count.
+    shortcut: deliveries between the two counts are not added back, so use is under-read across
+    a restock; add received orders here once receipts are routine."""
+    days = (after.reported_at - before.reported_at).total_seconds() / 86400
+    if before.reporter_phone_hash in SCENARIO_REPORTERS or days < 1 or after.on_hand > before.on_hand:
+        return
+    global _use_version
+    _observed[(after.facility_id, after.drug_id)] = (7 * (before.on_hand - after.on_hand) / days, after.as_of_date)
+    _use_version += 1
+
+
+def recent_use() -> dict[tuple[str, str], tuple[float, object]]:
+    latest_records()  # builds the index, and with it the observed use
+    return dict(_observed)
 
 
 def latest_stock(facility_ids: set[str]) -> dict[tuple[str, str], float]:
@@ -222,23 +273,35 @@ MIN_SHIPMENT = 10  # units: below this the live app drafts no transfer (the demo
 MAX_SOURCES = 5    # donors per recipient and medicine. Nashik, 2026-10-26: 160 drafts (smallest 1 unit) became 77, keeping 68% of the units
 
 
-def projected_stock(facility_ids: set[str]) -> dict[tuple[str, str], float]:
-    """Latest reported stock, minus units promised away and plus units on their way, for
-    every transfer approved after that report. A nurse's next report already includes the
-    move, so only orders newer than it count. This is what stops the same units being
-    approved twice, or proposed again after approval."""
+def projected_stock(facility_ids: set[str], incoming: bool = True) -> dict[tuple[str, str], float]:
+    """Stock per (facility, drug) after every approved transfer, from the latest reports.
+
+    Units promised away stay reserved at the source until they leave (SENT <code>, or the
+    receipt): a report the nurse sends before then still counts them, so they are taken off
+    it. Once they have left, only reports older than their departure still count them.
+    Units on their way are added at the destination for planning (`incoming=True`); for
+    approval only what is physically there counts (`incoming=False`), so nothing is sent
+    onward before it arrives. A report after arrival already includes them."""
     from backend.domain import OrderKind, OrderStatus
     latest = latest_records()
     stock = {k: float(v.on_hand) for k, v in latest.items() if k[0] in facility_ids}
     live = factory.get("store_live")
+
+    def add(fid, drug, units):
+        stock[(fid, drug)] = stock.get((fid, drug), 0.0) + units
+
     for status in COMMITTED:
         for o in live.query("orders", {"status": OrderStatus(status)}):
             if o.kind != OrderKind.DRUG_TRANSFER or o.approved_at is None:
                 continue
-            for fid, sign in ((o.from_facility_id, -1), (o.to_facility_id, 1)):
-                record = latest.get((fid, o.drug_id))
-                if fid in facility_ids and (record is None or o.approved_at > record.reported_at):
-                    stock[(fid, o.drug_id)] = stock.get((fid, o.drug_id), 0.0) + sign * o.quantity
+            left = o.dispatched_at or o.received_at
+            src = latest.get((o.from_facility_id, o.drug_id))
+            if o.from_facility_id in facility_ids and (left is None or src is None or left > src.reported_at):
+                add(o.from_facility_id, o.drug_id, -o.quantity)
+            dst = latest.get((o.to_facility_id, o.drug_id))
+            arrived_after_report = o.received_at is not None and (dst is None or o.received_at > dst.reported_at)
+            if o.to_facility_id in facility_ids and (arrived_after_report or (incoming and o.received_at is None)):
+                add(o.to_facility_id, o.drug_id, o.quantity)
     return stock
 
 
@@ -261,7 +324,8 @@ def propose_for_district(scope: str) -> list:
     if not drug_ids:
         return []
     from ml.optimize.constraints import SolverConfig
-    return propose(facilities, drug_ids, {}, projected_stock(ids), cfg=SolverConfig(min_transfer_units=MIN_SHIPMENT, max_sources=MAX_SOURCES), panel=panel)
+    return propose(facilities, drug_ids, {}, projected_stock(ids), cfg=SolverConfig(min_transfer_units=MIN_SHIPMENT, max_sources=MAX_SOURCES),
+                   panel=panel, recent_use=recent_use())
 
 
 def replace_drafts(district_id: str, drafts: list) -> list:
@@ -277,7 +341,7 @@ def replace_drafts(district_id: str, drafts: list) -> list:
                    for old in live.query("orders", {"status": OrderStatus.DRAFT})
                    if in_scope(getattr(index.get(old.from_facility_id), "district_id", ""), district_id)}
         live.put_many("orders", expired)
-    live.put_many("orders", {order.order_id: order for order in drafts})
+        live.put_many("orders", {order.order_id: order for order in drafts})  # inside the lock: two runs never both stay active
     return drafts
 
 
@@ -327,9 +391,9 @@ def _handle_inbound(payload: dict) -> None:
     if payload.get("latitude") is not None:
         _check_in(payload, facility_id, body, lang)
         return
-    received = None if payload.get("num_media") else re.fullmatch(r"\s*RECEIVED\s+([0-9a-f]{8})\s*", body, re.IGNORECASE)
-    if received:
-        _receive(facility_id, received.group(1).lower(), sender, lang)
+    movement = None if payload.get("num_media") else re.fullmatch(r"\s*(RECEIVED|SENT)\s+([0-9a-f]{8})\s*", body, re.IGNORECASE)
+    if movement:
+        _movement(facility_id, movement.group(1).upper(), movement.group(2).lower(), sender, lang)
         return
     beds = None if payload.get("num_media") else parse_beds(body)
     if beds is not None:
@@ -340,7 +404,7 @@ def _handle_inbound(payload: dict) -> None:
             return
         messaging.send_text(sender, msg(lang, "beds_recorded", facility=facility_id, occupied=beds[0], total=beds[1]))
         return
-    if not payload.get("num_media") and body.upper().strip(" .!") in CONFIRM_WORDS:
+    if not payload.get("num_media") and body.upper().strip(" .!") in CONFIRM_WORDS | {"1"}:
         live = factory.get("store_live")
         pending = live.query("stock_records", {"facility_id": facility_id, "status": RecordStatus.PENDING})
         for record in pending:
@@ -358,7 +422,8 @@ def _handle_inbound(payload: dict) -> None:
     stale = live.query("stock_records", {"facility_id": facility_id, "status": RecordStatus.PENDING})
     decision = handle_stock_message(payload, facility_id)
     if decision.confirmed or decision.pending:
-        for record in stale:
+        fresh = {r.record_id for r in decision.confirmed + decision.pending}
+        for record in (r for r in stale if r.record_id not in fresh):
             live.put("stock_records", record.record_id, record.model_copy(update={"status": RecordStatus.REJECTED}))
     if decision.confirmed:
         items = ", ".join(f"{drug_name(r.drug_id, lang)} {r.on_hand}" for r in decision.confirmed)
@@ -367,28 +432,30 @@ def _handle_inbound(payload: dict) -> None:
         messaging.send_text(sender, msg(lang, "unreadable"))
 
 
-def write_history(record: StockRecord) -> None:
+def write_history(record: BaseModel, table: str = "stock_records") -> None:
     """BigQuery history is a copy of the live store; a failed insert must not make Pub/Sub
     redeliver the message and resend replies the nurse already got."""
     try:
-        factory.get("store_history").insert("stock_records", [record.model_dump(mode="json")])
+        factory.get("store_history").insert(table, [record.model_dump(mode="json")])
     except Exception:  # noqa: BLE001
         log.exception("history insert failed for %s", record.record_id)
 
 
-def _receive(facility_id: str, code: str, sender: str, lang: str) -> None:
-    """The destination confirms an approved transfer arrived, by the code in its alert."""
-    from backend.api.officer import mark_received
+def _movement(facility_id: str, word: str, code: str, sender: str, lang: str) -> None:
+    """SENT <code> from the source, RECEIVED <code> from the destination, by the code in the order alert."""
+    from backend.api.officer import mark_dispatched, mark_received
     from backend.domain import OrderStatus
     from backend.i18n import msg
     live = factory.get("store_live")
-    match = [o for status in (OrderStatus.APPROVED, OrderStatus.DISPATCHED)
-             for o in live.query("orders", {"to_facility_id": facility_id, "status": status}) if o.order_id.startswith(code)]
+    sent = word == "SENT"
+    side, statuses = ("from_facility_id", (OrderStatus.APPROVED,)) if sent else ("to_facility_id", (OrderStatus.APPROVED, OrderStatus.DISPATCHED))
+    match = [o for status in statuses for o in live.query("orders", {side: facility_id, "status": status}) if o.order_id.startswith(code)]
+    key = "dispatch" if sent else "receipt"
     if len(match) != 1:
-        factory.get("messaging").send_text(sender, msg(lang, "receipt_unknown", code=code))
+        factory.get("messaging").send_text(sender, msg(lang, f"{key}_unknown", code=code))
         return
-    mark_received(match[0])
-    factory.get("messaging").send_text(sender, msg(lang, "receipt_ok", code=code))
+    (mark_dispatched if sent else mark_received)(match[0])
+    factory.get("messaging").send_text(sender, msg(lang, f"{key}_ok", code=code))
 
 
 def _check_in(payload: dict, facility_id: str, body: str, lang: str) -> None:

@@ -31,6 +31,8 @@ class TransferOrder(BaseModel):
     batches: list[BatchLine] = []
     staff_id_hash: str | None = None
     patient_count: int | None = None
+    role: str | None = None          # deputation: which post is covered
+    staff_count: int | None = None   # deputation: how many people move
     drive_minutes: float
     rationale: str
     forecast_ids: list[str] = []
@@ -42,6 +44,7 @@ class TransferOrder(BaseModel):
     signature: str | None = None
     escalation_level: int = 0
     alerted_at: datetime | None = None   # both facilities sent the signed order; unset means retry the alerts
+    dispatched_at: datetime | None = None  # the units left the source; until then they are reserved there
     received_at: datetime | None = None
 
     @model_validator(mode="after")

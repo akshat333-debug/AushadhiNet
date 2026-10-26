@@ -230,7 +230,7 @@ def _gemini_tools(question: str, officer: OfficerCtx, lang: str) -> tuple[str, l
                 fid = str(args.get("facility_id", "")).upper()
                 demand = weekly_demand()
                 result = [{"medicine": drug_name(r.drug_id, "en"), "on_hand": r.on_hand, "weekly_demand": round(demand.get((fid, r.drug_id), 0.0), 1),
-                           "reported": r.reported_at.date().isoformat()} for r in tool("get_stock", facility_id=fid) if r.status.value == "confirmed"]
+                           "reported": r.reported_at.date().isoformat()} for r in tool("get_stock", facility_id=fid)]
                 cited.append(fid)
             elif name == "facility_forecast":
                 fid, drug_id = str(args.get("facility_id", "")).upper(), _drug_from(str(args.get("medicine", "")))
@@ -241,7 +241,7 @@ def _gemini_tools(question: str, officer: OfficerCtx, lang: str) -> tuple[str, l
                     result = {"error": "no forecast"} if f is None else {
                         "medicine": drug_name(drug_id, "en"), "stockout_probability_pct": round(100 * f.stockout_prob),
                         "expected_demand": round(f.p50), "range_low": round(f.p10), "range_high": round(f.p90),
-                        "demand_basis": "last ledger week carried forward"}
+                        "demand_basis": "this facility's own reported use" if f.model == "reported_use" else "last ledger week carried forward"}
                     cited.extend([fid, drug_id])
             elif name == "at_risk":
                 from backend.api.public import district_summary
@@ -273,12 +273,24 @@ def _gemini_tools(question: str, officer: OfficerCtx, lang: str) -> tuple[str, l
     except ProviderError as e:
         _log.warning("agent function calling failed: %s", str(e)[:200])
         return None
-    known = set(_NUMBER_RE.findall(" ".join(seen + [question]).replace(",", "")))
-    extra = set(_NUMBER_RE.findall(text.replace(",", ""))) - known - {str(n) for n in range(11)}
-    if not text or extra or any(w in text.lower() for w in _ACTION_WORDS if w != "transfer now"):
-        _log.warning("agent answer dropped (empty, new numbers %s, or an action): %s", sorted(extra), text[:200])
+    # Grounded means: at least one function answered, and every number in the answer came from a
+    # function result (or counts one of its lists). A number only the officer typed is not a fact.
+    retrieved = [json.loads(r) for r in seen if '"error"' not in r[:12]]
+    known = set(_NUMBER_RE.findall(" ".join(seen).replace(",", ""))) | {str(n) for n in _list_lengths(retrieved)}
+    extra = set(_NUMBER_RE.findall(text.replace(",", ""))) - known
+    if not text or not retrieved or extra or any(w in text.lower() for w in _ACTION_WORDS if w != "transfer now"):
+        _log.warning("agent answer dropped (empty, no function result, new numbers %s, or an action): %s", sorted(extra), text[:200])
         return None
     return text, list(dict.fromkeys(cited)) or [district_id], None
+def _list_lengths(value) -> set[int]:
+    """How many items each list in a function result holds: "3 facilities" is grounded too."""
+    if isinstance(value, list):
+        return {len(value)} | {n for v in value for n in _list_lengths(v)}
+    if isinstance(value, dict):
+        return {n for v in value.values() for n in _list_lengths(v)}
+    return set()
+
+
 _ACTION_WORDS = ("approv", "send", "sent", "transfer now", "order now")
 
 

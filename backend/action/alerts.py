@@ -5,6 +5,8 @@ route plan.
 """
 from __future__ import annotations
 
+from pydantic import BaseModel
+
 from backend.domain import Facility, TransferOrder
 from backend.providers import factory
 
@@ -35,14 +37,27 @@ def send_transfer_alerts(
         manifest_local = manifest_en if phone_lang == "en" else translate.translate(manifest_en, phone_lang)
         messaging.send_text(phone, manifest_local)
         audio = tts.synthesize(manifest_local, phone_lang)
-        # in cloud mode this would upload `audio` and send the media URL;
-        # local mode logs the media payload directly for the demo/tests
-        messaging.send_media(phone, f"data:audio/ogg;base64,{_b64(audio)}")
+        messaging.send_media(phone, voice_url(audio))
 
 
-def _b64(data: bytes) -> str:
+class VoiceClip(BaseModel):
+    audio_b64: str
+
+
+def voice_url(audio: bytes) -> str:
+    """Twilio fetches media from a public URL, so the clip is stored and served by this API at
+    an unguessable address (backend/api/public.py). The simulator takes it inline instead."""
     import base64
-    return base64.b64encode(data).decode("ascii")
+    import uuid
+    from backend.config import get_settings
+    from backend.providers.messaging_local import LocalMessaging
+    encoded = base64.b64encode(audio).decode("ascii")
+    base = get_settings().public_api_url
+    if isinstance(factory.get("messaging"), LocalMessaging) or "REPLACE_ME" in base:
+        return f"data:audio/ogg;base64,{encoded}"
+    token = uuid.uuid4().hex
+    factory.get("store_live").put("voice_clips", token, VoiceClip(audio_b64=encoded))
+    return f"{base.rstrip('/')}/public/voice/{token}.ogg"
 
 
 def route_plan_text(order: TransferOrder, from_facility: Facility, to_facility: Facility) -> str:

@@ -36,16 +36,23 @@ def get_facility(facility_id: str) -> Facility | None:
 
 
 def get_stock(facility_id: str, drug_id: str | None = None) -> list:
-    live = factory.get("store_live")
+    """Current stock: the newest confirmed record per medicine, as the dashboard shows it.
+    Pending reads and older reports are history (get_stock_history), never current stock."""
+    from backend.runtime import latest_records
+    return [r for (fid, drug), r in latest_records().items() if fid == facility_id and (drug_id is None or drug == drug_id)]
+
+
+def get_stock_history(facility_id: str, drug_id: str | None = None) -> list:
+    """Every report, including pending and superseded ones."""
     filters = {"facility_id": facility_id}
     if drug_id:
         filters["drug_id"] = drug_id
-    return live.query("stock_records", filters)
+    return factory.get("store_live").query("stock_records", filters)
 
 
 def get_forecast(facility_id: str, drug_id: str) -> list:
-    from backend.runtime import forecast_panel, latest_stock
-    return latest_forecasts([facility_id], [drug_id], panel=forecast_panel(), on_hand=latest_stock({facility_id}))
+    from backend.runtime import forecast_panel, latest_stock, recent_use
+    return latest_forecasts([facility_id], [drug_id], panel=forecast_panel(), on_hand=latest_stock({facility_id}), recent_use=recent_use())
 
 
 def list_orders(district_id: str) -> list:
@@ -125,6 +132,7 @@ TOOL_REGISTRY = {
     "get_capacity": get_capacity,
     "get_facility": get_facility,
     "get_stock": get_stock,
+    "get_stock_history": get_stock_history,
     "get_forecast": get_forecast,
     "list_orders": list_orders,
     "explain_risk": explain_risk,

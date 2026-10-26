@@ -33,18 +33,18 @@ real facility list, synthetic stock ledger), **offline** (measured in a frozen e
 | ... **bed availability** | `BEDS 4/6` on the same WhatsApp number; the officer sees facilities at least 90% full |
 | ... **medical personnel attendance** | Staff check in by sharing their WhatsApp location; more than 200 m from the facility is flagged |
 | Across India's **entire PHC network** | Live for Nashik's 760 facilities. All 1,90,609 facilities of the MoHFW directory (36 states and UTs) are loaded with unique IDs, ready to onboard: listed, not reporting |
-| **Forecast demand** | Live: next-week demand per facility and medicine from the last ledger week (it beat LightGBM at facility-week grain); stock-out probability from live stock. Offline: LightGBM beats naive by 19% on real HMIS district-month data |
+| **Forecast demand** | Live: next-week demand per facility and medicine is the facility's own use, measured from two of its WhatsApp counts a day or more apart; until it has those, the last ledger week (lag-1 naive, which beat LightGBM at facility-week grain). A surge in use raises the stock-out risk and the transfer drafts. Offline: LightGBM beats naive by 19% on real HMIS district-month data |
 | **Early warnings for stock-outs** | Morning briefing: medicines short district-wide are escalated to the state with quantities; facilities under a week of cover are flagged |
 | **Automated cross-district redistribution** | Live: OR-Tools drafts medicine transfers within a district, or state-wide across district lines; a cross-district order needs an officer covering both districts. Approval checks the donor still has the units, then signs (Cloud KMS) and alerts both ends; the receiver confirms arrival. Beds and staff: referral and deputation suggestions an officer approves into signed orders the same way. Live cross-district demo: 15 Dhule facilities near Nashik carry labelled demo stock, so "State officer, Maharashtra" sees Dhule surplus drafted to Nashik |
-| **Shared predictive modelling across states** | Offline: a federated-training simulation (Flower client API, FedProx) on real HMIS data from 4 states shares model updates, not records; it ties local-only training. Planned: one Google Cloud project per state (the Terraform module provisions one) running it for real |
+| **Shared predictive modelling across states** | Connected demo: Maharashtra and Meghalaya run as separate client processes, each reading only its own HMIS files; they send row counts, feature sums and FedProx updates, never rows; the aggregated model is served by the API (`/public/federated`: its estimate beside actual units for Meghalaya's latest validation month). Offline experiment on 4 states: federation ties local-only training, no accuracy gain. Planned: each node in its state's own Google Cloud project (the Terraform module provisions one) |
 
 ## How it works
 
 1. **Report**: nurses use WhatsApp, in 7 Indian languages: medicine stock as text, a voice note or a photo of the register; `BEDS 4/6` for beds; a shared location to check in.
-2. **Forecast**: next-week demand per facility and medicine is last ledger week's use (lag-1 naive), which beat LightGBM at this grain; stock-out probability uses live stock. WhatsApp reports update stock and risk, not demand. LightGBM's 19% gain is a separate, district-month benchmark on real HMIS data.
+2. **Forecast**: next-week demand per facility and medicine is what the facility's own counts show it used (two counts a day or more apart; a count that went up is a delivery and is skipped), else last ledger week's use (lag-1 naive, which beat LightGBM at this grain). Stock-out probability uses live stock. LightGBM's 19% gain is a separate, district-month benchmark on real HMIS data.
 3. **Rebalance and escalate**: a medicine short across the whole district goes to the state as a supply request with a quantity; transfers can still even it out meanwhile. Local imbalances get OR-Tools transfer drafts from nearby surplus (at least 10 units, at most 5 donors per need), most urgent first; a state officer can run it state-wide, across district lines. Full facilities get referral suggestions; roles nobody covers today get deputation suggestions.
-4. **Approve and receive**: an officer approves each transfer only if the donor still has the units after earlier approvals; it is KMS-signed and both facilities are alerted in their language (a failed alert is retried). The receiver replies `RECEIVED <code>`. Referrals and deputations are approved the same way.
-5. **Ask**: the officer agent answers common questions (a facility's risk, by name; who is at risk; beds and staff) from fixed templates, and anything else (comparisons, several facilities) by Gemini function calling over read-only, jurisdiction-checked functions. An answer stating a number no function returned is dropped, and requests to approve or send are refused before any model sees them.
+4. **Approve, send, receive**: an officer approves a transfer only if the donor physically holds the units and they are not already promised; units still on their way to a facility cannot be sent onward. Approved units stay reserved at the donor until it replies `SENT <code>`, whatever counts it reports meanwhile; the receiver replies `RECEIVED <code>`. Each order is KMS-signed and both facilities are alerted in their language; if the alerts fail, the order card says so and offers Resend. Referrals and deputations (role and head count signed into the order) are approved the same way.
+5. **Ask**: the officer agent answers common questions (a facility's risk, by name; who is at risk; beds and staff) from fixed templates, and anything else (comparisons, several facilities) by Gemini function calling over read-only, jurisdiction-checked functions. A Gemini answer is kept only if at least one function answered and every number in it came from a function result (or counts one of its lists); a number only the officer typed does not count. Requests to approve or send are refused before any model sees them.
 6. **Transparency and reach**: a public view shows district totals with no facility identifiers, and every state in the national directory with what is live there.
 
 | Nurse on WhatsApp | Officer's morning briefing |
@@ -62,11 +62,11 @@ real facility list, synthetic stock ledger), **offline** (measured in a frozen e
 | Medicines escalated to the state (short district-wide, with quantities) | **4** |
 | Transfer drafts (live) | Nashik alone: **77**, each at least 10 units, at most 5 donors per need (68% of the units an unconstrained run moves in 160 drafts). State-wide: **58** more cross the line from Dhule's labelled demo stock |
 | Forecast error vs naive baseline (offline: real HMIS, district-month, held-out window; not the model the app serves) | **0.871 vs 1.078, 19% better** |
-| 26-week replay (offline simulation, 760 facilities) | Stock-out weeks **-6.0%** (10,774 to 10,131), but unmet units **+0.25%**, fill rate 67.83% to 67.75%, and **14,815 transfers** (about 570 a week). Rebalancing spreads scarcity; it adds no supply |
-| Federation (offline simulation, 4 states, data-poor Meghalaya) | Local-only 0.993, federated 0.996, centralised 1.000 WAPE: **a tie, no accuracy gain** |
+| 26-week replay (offline simulation, 760 facilities), policy the app deploys (at least 10 units, at most 5 donors) | Stock-out weeks **-4.9%** (10,774 to 10,244), unmet units **+0.41%**, fill rate 67.83% to 67.70%, **6,016 transfers** (about 230 a week, 76,326 drive minutes). Unconstrained policy, earlier run: -6.0% stock-out weeks, +0.25% unmet, 14,815 transfers, 209,597 drive minutes. Rebalancing spreads scarcity; it adds no supply |
+| Federation (offline experiment, 4 states, data-poor Meghalaya) | Local-only 0.993, federated 0.996, centralised 1.000 WAPE: **a tie, no accuracy gain**. Connected demo (2 processes, 1 round): served model's WAPE 0.90 on Meghalaya's latest validation month |
 | Gemini register reading (206 synthetic lines, 4 scripts) | **98.1% medicine, 100% quantity** |
 | Languages, end to end (UI, WhatsApp replies, voice, agent) | **7** (en, hi, mr, bn, ta, te, kn) |
-| Automated tests | **398** (381 backend + 17 Playwright E2E, run against the live site) |
+| Automated tests | **416** (399 backend + 17 Playwright E2E, run against the live site) |
 
 ## Try it in 2 minutes
 
@@ -109,7 +109,10 @@ with zero cloud credentials (`docker compose`, or any Docker host via `render.ya
 
 - **Every state is already in the system.** The MoHFW All India Health Centres Directory (2016,
   data.gov.in) gives 190,609 facilities in 678 districts of 36 states and UTs. A district goes live
-  with its nurses' WhatsApp numbers: no new hardware, no new app, no data entry.
+  with: its nurses' WhatsApp numbers in the contacts registry, an opening stock count from each
+  facility, and a demand history (past issues from the district store) so forecasts and transfers
+  include it. A facility without history can report from day one; its page says "no demand history
+  yet" and it stays out of transfer drafts until its history is loaded. No new hardware or app.
 - **One Google Cloud project per state** from the same Terraform module, so a state's facility data
   stays in its own project. In simulation, federated training shares model updates, not records (it matches
   local-only accuracy on real HMIS data from 4 states).
@@ -124,7 +127,7 @@ with zero cloud credentials (`docker compose`, or any Docker host via `render.ya
 | Week | What happens |
 |---|---|
 | 1 | `terraform apply` provisions the state's 37 resources in its Google Cloud project; Cloud Build deploys. This deployment took one day. |
-| 2 | Load one block's nurse WhatsApp numbers; connect a Twilio WhatsApp number and Firebase sign-in for officers (both wired in code). |
+| 2 | Register one block's nurse WhatsApp numbers (alerts go only to registered numbers outside demo mode) and load its issue history; set `PUBLIC_API_URL` and connect a Twilio WhatsApp number (voice alerts are served from the API for Twilio to fetch); create officer accounts in Firebase Auth (verification is in code, no sign-in screen yet). |
 | 3 | Nurses report daily by text, voice or photo; real register photos measure extraction accuracy. |
 | 4 | The officer approves transfers and sends supply requests; compare stock-out weeks with a matched block not yet using it, over the same weeks (year-on-year comparisons mix in demand and reporting changes). |
 
@@ -211,7 +214,9 @@ uv run python -m eval.seal_generator     # regenerates data/synthetic/*.parquet,
 ```bash
 uv run python -m eval.run_final           # real-HMIS frozen test: LightGBM vs naive baselines
 uv run python -m eval.run_replay          # solver vs no-transfer status quo, frozen synthetic test window
+uv run python -m eval.run_replay --live   # the same, with the deployed policy (>= 10 units, <= 5 donors)
 uv run python -m eval.run_federated_eval  # local-only vs federated vs centralised (Meghalaya)
+uv run python -m ml.federated.demo        # two state processes, one FedProx round, model served at /public/federated
 ```
 
 Every run appends to `eval/reports/runs.jsonl` — nothing is ever overwritten, so the full history of
@@ -287,15 +292,17 @@ tests/       mirrors every package above, plus frontend/tests/e2e
 
 - Local-mode state (stock, orders, outbox) is in memory and resets when the backend restarts.
 - Sign-in is a demo token picker (`DEMO_MODE`); Firebase Auth verification exists in the backend but
-  no officer accounts are set up. Contacts are derived dev numbers, not a verified registry.
+  no officer accounts or sign-in screen are set up. Alerts go to the contacts registry; demo mode
+  falls back to derived dev numbers for facilities with no registered number.
 - One backend instance: duplicate-message checks, the order lock and the simulator rate limit are
   per process. Scaling out needs Firestore transactions for them.
-- Orders go approved, then received; there is no separate dispatch step yet. Batches, expiry and cold
+- Orders go approved, sent (`SENT <code>` or Mark sent), received. Batches, expiry and cold
   chain are modelled in the solver, but the live data has no batch or cold-chain fields, so FEFO is
   tested in unit tests only. Travel times are straight-line estimates.
-- Demand is not learned from WhatsApp reports: a report carries stock, not consumption.
-- Twilio sends media by public URL; voice alerts are stored as `data:` audio, which plays in the
-  simulator but needs a Cloud Storage upload before a real Twilio number can send it.
+- Reported use is read from the difference between two counts; deliveries in between are not added
+  back yet, so use is under-read across a restock. A facility with no ledger history is not forecast.
+- Twilio: voice alerts are served at an unguessable API URL for Twilio to fetch (`PUBLIC_API_URL`);
+  not yet tried with a real Twilio number. Card replies accept YES or `1`.
 - Attendance trusts the shared location and the phone: a static WhatsApp pin can be moved before
   sending, and one number per facility stands in for each staff member's own number.
 - Dhule's 15 demo facilities carry generated stock (mirroring their nearest Nashik facility) so the
@@ -314,8 +321,10 @@ tests/       mirrors every package above, plus frontend/tests/e2e
 - Beds and staff: bed counts and staff posts per facility are IPHS-style norms (the national
   directory has neither). In demo mode, facilities that have not reported today show a generated
   baseline, labelled on screen and never stored; a WhatsApp report replaces it. Referrals and
-  deputations are suggestions the officer arranges; only medicine transfers become signed orders.
+  deputations become signed orders when the officer approves them.
 - Only Nashik has stock data (a sealed synthetic ledger); other districts are listed from the national
   directory and go live when their nurses report.
 - Federation ties but does not beat local-only training for the data-poor state; its value here is
-  matching local accuracy without pooling raw data, not beating it.
+  matching local accuracy without pooling raw data, not beating it. The connected demo runs both
+  state nodes on one machine, exchanging files instead of Flower's gRPC transport, with no
+  differential privacy (noise 0).

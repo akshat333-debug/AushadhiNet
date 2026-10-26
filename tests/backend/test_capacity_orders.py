@@ -29,12 +29,16 @@ def test_approving_a_referral_signs_it_alerts_both_ends_and_marks_it_done():
 def test_deputation_approval_and_stale_or_foreign_suggestions_are_refused():
     with TestClient(create_app()) as client:
         dep = client.get("/officer/capacity/mh/nashik", headers=OFFICER).json()["staff"]["deputations"][0]
-        order = client.post("/officer/capacity/approve", json={"kind": "deputation", "from_id": dep["from_id"], "to_id": dep["to_id"]},
-                            headers=OFFICER).json()
+        body = {"kind": "deputation", "from_id": dep["from_id"], "to_id": dep["to_id"], "role": dep["role"]}
+        order = client.post("/officer/capacity/approve", json=body, headers=OFFICER).json()
         stored = factory.get("store_live").get("orders", order["order_id"])
-        assert stored.kind == OrderKind.DEPUTATION and stored.status == OrderStatus.APPROVED and dep["role"] in stored.rationale
+        assert stored.kind == OrderKind.DEPUTATION and stored.status == OrderStatus.APPROVED
+        assert (stored.role, stored.staff_count) == (dep["role"], dep["staff"])
+        from backend.action.sign_order import verify
+        assert verify(stored) and not verify(stored.model_copy(update={"role": "Pharmacist", "staff_count": 9}))  # the instruction is signed
+        wrong_role = {**body, "role": "nobody"}
+        assert client.post("/officer/capacity/approve", json=wrong_role, headers=OFFICER).status_code == 409
         made_up = {"kind": "referral", "from_id": dep["to_id"], "to_id": dep["from_id"]}
         assert client.post("/officer/capacity/approve", json=made_up, headers=OFFICER).status_code == 409
         dhule = {"Authorization": "Bearer dev:o2:district:mh/dhule"}
-        assert client.post("/officer/capacity/approve", json={"kind": "deputation", "from_id": dep["from_id"], "to_id": dep["to_id"]},
-                           headers=dhule).status_code == 403
+        assert client.post("/officer/capacity/approve", json=body, headers=dhule).status_code == 403

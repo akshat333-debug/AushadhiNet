@@ -17,14 +17,15 @@ class ConfirmationCard:
     low_fields: list[str]
 
 
-def build(record, low_fields: list[str], lang: str = "en") -> ConfirmationCard:
+def build(records: list, low_fields: list[str], lang: str = "en") -> ConfirmationCard:
+    """Every pending record with the quantity read, and the fields we are unsure of."""
     from backend.i18n import MESSAGES, drug_name, msg
     field_list = ", ".join(msg(lang, f"field_{f}") if f"field_{f}" in MESSAGES["en"] else f for f in low_fields)
-    drug = drug_name(getattr(record, "drug_id", ""), lang) or "this record"
+    items = ", ".join(f"{drug_name(r.drug_id, lang) or r.drug_id} {r.on_hand}" for r in records)
     return ConfirmationCard(
-        text=msg(lang, "card", drug=drug, fields=field_list),
+        text=msg(lang, "card", drug=items, fields=field_list),
         buttons=[msg(lang, "btn_confirm"), msg(lang, "btn_correct")],
-        record_id=record.record_id, low_fields=low_fields,
+        record_id=records[0].record_id, low_fields=low_fields,
     )
 
 

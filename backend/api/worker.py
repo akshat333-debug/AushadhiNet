@@ -62,6 +62,9 @@ def handle_stock_message(payload: dict, facility_id: str):
     else:
         result = from_text(payload.get("body") or "", facility_id, payload["reporter_phone_hash"])
 
+    if payload.get("message_sid"):  # a redelivered message overwrites its own records instead of adding more
+        for n, record in enumerate(result.records):
+            record.record_id = f"{payload['message_sid']}-{n}"
     lang = payload.get("lang", "en")
     media = payload.get("num_media", 0) > 0
     voice = media and payload.get("media_content_type", "").startswith("audio/")
@@ -110,16 +113,18 @@ def handle_bed_census(payload: dict, facility_id: str, beds_total: int, beds_occ
     from backend.domain import Confidence
     import hashlib
     import uuid
-    from datetime import date
+    from datetime import datetime, timezone
+    from backend.capacity import today
 
     record = BedCensus(
-        record_id=str(uuid.uuid4()), facility_id=facility_id, as_of_date=date.today(),
-        beds_total=beds_total, beds_occupied=beds_occupied, status=RecordStatus.CONFIRMED,
+        # Keyed by the message id, so a redelivered message overwrites rather than duplicates.
+        record_id=payload.get("message_sid") or str(uuid.uuid4()), facility_id=facility_id, as_of_date=today(),
+        reported_at=datetime.now(timezone.utc), beds_total=beds_total, beds_occupied=beds_occupied, status=RecordStatus.CONFIRMED,
         confidence=Confidence(field_confidence={"beds_total": 1.0, "beds_occupied": 1.0}, overall=1.0, source=ConfidenceSource.MANUAL),
         raw_message_id=hashlib.sha256(payload.get("message_sid", "").encode()).hexdigest()[:16],
     )
     factory.get("store_live").put("bed_census", record.record_id, record)
-    factory.get("store_history").insert("bed_census", [record.model_dump(mode="json")])
+    write_history(record, "bed_census")
     return record
 
 
@@ -134,11 +139,11 @@ def handle_checkin(payload: dict, facility_id: str, staff_id_hash: str, role: St
     settings = get_settings()
     distance = _haversine_m(lat, lon, facility_lat, facility_lon)
     record = CheckIn(
-        record_id=str(uuid.uuid4()), facility_id=facility_id, staff_id_hash=staff_id_hash, role=role,
+        record_id=payload.get("message_sid") or str(uuid.uuid4()), facility_id=facility_id, staff_id_hash=staff_id_hash, role=role,
         at=datetime.now(timezone.utc), lat=lat, lon=lon, distance_m=distance,
         geofence_ok=distance <= settings.geofence_radius_m, status=RecordStatus.CONFIRMED,
         raw_message_id=hashlib.sha256(payload.get("message_sid", "").encode()).hexdigest()[:16],
     )
     factory.get("store_live").put("checkins", record.record_id, record)
-    factory.get("store_history").insert("checkins", [record.model_dump(mode="json")])
+    write_history(record, "checkins")
     return record

@@ -22,8 +22,11 @@ facility's pending (low-confidence) records; unregistered numbers get a refusal.
 |---|---|---|
 | GET | `/officer/orders/{district_id}` | Orders touching a district (jurisdiction-checked), with facility names, the destination's days of cover and a district-wide-gap flag; most urgent first, expired drafts left out. |
 | POST | `/officer/propose/{district_id}` | Run the transfer solver; store results as drafts, expiring the district's earlier drafts. |
-| POST | `/officer/orders/{id}/approve` | Approve a draft: signs it, sends WhatsApp + voice alerts to both facilities, each in its contact's language. Idempotent. 409 if not a draft. |
+| POST | `/officer/orders/{id}/approve` | Approve a draft: 409 unless the source physically holds the units, not already promised; then signs it and sends WhatsApp + voice alerts to both facilities (registered numbers), each in its contact's language. 502 if the alerts fail: the order stays approved and approving again resends. Idempotent. |
 | POST | `/officer/orders/{id}/reject` | Reject a draft. 409 if already approved. |
+| POST | `/officer/orders/{id}/dispatched` | Mark the units sent (the source can reply `SENT <code>`); until then they stay reserved at the source. |
+| POST | `/officer/orders/{id}/received` | Mark the units received (the destination can reply `RECEIVED <code>`). |
+| POST | `/officer/capacity/approve` | `{kind, from_id, to_id, role}`: approve one of today's referral or deputation suggestions into a signed order (role and head count signed). 409 if no longer suggested. |
 | GET | `/officer/districts/{district_id}/facilities` | Facilities in a district with an at-risk flag. |
 | GET | `/officer/capacity/{district_id}` | Today's beds and staff: occupancy, facilities at least 90% full with referral suggestions, staff on site vs posts, off-site check-ins, deputation suggestions (`backend/capacity.py`). Facilities that have not reported show a generated baseline in local and demo mode (`demo_baseline: true`). |
 | GET | `/officer/facility/{facility_id}` | Latest stock, next-week forecast and stock-out probability for one facility. |
@@ -44,6 +47,8 @@ a caller-supplied district. A cross-district order needs an officer covering bot
 | Method | Path | Description |
 |---|---|---|
 | GET | `/public/district-summary` | Per district: facilities reporting, facilities with any drug under one week of cover, that count per drug, medicines short district-wide (`escalate`, with `procurement_units`) and `facilities_needing_transfer`. No facility-level identifiers. |
+| GET | `/public/federated` | The model the two-process federation demo trained (`ml/federated/demo.py`), loaded and applied: estimate vs actual units for Meghalaya's latest validation month, with its WAPE. |
+| GET | `/public/voice/{token}.ogg` | A spoken order alert, for Twilio to fetch; the token is random and sent only to the two facilities. |
 | GET | `/public/coverage` | Every state in the MoHFW facility directory: facility and district counts, and how many districts are live. Counts only. |
 
 ## Error shape

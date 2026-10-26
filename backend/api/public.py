@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Response
 
 
 router = APIRouter(prefix="/public", tags=["public"])
@@ -17,6 +17,41 @@ def drug_names() -> dict[str, dict[str, str]]:
     """Localized display names for every tracked medicine, keyed by drug id then language."""
     from backend.i18n import DRUG_NAMES
     return DRUG_NAMES
+
+
+@router.get("/voice/{token}.ogg")
+def voice_clip(token: str) -> Response:
+    """A spoken order alert, for Twilio to fetch. The token is a random 128-bit id sent only to
+    the two facilities on the order."""
+    import base64
+    from backend.providers import factory
+    clip = factory.get("store_live").get("voice_clips", token) if token.isalnum() else None
+    if clip is None:
+        raise HTTPException(404, "no such clip")
+    return Response(base64.b64decode(clip.audio_b64), media_type="audio/ogg")
+
+
+@router.get("/federated")
+def federated_model() -> dict:
+    """The model the federation demo trained (ml/federated/demo.py: two state processes, one
+    FedProx round), loaded and used here: its estimate for each Meghalaya district and medicine
+    in the latest validation month, beside the units actually distributed. District totals from
+    public HMIS data only."""
+    import json
+    import pathlib
+    import numpy as np
+    from eval.metrics import wape
+    folder = pathlib.Path(__file__).resolve().parents[1] / "federated"
+    if not (folder / "model.npz").exists():
+        raise HTTPException(404, "no federated model: run `python -m ml.federated.demo`")
+    model = np.load(folder / "model.npz")
+    w = model["w"]
+    latest = json.loads((folder / "ML.latest.json").read_text())
+    rows = [{"district_id": r["district_id"], "drug": r["drug"], "actual": r["actual"],
+             "estimate": round(float(np.expm1(np.dot(r["x"], w[:-1]) + w[-1])))} for r in latest["rows"]]
+    return {**json.loads(str(model["card"])), "month": latest["month"],
+            "wape": round(float(wape(np.array([r["actual"] for r in rows]), np.array([r["estimate"] for r in rows]))), 3),
+            "rows": sorted(rows, key=lambda r: -r["actual"])[:20]}
 
 
 @router.get("/facility-points")

@@ -69,3 +69,31 @@ def test_requests_to_act_never_reach_gemini(cloud_agent):
     with TestClient(create_app()) as client:
         cloud_agent(lambda call, _: pytest.fail("Gemini must not see this"))
         assert "I cannot approve or send anything" in _ask(client, "please approve all drafts for me")["text"]
+
+
+def test_a_number_only_the_officer_typed_is_not_grounded(cloud_agent):
+    """Judge's case: "Are there 999 units available?" answered "There are 999 units" with no function call."""
+    with TestClient(create_app()) as client:
+        cloud_agent(lambda call, _: "There are 999 units available.")
+        assert _ask(client, "Compare: are there 999 units available?")["text"].startswith("I can explain a facility's risk")
+
+
+def test_current_stock_is_the_latest_confirmed_count_only():
+    """Judge's case: yesterday's 100 and a pending 999 must not appear beside today's 20."""
+    from datetime import datetime, timedelta, timezone
+    from backend.agent.tools import get_stock
+    from backend.domain import Confidence, ConfidenceSource, RecordStatus, StockRecord
+    from backend.providers import factory
+    from backend.runtime import latest_records, note_confirmed
+    with TestClient(create_app()):
+        latest_records()
+        now = datetime.now(timezone.utc)
+        for rid, on_hand, status, at in (("y", 100, RecordStatus.CONFIRMED, now - timedelta(days=1)),
+                                          ("t", 20, RecordStatus.CONFIRMED, now), ("p", 999, RecordStatus.PENDING, now)):
+            r = StockRecord(record_id=rid, facility_id="MH-0000221", drug_id="ors", reported_at=at, as_of_date=at.date(),
+                            on_hand=on_hand, status=status, reporter_phone_hash="h", raw_message_id=rid,
+                            confidence=Confidence(field_confidence={"on_hand": 1.0}, overall=1.0, source=ConfidenceSource.MANUAL))
+            factory.get("store_live").put("stock_records", rid, r)
+            if status == RecordStatus.CONFIRMED:
+                note_confirmed(r)
+        assert [r.on_hand for r in get_stock("MH-0000221", "ors")] == [20]

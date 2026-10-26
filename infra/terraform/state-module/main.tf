@@ -94,7 +94,7 @@ locals {
       ["record_id", "STRING", "REQUIRED"], ["facility_id", "STRING", "REQUIRED"], ["as_of_date", "DATE", "REQUIRED"],
       ["beds_total", "INT64", "REQUIRED"], ["beds_occupied", "INT64", "REQUIRED"], ["admissions", "INT64", "NULLABLE"],
       ["discharges", "INT64", "NULLABLE"], ["status", "STRING", "REQUIRED"], ["confidence", "STRING", "REQUIRED"],
-      ["raw_message_id", "STRING", "REQUIRED"],
+      ["raw_message_id", "STRING", "REQUIRED"], ["reported_at", "TIMESTAMP", "NULLABLE"],
     ]
     checkins = [
       ["record_id", "STRING", "REQUIRED"], ["facility_id", "STRING", "REQUIRED"], ["staff_id_hash", "STRING", "REQUIRED"],

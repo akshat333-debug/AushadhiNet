@@ -102,7 +102,9 @@ export default function DashboardPage() {
   async function propose() {
     setBusy(true);
     try {
-      setDrafts(await api.proposeOrders(scope));
+      await api.proposeOrders(scope);
+      // The order list carries the projected cover the after-view needs; the proposal response does not.
+      setDrafts((await api.listOrders(scope)).filter((o) => o.status === "draft"));
     } catch (e) {
       setError((e as Error).message);
     } finally {

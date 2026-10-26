@@ -1,7 +1,7 @@
 """BedCensus (modular-plan.md §2.1)."""
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -22,6 +22,7 @@ class BedCensus(BaseModel):
     status: RecordStatus = RecordStatus.PENDING
     confidence: Confidence
     raw_message_id: str
+    reported_at: datetime | None = None  # orders same-day corrections; older stored records have none
 
     @model_validator(mode="after")
     def _validate(self) -> "BedCensus":

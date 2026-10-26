@@ -28,6 +28,14 @@ from backend.action.escalate import sweep
 from backend.action.sign_order import sign
 
 router = APIRouter(prefix="/officer", tags=["officer"])
+
+
+def _units() -> dict[str, str]:
+    from ml.data.drugs import M19_CATALOGUE
+    return {d["drug_id"]: d["unit"] for d in M19_CATALOGUE}
+
+
+UNITS = _units()
 log = logging.getLogger(__name__)
 OFFICER = require_role("block", "district", "state")
 
@@ -79,7 +87,7 @@ def list_orders(district_id: str, user: AuthUser = Depends(OFFICER)):
     check_jurisdiction(user, district_id)
     from ml.data.facilities import served_facility_index as facility_index
     from backend.api.public import district_summary
-    from backend.runtime import latest_records, projected_stock, weekly_demand
+    from backend.runtime import SCENARIO_REPORTERS, latest_records, projected_stock, weekly_demand
     index, latest = facility_index(), latest_records()
     try:
         demand = weekly_demand()
@@ -118,7 +126,10 @@ def list_orders(district_id: str, user: AuthUser = Depends(OFFICER)):
                 "dest_cover_after_days": cover(dst, None if dst_units is None else dst_units + (incoming.get(dst, 0) if draft else 0)),
                 "src_on_hand_after": None if src_units is None else src_units - (o.quantity or 0) * draft,
                 "src_cover_after_days": cover(src, None if src_units is None else src_units - (o.quantity or 0) * draft),
-                "report_age_days": None if report is None else (now - report.reported_at).days,
+                "report_age_days": None if report is None else (now.date() - report.as_of_date).days,
+                "report_date": None if report is None else report.as_of_date.isoformat(),
+                "scenario_stock": report is not None and report.reporter_phone_hash in SCENARIO_REPORTERS,
+                "unit": UNITS.get(o.drug_id),
                 "can_approve": all(_covers(user, d) for d in _order_districts(o)),
                 "district_gap": o.drug_id in gaps.get(index[o.to_facility_id].district_id if o.to_facility_id in index else "", {})}
 
@@ -148,9 +159,9 @@ def approve_order(order_id: str, user: AuthUser = Depends(OFFICER)):
                 raise HTTPException(409, f"cannot approve an order that is {current.status.value}")
             if current.kind == OrderKind.DRUG_TRANSFER:
                 from backend.runtime import projected_stock
-                available = projected_stock({current.from_facility_id}).get((current.from_facility_id, current.drug_id), 0.0)
+                available = projected_stock({current.from_facility_id}, incoming=False).get((current.from_facility_id, current.drug_id), 0.0)
                 if current.quantity > available:
-                    raise HTTPException(409, f"the source now has {available:g} units after earlier approvals and reports, "
+                    raise HTTPException(409, f"the source holds {available:g} units not already promised (stock on its way does not count until it arrives), "
                                              f"fewer than the {current.quantity} ordered: propose transfers again")
             live.put("orders", order_id, signed)
         _audit(user, "approve_order", signed)
@@ -158,14 +169,19 @@ def approve_order(order_id: str, user: AuthUser = Depends(OFFICER)):
         signed = order
 
     from ml.data.facilities import served_facility_index as facility_index
-    from backend.runtime import phone_for_facility
+    from backend.runtime import contact_phone
     index = facility_index()
+    phones = [contact_phone(signed.from_facility_id), contact_phone(signed.to_facility_id)]
+    missing = [index[fid].name for fid, ph in zip((signed.from_facility_id, signed.to_facility_id), phones) if ph is None]
+    if missing:
+        raise HTTPException(502, f"Approved and signed, but {', '.join(missing)} has no registered WhatsApp number. "
+                                 "Register it, then approve again to send the alerts.")
     try:
         # shortcut: a failure resends both facilities' alerts on retry, so one may get a duplicate;
         # per-recipient delivery tracking needs Twilio status callbacks.
         send_transfer_alerts(
             signed, index[signed.from_facility_id], index[signed.to_facility_id],
-            phone_for_facility(signed.from_facility_id), phone_for_facility(signed.to_facility_id),
+            phones[0], phones[1],
         )
     except Exception as e:  # noqa: BLE001 -- any provider failure: the approval stands, the alert is retried
         log.warning("alerts for %s failed: %s", order_id, e)
@@ -183,6 +199,28 @@ def receive_order(order_id: str, user: AuthUser = Depends(OFFICER)):
     received = mark_received(order)
     _audit(user, "receive_order", received)
     return received
+
+
+@router.post("/orders/{order_id}/dispatched")
+def dispatch_order(order_id: str, user: AuthUser = Depends(OFFICER)):
+    """Records that the units left the source (the nurse can also reply SENT <code>)."""
+    order = _authorised_order(order_id, user)
+    dispatched = mark_dispatched(order)
+    _audit(user, "dispatch_order", dispatched)
+    return dispatched
+
+
+def mark_dispatched(order: TransferOrder) -> TransferOrder:
+    if order.status in (OrderStatus.DISPATCHED, OrderStatus.RECEIVED):
+        return order
+    if order.status != OrderStatus.APPROVED:
+        raise HTTPException(409, f"cannot dispatch an order that is {order.status.value}")
+    live = factory.get("store_live")
+    with ORDER_LOCK:
+        dispatched = live.get("orders", order.order_id).model_copy(
+            update={"status": OrderStatus.DISPATCHED, "dispatched_at": datetime.now(timezone.utc)})
+        live.put("orders", order.order_id, dispatched)
+    return dispatched
 
 
 def mark_received(order: TransferOrder) -> TransferOrder:
@@ -251,6 +289,7 @@ class CapacityApproval(BaseModel):
     kind: Literal["referral", "deputation"]
     from_id: str
     to_id: str
+    role: str | None = None  # deputation: two roles between the same facilities are two suggestions
 
 
 @router.post("/capacity/approve")
@@ -269,7 +308,8 @@ def approve_capacity(body: CapacityApproval, user: AuthUser = Depends(OFFICER)):
         check_jurisdiction(user, district)
     cap = district_capacity(src.district_id)
     rows = cap["beds"]["referrals"] if body.kind == "referral" else cap["staff"]["deputations"]
-    match = next((r for r in rows if r["from_id"] == body.from_id and r["to_id"] == body.to_id), None)
+    match = next((r for r in rows if r["from_id"] == body.from_id and r["to_id"] == body.to_id
+                  and (body.kind == "referral" or r["role"] == body.role)), None)
     if match is None:
         raise HTTPException(409, "that suggestion is no longer current: reload the briefing")
     if match.get("order_id"):
@@ -279,6 +319,7 @@ def approve_capacity(body: CapacityApproval, user: AuthUser = Depends(OFFICER)):
         order_id=str(uuid.uuid4()), kind=OrderKind.REFERRAL if referral else OrderKind.DEPUTATION,
         from_facility_id=body.from_id, to_facility_id=body.to_id, drive_minutes=float(match["minutes"]),
         patient_count=match["patients"] if referral else None,
+        role=None if referral else match["role"], staff_count=None if referral else match["staff"],
         rationale=(f"refer {match['patients']} patient(s): {match['from_name']} is at least 90% full" if referral
                    else f"depute {match['staff']} {match['role']} for today: nobody in that role is on site at {match['to_name']}"),
         created_at=datetime.now(timezone.utc), created_by="solver",
@@ -298,7 +339,7 @@ def capacity(district_id: str, user: AuthUser = Depends(OFFICER)):
 @router.get("/facility/{facility_id}")
 def facility_detail(facility_id: str, user: AuthUser = Depends(OFFICER)):
     from ml.data.facilities import served_facility_index as facility_index
-    from backend.runtime import forecast_panel, latest_stock
+    from backend.runtime import forecast_panel, latest_stock, recent_use
     from ml.forecast.service import latest_forecasts
     facility = facility_index().get(facility_id)
     if facility is None:
@@ -309,5 +350,7 @@ def facility_detail(facility_id: str, user: AuthUser = Depends(OFFICER)):
     return {
         "facility": facility,
         "stock": sorted(stock, key=lambda r: r.drug_id),
-        "forecasts": latest_forecasts([facility_id], drug_ids, panel=forecast_panel(), on_hand=latest_stock({facility_id})) if drug_ids else [],
+        "forecasts": latest_forecasts([facility_id], drug_ids, panel=forecast_panel(), on_hand=latest_stock({facility_id}),
+                                      recent_use=recent_use()) if drug_ids else [],
+        "has_history": facility_id in set(forecast_panel()["facility_id"].astype(str)),
     }

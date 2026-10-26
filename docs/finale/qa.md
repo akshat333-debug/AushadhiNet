@@ -17,10 +17,11 @@ the first thing a pilot measures. Every photo read is confirmed by the nurse bef
 **What if the forecast is wrong?**
 Nothing moves without an officer approving it, and every forecast shows a range (p10-p90) and a
 probability, not a single number. The served forecast is lag-1 naive because it beat LightGBM on
-the most recent weeks; we pick the model by measurement, not by preference. It carries last ledger
-week's demand forward one week (the facility page says so, with the date); WhatsApp reports change
-stock and risk, not demand, because a report carries stock, not consumption. Calibration of the
-stock-out probability has not been measured.
+the most recent weeks; we pick the model by measurement, not by preference. Next week's demand is the
+facility's own use, read from two of its WhatsApp counts a day or more apart; until it has those, last
+ledger week's use carried forward (the facility page says which, with the date). So a surge in use
+raises the risk and the transfer drafts. Deliveries between two counts are not added back yet, so use
+is under-read across a restock. Calibration of the stock-out probability has not been measured.
 
 **Is it really on Google Cloud?**
 Yes: Cloud Run in Mumbai, with Firestore for live stock, BigQuery for history, Pub/Sub carrying
@@ -43,8 +44,9 @@ prompt-injection attempt. Only a signed-in officer, within their jurisdiction, c
 
 **Privacy?**
 Phone numbers are stored hashed. The public view shows district totals only, never a facility
-identifier, and a test enforces that. Federation is a simulation so far: states share model updates
-and summary statistics, not rows, and it ties local-only accuracy. The scored runs add no noise, so we
+identifier, and a test enforces that. In federation, states share model updates and summary statistics,
+not rows; it ties local-only accuracy. The connected demo runs two state nodes as separate processes on
+one machine. The scored runs add no noise, so we
 claim no differential privacy.
 
 **Why are almost all facilities short of calcium?**
@@ -113,27 +115,35 @@ Say plainly that the 15 Dhule facilities carry generated demo stock (mirroring n
 for this demo; only Nashik's ledger is part of the evaluation.
 
 **Which model produced this recommendation, and when was its demand data last updated?**
-Lag-1 naive on the synthetic ledger; the facility page states the ledger week. Stock is live from
-WhatsApp; demand is not.
+The facility page says, per facility: demand from its own reported counts (with the latest date),
+or lag-1 naive from the ledger week (with that date). Stock is live from WhatsApp. Order cards show the
+destination's stock date, and say "scenario stock" when it is loaded ledger data, not a nurse's count.
 
 **Show what crosses a state boundary during federation.**
-In the simulation: model weights and per-state counts, sums and sums of squares for scaling. No rows.
-It is not deployed across projects, and it ties local-only accuracy.
+Run `python -m ml.federated.demo`: Maharashtra and Meghalaya start as separate processes, each loading
+only its own HMIS files. What crosses: row count, feature sums and sums of squares, then FedProx
+weights. The coordinator averages them and writes one model; `GET /public/federated` loads it and shows
+its estimate beside actual units for Meghalaya's latest validation month (WAPE 0.90). It is not yet
+deployed across projects, and the 4-state experiment ties local-only accuracy.
 
 **Why prefer your solver when total unmet demand increased?**
-It does not add supply: in the replay, stock-out weeks fall 6% while unmet units rise 0.25% and fill
-rate is flat, at about 570 transfers a week. It spreads scarcity so fewer facilities run dry; the
-supply fix is the state request. The live app now drafts no shipment under 10 units and uses at most
-5 donors per need, which cut Nashik's drafts from 160 to 77.
+It does not add supply. The policy the app deploys (at least 10 units, at most 5 donors per need),
+replayed over 26 weeks: stock-out weeks -4.9%, unmet units +0.41%, fill rate 67.83% to 67.70%, about
+230 transfers a week (`eval/run_replay.py --live`). The unconstrained policy did -6.0% with 570 a week
+and nearly three times the driving. It spreads scarcity so fewer facilities run dry; the supply fix is
+the state request.
 
 **Show the two facilities receiving the order, then acknowledge receipt.**
 Approve on Orders: both facilities get the signed order in the simulator (pick each facility). The
-destination replies `RECEIVED <code>` from the order message, or the officer taps Mark received.
+source replies `SENT <code>`, the destination `RECEIVED <code>` (or the officer taps Mark sent, Mark
+received). Until `SENT`, the units stay reserved at the source whatever it reports, so the same units
+cannot be approved twice; units on their way cannot be sent onward before they arrive.
 
 **Is the agent just keyword matching?**
 For the common questions, yes, on purpose: fixed templates over the same tools answer fast and the same
 way every time. Anything else goes to Gemini function calling over six read-only functions, each
-jurisdiction-checked; an answer with a number no function returned is dropped. Requests to approve or
+jurisdiction-checked. An answer is kept only if a function answered and every number in it came from
+a function result (or counts one of its lists); a number only the officer typed does not count. Requests to approve or
 send never reach a model.
 
 **Are beds and staff only suggestions?**

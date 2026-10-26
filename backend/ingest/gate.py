@@ -21,18 +21,17 @@ class GateDecision:
 
 
 def apply(records: list, threshold: float, lang: str = "en") -> GateDecision:
-    confirmed, pending = [], []
-    card: ConfirmationCard | None = None
-
+    confirmed, pending, low = [], [], []
     for record in records:
         low_fields = record.confidence.low_fields(threshold)
         if low_fields:
             record.status = RecordStatus.PENDING
             pending.append(record)
-            if card is None:  # one card per gate call; the caller sends it once, covering all pending records
-                card = build_card(record, low_fields, lang)
+            low += [f for f in low_fields if f not in low]
         else:
             record.status = RecordStatus.CONFIRMED
             confirmed.append(record)
 
+    # One card covering every pending record, each with the quantity read: YES confirms exactly what it shows.
+    card: ConfirmationCard | None = build_card(pending, low, lang) if pending else None
     return GateDecision(confirmed=confirmed, pending=pending, card=card)

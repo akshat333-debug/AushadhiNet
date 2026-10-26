@@ -50,7 +50,7 @@ steps:
       - --min-instances=${_BACKEND_MIN_INSTANCES}
       - --max-instances=1
       # ^;^ makes ';' the separator, so CORS_ALLOWED_ORIGINS can list origins with commas (Cloud Run + the Render frontend).
-      - --set-env-vars=^;^AUSHADHI_MODE=cloud;DEMO_MODE=${_DEMO_MODE};GEMINI_MODEL=gemini-3.1-flash-lite;VERTEX_LOCATION=us-central1;GCP_PROJECT=$PROJECT_ID;BIGQUERY_PROJECT=$PROJECT_ID;BIGQUERY_DATASET=aushadhinet_${_STATE};CORS_ALLOWED_ORIGINS=${_FRONTEND_URL},https://aushadhinet-frontend.onrender.com;PUBSUB_PUSH_AUDIENCE=${_BACKEND_URL}/internal/pubsub/ingest;PUBSUB_PUSH_SERVICE_ACCOUNT=pubsub-push@$PROJECT_ID.iam.gserviceaccount.com;SIGNING_KEY=projects/$PROJECT_ID/locations/${_REGION}/keyRings/aushadhinet-order-signing/cryptoKeys/transfer-order-signer/cryptoKeyVersions/1
+      - --set-env-vars=^;^AUSHADHI_MODE=cloud;DEMO_MODE=${_DEMO_MODE};GEMINI_MODEL=gemini-3.1-flash-lite;VERTEX_LOCATION=us-central1;GCP_PROJECT=$PROJECT_ID;BIGQUERY_PROJECT=$PROJECT_ID;BIGQUERY_DATASET=aushadhinet_${_STATE};CORS_ALLOWED_ORIGINS=${_FRONTEND_URL},https://aushadhinet-frontend.onrender.com;PUBSUB_PUSH_AUDIENCE=${_BACKEND_URL}/internal/pubsub/ingest;PUBLIC_API_URL=${_BACKEND_URL};PUBSUB_PUSH_SERVICE_ACCOUNT=pubsub-push@$PROJECT_ID.iam.gserviceaccount.com;SIGNING_KEY=projects/$PROJECT_ID/locations/${_REGION}/keyRings/aushadhinet-order-signing/cryptoKeys/transfer-order-signer/cryptoKeyVersions/1
       # Twilio is optional: without its secret, replies go to the simulator outbox.
       - --set-secrets=GEMINI_API_KEY=gemini-api-key:latest
 

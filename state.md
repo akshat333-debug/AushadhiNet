@@ -38,7 +38,7 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 | Acceptance | Result | Honest reading |
 |---|---|---|
 | AC4 forecasting, real HMIS frozen test | LightGBM WAPE 0.871 vs lag-1 naive 1.078, median-of-3 0.959 | Clean win (-19%). Second logged attempt; the first (1.110) lost and is kept. |
-| AC6 stock-out replay, synthetic test window | stock-out weeks 10,774 → 10,131 (-6.0%) | Unmet units +0.25%: rebalances scarcity, adds no supply. ~570 transfers/week. |
+| AC6 stock-out replay, synthetic test window, deployed policy (>= 10 units, <= 5 donors) | stock-out weeks 10,774 → 10,244 (-4.9%) | Unmet units +0.41%, fill 67.83% → 67.70%, ~230 transfers/week. Unconstrained run kept: -6.0%, +0.25% unmet, ~570/week, 2.7x the driving. |
 | AC9 federation, Meghalaya validation | local 0.993, federated 0.996, centralised 1.000 | Ties local-only (all ~21% better than naive). Value is privacy, not accuracy. |
 | App forecasts, facility-week | lag-1 naive kept | Beats best LightGBM variant 0.220 vs 0.239 on the last 13 train weeks. |
 | AC3 extraction accuracy | measured on synthetic renders | Gemini (gemini-3.1-flash-lite) on 206 of 220 rendered register lines (14 hit free-tier 429s), 4 scripts: medicine 98.1% (Bengali 92.2%, others 100%), quantity 100%, batch 100% outside Devanagari. Devanagari batch scores 0% because the render font has no Latin "B" (drawn as a box), so the label is unreadable in the image itself: an eval-data bug, not a read error. Images are rendered text, not photographs; no real-photo number yet. Report: eval/reports/extraction_gemini.json. |
@@ -82,6 +82,14 @@ agent answers, native-script reports). Audited against the Vercel web interface 
   cross-district transfers live; referrals and deputations approve into signed orders; simulator
   plays voice alerts; backend kept warm (min instances 1) until results. 381 backend tests, 17/17
   e2e live (one intermittent client error right after a deploy, passed on two reruns).
+- Third mock-judge pass (2026-10-26): units promised away stay reserved at the donor until `SENT
+  <code>`, and units on their way cannot be sent onward; agent's current stock is the latest confirmed
+  count; answers need a tool result for every number; deputation role and head count are signed;
+  same-day bed corrections win; concurrent proposals leave one plan; a saved report is not saved twice
+  when its reply fails; one card shows every item waiting for YES; Resend alerts on the order card;
+  demand from each facility's own counts; replay of the deployed policy; two-process federation demo
+  served at `/public/federated`; alerts to the contacts registry; voice alerts served for Twilio.
+  399 backend tests.
 - Limits: backend max 1 instance (in-memory simulator outbox; caps cost), frontend max 2, both scale
   to zero. Budget alert Rs 850/month (alerts only).
 - Not configured: Firebase Auth and Twilio (demo sign-in and the simulator stand in), Maps

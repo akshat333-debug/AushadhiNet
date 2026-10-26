@@ -44,10 +44,20 @@ def run(window: str = "test", cfg=None, world=None) -> dict:
 
 
 def main() -> None:
+    """`--live`: the policy the app deploys (backend/runtime.py: no shipment under MIN_SHIPMENT
+    units, at most MAX_SOURCES donors per recipient and medicine), recorded as its own run."""
+    import sys
+    from ml.optimize.constraints import SolverConfig
+    live = "--live" in sys.argv[1:]
+    cfg = None
+    if live:
+        from backend.runtime import MAX_SOURCES, MIN_SHIPMENT
+        cfg = SolverConfig(min_transfer_units=MIN_SHIPMENT, max_sources=MAX_SOURCES)
     protocol = load_protocol()
-    result = run("test")
+    result = run("test", cfg)
     record = {
-        "run_id": str(uuid.uuid4()), "git_sha": _git_sha(), "model": "replay_solver_vs_status_quo",
+        "run_id": str(uuid.uuid4()), "git_sha": _git_sha(),
+        "model": "replay_solver_vs_status_quo" + ("_live_policy" if live else ""),
         "grain": "FACILITY_WEEK", "metrics": result,
         "protocol_hash": protocol.generator_seal.content_hash,
         "timestamp": datetime.now(timezone.utc).isoformat(),

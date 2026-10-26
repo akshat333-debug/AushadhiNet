@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     pubsub_push_audience: str = Field("REPLACE_ME", validation_alias="PUBSUB_PUSH_AUDIENCE")
     pubsub_push_service_account: str = Field("REPLACE_ME", validation_alias="PUBSUB_PUSH_SERVICE_ACCOUNT")
     signing_key: str = Field("REPLACE_ME", validation_alias="SIGNING_KEY")
+    public_api_url: str = Field("REPLACE_ME", validation_alias="PUBLIC_API_URL")  # where Twilio fetches voice clips
     maps_api_key: str = Field("REPLACE_ME", validation_alias="MAPS_API_KEY")
     # Hosted demo on real GCP: demo sign-in and the WhatsApp simulator stay available in cloud
     # mode. Off by default; a real rollout uses Firebase Auth and Twilio instead.

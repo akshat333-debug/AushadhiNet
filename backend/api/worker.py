@@ -12,7 +12,7 @@ from backend.config import get_settings
 from backend.domain import BedCensus, CheckIn, ConfidenceSource, RecordStatus, StaffRole
 from backend.providers import factory
 from backend.providers.base import ProviderError
-from backend.runtime import note_confirmed
+from backend.runtime import write_history, note_confirmed
 
 from backend.ingest.cards import build_photo_card
 from backend.ingest.extract import from_audio, from_image
@@ -40,7 +40,6 @@ def handle_stock_message(payload: dict, facility_id: str):
     settings = get_settings()
     messaging = factory.get("messaging")
     live_store = factory.get("store_live")
-    history_store = factory.get("store_history")
 
     if payload.get("num_media", 0) > 0 and payload.get("media_url"):
         media_bytes = _download_media(payload["media_url"], settings)
@@ -75,7 +74,7 @@ def handle_stock_message(payload: dict, facility_id: str):
     for record in decision.confirmed:
         live_store.put("stock_records", record.record_id, record)
         note_confirmed(record)
-        history_store.insert("stock_records", [record.model_dump(mode="json")])
+        write_history(record)
 
     for record in decision.pending:
         live_store.put("stock_records", record.record_id, record)  # visible as pending, not silently dropped

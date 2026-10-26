@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from typing import Literal
 
@@ -91,13 +91,16 @@ def list_orders(district_id: str, user: AuthUser = Depends(OFFICER)):
     # Expired drafts (superseded solver runs) are most of the store and grow with every proposal; skip them.
     live = factory.get("store_live")
     orders = [o for status in OrderStatus if status != OrderStatus.EXPIRED for o in live.query("orders", {"status": status})]
+    now = datetime.now(timezone.utc)
+    # Finished orders older than two weeks are history (audit log, BigQuery), not work to do.
+    orders = [o for o in orders if not (o.status in (OrderStatus.RECEIVED, OrderStatus.REJECTED)
+                                        and now - (o.received_at or o.created_at) > timedelta(days=14))]
     orders = [o for o in orders if any(in_scope(d, district_id) for d in _order_districts(o))]
     stock = projected_stock({fid for o in orders for fid in (o.from_facility_id, o.to_facility_id)})
     incoming: dict[tuple, int] = {}
     for o in orders:
         if o.status == OrderStatus.DRAFT and o.quantity:
             incoming[(o.to_facility_id, o.drug_id)] = incoming.get((o.to_facility_id, o.drug_id), 0) + o.quantity
-    now = datetime.now(timezone.utc)
 
     def cover(key, units):
         need = demand.get(key, 0.0)

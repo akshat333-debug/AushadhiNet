@@ -20,4 +20,5 @@ RUN python -m eval.seal_generator
 
 ENV AUSHADHI_MODE=local PORT=8000
 EXPOSE 8000
-CMD ["sh", "-c", "exec uvicorn backend.app:app --host 0.0.0.0 --port ${PORT}"]
+# Cloud Run's proxy terminates TLS: trust its X-Forwarded-Proto so the Twilio signature check sees the https URL.
+CMD ["sh", "-c", "exec uvicorn backend.app:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips='*'"]

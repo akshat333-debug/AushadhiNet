@@ -4,6 +4,7 @@ would have been sent (the WhatsApp simulator UI reads this log too).
 """
 from __future__ import annotations
 
+import itertools
 from dataclasses import dataclass, field
 
 
@@ -13,6 +14,7 @@ class SentMessage:
     kind: str  # "text" | "media" | "buttons"
     body: str
     extra: dict = field(default_factory=dict)
+    seq: int = -1  # set when logged; stays the same when older messages are dropped
 
 
 # The cloud demo runs this for days and each approval logs two voice clips, so only the newest
@@ -23,8 +25,10 @@ MAX_SENT = 2000
 class LocalMessaging:
     def __init__(self):
         self.sent: list[SentMessage] = []
+        self._seq = itertools.count()
 
     def _log(self, message: SentMessage) -> None:
+        message.seq = next(self._seq)
         self.sent.append(message)
         del self.sent[:-MAX_SENT]
 

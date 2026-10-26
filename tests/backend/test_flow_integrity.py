@@ -120,3 +120,26 @@ def test_destination_confirms_receipt_on_whatsapp():
         assert _send(client, phone=dst_phone, body="RECEIVED 00000000")[-1].startswith("No transfer 00000000")
         assert _send(client, phone=dst_phone, body="received abcdef12")[-1] == "Receipt recorded for transfer abcdef12. Thank you."
         assert factory.get("store_live").get("orders", "abcdef12-order").status == OrderStatus.RECEIVED
+
+
+@pytest.mark.parametrize("reply, kept", [("Yes.", 1), ("hello", None)])
+def test_casual_reply_never_discards_the_pending_card(reply, kept):
+    with TestClient(create_app()) as client:
+        _send(client, body="Zync 40")  # fuzzy drug name: waits for YES
+        pending = factory.get("store_live").query("stock_records", {"facility_id": SRC, "status": RecordStatus.PENDING})
+        assert pending
+        _send(client, body=reply)
+        if kept:
+            _send(client, body="YES")  # harmless if "Yes." already confirmed it
+            assert factory.get("store_live").get("stock_records", pending[0].record_id).status == RecordStatus.CONFIRMED
+        else:
+            assert factory.get("store_live").get("stock_records", pending[0].record_id).status == RecordStatus.PENDING
+
+
+def test_voice_note_numbers_survive_the_outbox_cap(monkeypatch):
+    from backend.providers import messaging_local
+    monkeypatch.setattr(messaging_local, "MAX_SENT", 3)
+    m = messaging_local.LocalMessaging()
+    for i in range(5):
+        m.send_text("p", f"t{i}")
+    assert [s.seq for s in m.sent] == [2, 3, 4]

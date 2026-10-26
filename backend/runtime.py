@@ -340,28 +340,40 @@ def _handle_inbound(payload: dict) -> None:
             return
         messaging.send_text(sender, msg(lang, "beds_recorded", facility=facility_id, occupied=beds[0], total=beds[1]))
         return
-    if not payload.get("num_media") and body.upper() in CONFIRM_WORDS:
+    if not payload.get("num_media") and body.upper().strip(" .!") in CONFIRM_WORDS:
         live = factory.get("store_live")
         pending = live.query("stock_records", {"facility_id": facility_id, "status": RecordStatus.PENDING})
         for record in pending:
             confirmed = apply_reply(record, {})
             live.put("stock_records", confirmed.record_id, confirmed)
             note_confirmed(confirmed)
-            factory.get("store_history").insert("stock_records", [confirmed.model_dump(mode="json")])
+            write_history(confirmed)
         messaging.send_text(sender, msg(lang, "confirmed_n", n=len(pending)) if pending else msg(lang, "nothing_pending"))
         return
 
     # A new report replaces any earlier one still waiting for YES, so YES (or a typed correction)
     # only ever applies to the card the nurse is looking at.
+    # Only once the new message has been read: "hello" or "yes please" must not discard the card.
     live = factory.get("store_live")
-    for stale in live.query("stock_records", {"facility_id": facility_id, "status": RecordStatus.PENDING}):
-        live.put("stock_records", stale.record_id, stale.model_copy(update={"status": RecordStatus.REJECTED}))
+    stale = live.query("stock_records", {"facility_id": facility_id, "status": RecordStatus.PENDING})
     decision = handle_stock_message(payload, facility_id)
+    if decision.confirmed or decision.pending:
+        for record in stale:
+            live.put("stock_records", record.record_id, record.model_copy(update={"status": RecordStatus.REJECTED}))
     if decision.confirmed:
         items = ", ".join(f"{drug_name(r.drug_id, lang)} {r.on_hand}" for r in decision.confirmed)
         messaging.send_text(sender, msg(lang, "recorded", facility=facility_id, items=items))
     elif decision.card is None and not decision.rejected:
         messaging.send_text(sender, msg(lang, "unreadable"))
+
+
+def write_history(record: StockRecord) -> None:
+    """BigQuery history is a copy of the live store; a failed insert must not make Pub/Sub
+    redeliver the message and resend replies the nurse already got."""
+    try:
+        factory.get("store_history").insert("stock_records", [record.model_dump(mode="json")])
+    except Exception:  # noqa: BLE001
+        log.exception("history insert failed for %s", record.record_id)
 
 
 def _receive(facility_id: str, code: str, sender: str, lang: str) -> None:

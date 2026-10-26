@@ -90,8 +90,8 @@ def simulator_outbox(phone: str) -> list[dict]:
     from backend.providers import factory
     sent = factory.get("messaging").sent
     return [
-        {"seq": i, "kind": m.kind, "body": "[voice note]" if m.kind == "media" else m.body, "buttons": m.extra.get("buttons", [])}
-        for i, m in enumerate(sent) if m.to == phone
+        {"seq": m.seq, "kind": m.kind, "body": "[voice note]" if m.kind == "media" else m.body, "buttons": m.extra.get("buttons", [])}
+        for m in sent if m.to == phone
     ]
 
 
@@ -101,8 +101,8 @@ def simulator_media(phone: str, seq: int) -> Response:
     import base64
     _local_only()
     from backend.providers import factory
-    sent = factory.get("messaging").sent
-    if not 0 <= seq < len(sent) or sent[seq].to != phone or sent[seq].kind != "media" or not sent[seq].body.startswith("data:"):
+    m = next((m for m in factory.get("messaging").sent if m.seq == seq), None)
+    if m is None or m.to != phone or m.kind != "media" or not m.body.startswith("data:"):
         raise HTTPException(404, "no voice note")
-    header, encoded = sent[seq].body.split(",", 1)
+    header, encoded = m.body.split(",", 1)
     return Response(base64.b64decode(encoded), media_type=header[5:].split(";")[0], headers={"Cache-Control": "max-age=3600"})

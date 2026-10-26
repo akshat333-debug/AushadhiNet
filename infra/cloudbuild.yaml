@@ -15,6 +15,7 @@ substitutions:
   _BACKEND_URL: https://REPLACE_ME
   _FRONTEND_URL: https://REPLACE_ME
   _DEMO_MODE: "false"   # "true" keeps demo sign-in and the simulator for a hosted demo
+  _BACKEND_MIN_INSTANCES: "0"  # "1" during judging: no 60 s cold start (about Rs 5 an hour)
 
 steps:
   - id: backend-image
@@ -46,7 +47,7 @@ steps:
       - --memory=2Gi
       - --cpu-boost
       # One instance: the demo's simulator outbox lives in memory, and it caps the bill.
-      - --min-instances=0
+      - --min-instances=${_BACKEND_MIN_INSTANCES}
       - --max-instances=1
       # ^;^ makes ';' the separator, so CORS_ALLOWED_ORIGINS can list origins with commas (Cloud Run + the Render frontend).
       - --set-env-vars=^;^AUSHADHI_MODE=cloud;DEMO_MODE=${_DEMO_MODE};GEMINI_MODEL=gemini-3.1-flash-lite;VERTEX_LOCATION=us-central1;GCP_PROJECT=$PROJECT_ID;BIGQUERY_PROJECT=$PROJECT_ID;BIGQUERY_DATASET=aushadhinet_${_STATE};CORS_ALLOWED_ORIGINS=${_FRONTEND_URL},https://aushadhinet-frontend.onrender.com;PUBSUB_PUSH_AUDIENCE=${_BACKEND_URL}/internal/pubsub/ingest;PUBSUB_PUSH_SERVICE_ACCOUNT=pubsub-push@$PROJECT_ID.iam.gserviceaccount.com;SIGNING_KEY=projects/$PROJECT_ID/locations/${_REGION}/keyRings/aushadhinet-order-signing/cryptoKeys/transfer-order-signer/cryptoKeyVersions/1

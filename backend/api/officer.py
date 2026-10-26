@@ -13,7 +13,10 @@ import logging
 import uuid
 from datetime import datetime, timezone
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 from backend.deps import AuthUser, check_jurisdiction, require_role
 from backend.domain import AuditEvent, OrderKind, OrderStatus, TransferOrder
@@ -230,6 +233,46 @@ def district_facilities(district_id: str, user: AuthUser = Depends(OFFICER)):
          "short_drugs": sorted(short.get(f.facility_id, []))}
         for f in facility_index().values() if f.district_id == district_id
     ]
+
+
+class CapacityApproval(BaseModel):
+    kind: Literal["referral", "deputation"]
+    from_id: str
+    to_id: str
+
+
+@router.post("/capacity/approve")
+def approve_capacity(body: CapacityApproval, user: AuthUser = Depends(OFFICER)):
+    """Turns one of today's referral or deputation suggestions into a signed order, through the
+    same approval path as transfers (KMS signature, WhatsApp to both facilities, audit). Only a
+    suggestion the solver is making right now can be approved, so no arbitrary order is created."""
+    from ml.data.facilities import served_facility_index
+    from backend.capacity import district_capacity
+    from backend.domain import OrderKind
+    index = served_facility_index()
+    src, dst = index.get(body.from_id), index.get(body.to_id)
+    if src is None or dst is None:
+        raise HTTPException(404, "facility not found")
+    for district in {src.district_id, dst.district_id}:
+        check_jurisdiction(user, district)
+    cap = district_capacity(src.district_id)
+    rows = cap["beds"]["referrals"] if body.kind == "referral" else cap["staff"]["deputations"]
+    match = next((r for r in rows if r["from_id"] == body.from_id and r["to_id"] == body.to_id), None)
+    if match is None:
+        raise HTTPException(409, "that suggestion is no longer current: reload the briefing")
+    if match.get("order_id"):
+        return factory.get("store_live").get("orders", match["order_id"])
+    referral = body.kind == "referral"
+    order = TransferOrder(
+        order_id=str(uuid.uuid4()), kind=OrderKind.REFERRAL if referral else OrderKind.DEPUTATION,
+        from_facility_id=body.from_id, to_facility_id=body.to_id, drive_minutes=float(match["minutes"]),
+        patient_count=match["patients"] if referral else None,
+        rationale=(f"refer {match['patients']} patient(s): {match['from_name']} is at least 90% full" if referral
+                   else f"depute {match['staff']} {match['role']} for today: nobody in that role is on site at {match['to_name']}"),
+        created_at=datetime.now(timezone.utc), created_by="solver",
+    )
+    factory.get("store_live").put("orders", order.order_id, order)
+    return approve_order(order.order_id, user)
 
 
 @router.get("/capacity/{district_id:path}")

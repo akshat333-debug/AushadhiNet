@@ -42,9 +42,69 @@ def forecast_panel() -> pd.DataFrame:
         last_week = pd.read_parquet(SYNTHETIC_STOCK, columns=["week"])["week"].max()
         since = (last_week - pd.Timedelta(weeks=get_settings().serving_weeks)).date()
         panel = build(Grain.FACILITY_WEEK, since=since)
+    if get_settings().mode == "local" or get_settings().demo_mode:
+        panel = pd.concat([panel, neighbour_demo_panel(panel)], ignore_index=True)
     for col in ("facility_id", "drug_id"):
         panel[col] = panel[col].astype("category")
     return panel
+
+
+NEIGHBOUR_DISTRICT = "mh/dhule"
+NEIGHBOUR_FACILITIES = 15
+NEIGHBOUR_REPORTER = "demo-neighbour"  # marks the generated Dhule stock wherever it is stored
+
+
+def neighbour_demo_facilities() -> list:
+    """The Dhule PHCs and CHCs nearest Nashik: a second district with stock, so a State officer
+    can see surplus cross the district line live. Demo data only: never in any evaluation."""
+    from backend.domain import FacilityType
+    from ml.data.facilities import served_facility_index
+    index = served_facility_index().values()
+    pilot = [(f.lat, f.lon) for f in index if f.district_id == PILOT_DISTRICT]
+    near = lambda f: min((f.lat - a) ** 2 + (f.lon - b) ** 2 for a, b in pilot)
+    candidates = [f for f in index if f.district_id == NEIGHBOUR_DISTRICT and f.facility_type in (FacilityType.PHC, FacilityType.CHC)]
+    return sorted(candidates, key=near)[:NEIGHBOUR_FACILITIES]
+
+
+def neighbour_demo_panel(panel: pd.DataFrame) -> pd.DataFrame:
+    """Each demo Dhule facility mirrors the demand of its nearest Nashik facility (same weeks)."""
+    from ml.data.facilities import served_facility_index
+    index = served_facility_index()
+    pilot = [f for f in index.values() if f.district_id == PILOT_DISTRICT and f.facility_id in set(panel["facility_id"].astype(str))]
+    rows = []
+    for f in neighbour_demo_facilities():
+        twin = min(pilot, key=lambda p: (p.lat - f.lat) ** 2 + (p.lon - f.lon) ** 2)
+        mirrored = panel[panel["facility_id"].astype(str) == twin.facility_id].copy()
+        mirrored["facility_id"] = f.facility_id
+        rows.append(mirrored)
+    return pd.concat(rows, ignore_index=True) if rows else panel.iloc[:0]
+
+
+def seed_neighbour() -> int:
+    """Demo stock for the Dhule facilities: four weeks of their demand, so they hold surplus beyond
+    the two weeks a donor keeps. Writes only these facilities; Nashik's live stock is untouched."""
+    from backend.domain import Contact
+    live = factory.get("store_live")
+    panel = forecast_panel()
+    ids = {f.facility_id for f in neighbour_demo_facilities()}
+    recent = panel[panel["facility_id"].astype(str).isin(ids)]
+    recent = recent[recent["week"] > recent["week"].max() - pd.Timedelta(weeks=4)]
+    now = datetime.now(timezone.utc)
+    records = {}
+    for (fid, drug), g in recent.groupby(["facility_id", "drug_id"], observed=True):
+        rid = f"demo-{fid}-{drug}"
+        records[rid] = StockRecord(
+            record_id=rid, facility_id=str(fid), drug_id=str(drug), reported_at=now, as_of_date=now.date(),
+            on_hand=int(round(4 * g["dispensed"].mean())), status=RecordStatus.CONFIRMED,
+            confidence=Confidence(field_confidence={"on_hand": 1.0}, overall=1.0, source=ConfidenceSource.IMPORT),
+            reporter_phone_hash=NEIGHBOUR_REPORTER, raw_message_id="demo-neighbour-seed")
+    live.put_many("stock_records", records)
+    for fid in ids:
+        phone = phone_for_facility(fid)
+        live.put("contacts", phone, Contact(phone=phone, facility_id=fid))
+    global _latest
+    _latest = None
+    return len(records)
 
 
 @lru_cache(maxsize=1)
@@ -349,12 +409,17 @@ def start() -> None:
     seed_contacts()
     factory.get("queue").subscribe("ingest.raw_message", handle_inbound)
     log.info("seeded %d stock records for %s", seed(), PILOT_DISTRICT)
+    log.info("seeded %d demo stock records for %s", seed_neighbour(), NEIGHBOUR_DISTRICT)
 
 
 if __name__ == "__main__":
     # One-off cloud seeding: `AUSHADHI_MODE=cloud python -m backend.runtime seed` loads the pilot
     # district's contacts and latest ledger stock into Firestore.
+    # `seed-neighbour` adds only the labelled Dhule demo stock (needs DEMO_MODE=true).
     import sys
-    if sys.argv[1:] != ["seed"]:
-        raise SystemExit("usage: python -m backend.runtime seed")
-    print(f"contacts: {seed_contacts()}, stock records: {seed()}")
+    if sys.argv[1:] == ["seed"]:
+        print(f"contacts: {seed_contacts()}, stock records: {seed()}")
+    elif sys.argv[1:] == ["seed-neighbour"]:
+        print(f"demo stock records for {NEIGHBOUR_DISTRICT}: {seed_neighbour()}")
+    else:
+        raise SystemExit("usage: python -m backend.runtime seed | seed-neighbour")

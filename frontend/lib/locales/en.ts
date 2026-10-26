@@ -74,7 +74,7 @@ const en = {
   agent_placeholder: "Ask about stock, risk or transfers…",
   agent_ask: "Ask",
   agent_q_risk: "Which facilities are at risk?",
-  agent_q_explain: "Why is MH-0002021 at risk for calcium?",
+  agent_q_explain: "Why is Sinnar Phata at risk for calcium?",
   agent_q_propose: "Propose transfers",
   agent_you: "You",
   agent_name: "Agent",
@@ -190,7 +190,7 @@ const en = {
   cap_off_site: "{name}: {role} checked in {km} km away",
   cap_minutes: "{n} min",
   cap_nearby: "nearby",
-  cap_demo: "Facilities that have not reported today show generated demo data; a WhatsApp report replaces it. Suggestions only: no order is created.",
+  cap_demo: "Facilities that have not reported today show generated demo data; a WhatsApp report replaces it. Approve sends a signed order to both facilities.",
   cap_none: "Nothing needs moving.",
   sim_location: "Share location to check in",
   sim_location_bubble: "Location shared",
@@ -202,6 +202,7 @@ const en = {
   mark_received: "Mark received",
   no_district_data: "No reports from {district} yet.",
   forecast_note: "Demand: units used in the last ledger week ({date}), carried forward one week. Live reports update stock and risk, not demand.",
+  agent_q_capacity: "Which facilities are full today?",
 };
 
 export type Messages = typeof en;

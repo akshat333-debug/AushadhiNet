@@ -54,13 +54,11 @@ class GoogleLLMProvider:
             parsed = schema.model_validate_json(response.text or "")
         except ValueError as e:
             raise ProviderError("Gemini did not return a schema-conformant response") from e
-        # Gemini structured output does not natively return per-field
-        # confidence; a fixed prompt convention asks for a sibling
-        # "<field>_confidence" object, defaulted to 1.0 when absent.
-        confidence = getattr(response, "field_confidence", None) or {
-            field: 1.0 for field in schema.model_fields
-        }
-        return parsed, confidence
+        # The API returns no per-field confidence; the schema asks Gemini to self-report it inside
+        # the JSON (StockExtraction.confidence). Self-reports are uncalibrated, which is why every
+        # photo and voice read waits for the nurse's YES. This map is only a floor for callers that
+        # read it: absent means unknown, never certain.
+        return parsed, {field: 0.0 for field in schema.model_fields}
 
     def generate(self, prompt: str, tools: list[dict] | None = None, timeout_s: float = 45) -> LLMResponse:
         from google.genai import types
@@ -73,3 +71,31 @@ class GoogleLLMProvider:
         except Exception as e:  # noqa: BLE001
             raise ProviderError(f"Gemini generation failed: {e}") from e
         return LLMResponse(text=response.text or "", tool_calls=[])
+
+    def run_tools(self, system: str, question: str, declarations: list[dict], call, max_steps: int = 5, timeout_s: float = 25) -> str:
+        """Gemini function calling, run by hand: Gemini picks a declared function, `call` runs it
+        (jurisdiction-checked in backend/agent/tools.py) and the result goes back, until Gemini
+        answers in text. Only declared functions exist; none of them can approve or send."""
+        from google.genai import types
+
+        config = types.GenerateContentConfig(
+            system_instruction=system,
+            tools=[types.Tool(function_declarations=[types.FunctionDeclaration(**d) for d in declarations])],
+            automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+            http_options=types.HttpOptions(timeout=int(max(timeout_s, 10) * 1000)),
+        )
+        contents = [types.Content(role="user", parts=[types.Part(text=question)])]
+        for _ in range(max_steps):
+            try:
+                response = self._client.models.generate_content(model=self._model, contents=contents, config=config)
+            except Exception as e:  # noqa: BLE001
+                raise ProviderError(f"Gemini tool call failed: {e}") from e
+            calls = response.function_calls or []
+            if not calls:
+                return (response.text or "").strip()
+            contents.append(response.candidates[0].content)
+            contents.append(types.Content(role="user", parts=[
+                types.Part.from_function_response(name=fc.name, response={"result": call(fc.name, dict(fc.args or {}))})
+                for fc in calls
+            ]))
+        raise ProviderError("Gemini kept calling tools without answering")

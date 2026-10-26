@@ -11,7 +11,7 @@ import threading
 import time
 from collections import deque
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from backend.api.webhooks_twilio import publish_inbound_message
@@ -93,3 +93,16 @@ def simulator_outbox(phone: str) -> list[dict]:
         {"seq": i, "kind": m.kind, "body": "[voice note]" if m.kind == "media" else m.body, "buttons": m.extra.get("buttons", [])}
         for i, m in enumerate(sent) if m.to == phone
     ]
+
+
+@router.get("/media")
+def simulator_media(phone: str, seq: int) -> Response:
+    """The audio of a voice alert in the outbox, so the simulator can play what WhatsApp would deliver."""
+    import base64
+    _local_only()
+    from backend.providers import factory
+    sent = factory.get("messaging").sent
+    if not 0 <= seq < len(sent) or sent[seq].to != phone or sent[seq].kind != "media" or not sent[seq].body.startswith("data:"):
+        raise HTTPException(404, "no voice note")
+    header, encoded = sent[seq].body.split(",", 1)
+    return Response(base64.b64decode(encoded), media_type=header[5:].split(";")[0], headers={"Cache-Control": "max-age=3600"})

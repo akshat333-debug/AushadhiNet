@@ -101,7 +101,28 @@ def propose_transfers(district_id: str) -> list[TransferOrder]:
     return replace_drafts(district_id, propose_for_district(district_id))
 
 
+def find_facility(query: str, district_id: str) -> list[dict]:
+    """Facilities in a district whose name matches, best first: officers know names, not IDs."""
+    from backend.runtime import latest_records
+    from ml.data.facilities import served_facility_index as facility_index
+    wanted = " ".join(query.lower().split())
+    reporting = {fid for fid, _ in latest_records()}
+    hits = [f for f in facility_index().values()
+            if f.district_id == district_id and (wanted in f.name.lower() or f.name.lower() in wanted)]
+    # exact names first, then reporting facilities (sub-centres often share a PHC's village name)
+    hits.sort(key=lambda f: (f.name.lower() != wanted, f.facility_id not in reporting, len(f.name)))
+    return [{"facility_id": f.facility_id, "name": f.name, "block": f.block, "type": f.facility_type.value} for f in hits[:5]]
+
+
+def get_capacity(district_id: str) -> dict:
+    """Today's beds and staff for a district: full facilities, referral and deputation suggestions."""
+    from backend.capacity import district_capacity
+    return district_capacity(district_id)
+
+
 TOOL_REGISTRY = {
+    "find_facility": find_facility,
+    "get_capacity": get_capacity,
     "get_facility": get_facility,
     "get_stock": get_stock,
     "get_forecast": get_forecast,

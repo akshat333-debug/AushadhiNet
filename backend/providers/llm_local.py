@@ -31,3 +31,6 @@ class LocalLLMProvider:
 
     def generate(self, prompt: str, tools: list[dict] | None = None, timeout_s: float = 45) -> LLMResponse:
         return LLMResponse(text=f"[local-llm stub response to: {prompt[:60]}...]", tool_calls=[])
+
+    def run_tools(self, system: str, question: str, declarations: list[dict], call, max_steps: int = 5, timeout_s: float = 25) -> str:
+        raise ProviderError("no function calling in local mode")  # the agent falls back to its templates

@@ -5,7 +5,7 @@
  */
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Bed, UsersThree } from "@phosphor-icons/react";
+import { Bed, Check, SealCheck, UsersThree } from "@phosphor-icons/react";
 import { Skeleton } from "@/components/ui";
 import { api, Capacity } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -14,10 +14,42 @@ export default function CapacityCard({ district }: { district: string }) {
   const { t, num } = useI18n();
   const [cap, setCap] = useState<Capacity | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
     api.capacity(district).then(setCap).catch((e) => setError((e as Error).message));
   }, [district]);
+
+  // Approving signs the order and sends it to both facilities on WhatsApp, like a transfer.
+  async function approve(kind: "referral" | "deputation", fromId: string, toId: string) {
+    setBusy(`${kind}-${fromId}-${toId}`);
+    try {
+      await api.approveCapacity(kind, fromId, toId);
+      setCap(await api.capacity(district));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+  const action = (kind: "referral" | "deputation", r: { from_id: string; to_id: string; order_id?: string | null; minutes: number }) =>
+    r.order_id ? (
+      <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-teal-700 dark:text-teal-400" data-testid={`${kind}-approved`}>
+        <SealCheck size={14} weight="fill" /> {t("status_approved")}
+      </span>
+    ) : (
+      <span className="flex shrink-0 items-center gap-2">
+        <span className="muted text-xs">{time(r.minutes)}</span>
+        <button
+          className="btn-secondary px-2 py-0.5 text-xs"
+          disabled={busy !== null}
+          onClick={() => approve(kind, r.from_id, r.to_id)}
+          data-testid={`approve-${kind}`}
+        >
+          <Check size={12} weight="bold" /> {t("approve")}
+        </button>
+      </span>
+    );
 
   const time = (minutes: number) => (minutes < 5 ? t("cap_nearby") : t("cap_minutes", { n: num(minutes) }));
   const link = (id: string, name: string) => (
@@ -55,7 +87,7 @@ export default function CapacityCard({ district }: { district: string }) {
               {cap.beds.referrals.slice(0, 5).map((r) => (
                 <li key={`${r.from_id}-${r.to_id}`} className="flex flex-wrap items-baseline justify-between gap-x-3 py-1.5">
                   <span>{line("cap_refer", { from: link(r.from_id, r.from_name), n: num(r.patients), to: link(r.to_id, r.to_name) })}</span>
-                  <span className="muted text-xs">{time(r.minutes)}</span>
+                  {action("referral", r)}
                 </li>
               ))}
               {!cap.beds.referrals.length && <li className="muted py-1.5">{t("cap_none")}</li>}
@@ -71,7 +103,7 @@ export default function CapacityCard({ district }: { district: string }) {
               {cap.staff.deputations.slice(0, 3).map((d) => (
                 <li key={`${d.role}-${d.from_id}-${d.to_id}`} className="flex flex-wrap items-baseline justify-between gap-x-3 py-1.5">
                   <span>{line("cap_depute", { to: link(d.to_id, d.to_name), n: num(d.staff), role: d.role, from: link(d.from_id, d.from_name) })}</span>
-                  <span className="muted text-xs">{time(d.minutes)}</span>
+                  {action("deputation", d)}
                 </li>
               ))}
               {cap.staff.off_site.slice(0, 2).map((c, i) => (

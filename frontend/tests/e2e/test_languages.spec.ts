@@ -17,7 +17,7 @@ test.describe("Languages", () => {
     await signIn(page, "District officer, Nashik");
     await page.getByTestId("lang-switcher").selectOption("hi");
     await page.goto("/agent");
-    await page.getByRole("button", { name: "MH-0002021 में कैल्शियम गोली का जोखिम क्यों है?" }).click();
+    await page.getByRole("button", { name: "Sinnar Phata में कैल्शियम गोली का जोखिम क्यों है?" }).click();
     await expect(page.getByTestId("agent-chat")).toContainText("अगले सप्ताह ख़त्म होने की संभावना", { timeout: 45_000 });
   });
 });

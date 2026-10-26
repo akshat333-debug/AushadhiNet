@@ -150,6 +150,12 @@ def district_capacity(district_id: str) -> dict:
     role_of = dict(zip(spare["staff_id_hash"], spare["role"]))
 
     nobody = [fid for fid in roster if not any(c["facility_id"] == fid for c in on_site)]
+    # Suggestions an officer already approved today carry their order, so the card shows them as done.
+    from backend.domain import OrderKind, OrderStatus
+    done = {(o.kind, o.from_facility_id, o.to_facility_id): o.order_id
+            for status in (OrderStatus.APPROVED, OrderStatus.RECEIVED)
+            for o in factory.get("store_live").query("orders", {"status": status})
+            if o.kind in (OrderKind.REFERRAL, OrderKind.DEPUTATION) and o.approved_at and o.approved_at.astimezone(IST).date() == day}
     return {
         "date": day.isoformat(),
         "demo_baseline": demo,
@@ -160,7 +166,8 @@ def district_capacity(district_id: str) -> dict:
             "full": [{"facility_id": fid, "name": name(fid), "occupied": o, "total": t} for fid, o, t in full[:SHOW]],
             "full_count": len(full),
             "referrals": [{"from_id": r.from_facility_id, "from_name": name(r.from_facility_id), "to_id": r.to_facility_id,
-                           "to_name": name(r.to_facility_id), "patients": r.patient_count, "minutes": round(r.drive_minutes)}
+                           "to_name": name(r.to_facility_id), "patients": r.patient_count, "minutes": round(r.drive_minutes),
+                           "order_id": done.get((OrderKind.REFERRAL, r.from_facility_id, r.to_facility_id))}
                           for r in referrals[:SHOW]],
         },
         "staff": {
@@ -171,7 +178,8 @@ def district_capacity(district_id: str) -> dict:
             "nobody_count": len(nobody),
             "off_site": [{"facility_id": c["facility_id"], "name": name(c["facility_id"]), "role": c["role"].value,
                           "distance_m": round(c["distance_m"])} for c in checkins if c["distance_m"] > settings.geofence_radius_m][:SHOW],
-            "deputations": [{"role": role, "staff": n, "from_id": src, "from_name": name(src), "to_id": dst, "to_name": name(dst), "minutes": round(m)}
+            "deputations": [{"role": role, "staff": n, "from_id": src, "from_name": name(src), "to_id": dst, "to_name": name(dst), "minutes": round(m),
+                             "order_id": done.get((OrderKind.DEPUTATION, src, dst))}
                             for (m, role, src, dst), n in sorted(Counter(
                                 (d.drive_minutes, role_of.get(d.staff_id_hash, ""), d.from_facility_id, d.to_facility_id) for d in deputations).items())[:SHOW]],
         },

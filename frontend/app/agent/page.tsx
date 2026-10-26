@@ -59,7 +59,7 @@ export default function AgentPage() {
     );
   }
 
-  const suggestions = [t("agent_q_risk"), t("agent_q_explain"), t("agent_q_propose")];
+  const suggestions = [t("agent_q_risk"), t("agent_q_explain"), t("agent_q_capacity"), t("agent_q_propose")];
 
   return (
     <div className="mx-auto max-w-3xl">

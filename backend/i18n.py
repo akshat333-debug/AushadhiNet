@@ -12,6 +12,9 @@ LANG_NAMES = {"en": "English", "hi": "Hindi", "mr": "Marathi", "bn": "Bengali", 
 
 MESSAGES: dict[str, dict[str, str]] = {
     "en": {
+        "agent_capacity": "{district} today: {full} facilities at least 90% full ({occupied} of {total} beds in use); {present} of {rostered} staff on site, {off_site} check-ins away from their facility.",
+        "agent_referral": "Suggested referral: {n} patient(s) from {src} to {dst}.",
+        "agent_deputation": "Suggested deputation: {n} {role} from {src} to {dst}.",
         "receipt_ok": "Receipt recorded for transfer {code}. Thank you.",
         "receipt_unknown": "No transfer {code} is on its way to this facility. Check the code in the order message.",
         "bad_quantity": "Not recorded: {lines}. Send whole numbers with no minus sign or decimal, e.g. 'ORS 1000'.",
@@ -30,7 +33,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "field_drug_id": "which medicine this is", "field_on_hand": "the quantity",
         "field_expiry": "the expiry date", "field_batch_no": "the batch number",
         "btn_confirm": "Confirm", "btn_correct": "Correct",
-        "agent_help": "I can explain a facility's risk ('why is MH-0002021 at risk for calcium?'), list shortages ('which facilities are at risk?'), or draft transfers ('propose transfers'). I cannot approve or send anything.",
+        "agent_help": "I can explain a facility's risk ('why is Sinnar Phata at risk for calcium?'), list shortages ('which facilities are at risk?'), summarise beds and staff ('which facilities are full?'), or draft transfers ('propose transfers'). I cannot approve or send anything.",
         "agent_explain": "{facility}'s {drug} stock-out probability over the next week is {prob}, with expected demand around {p50} units (range {p10}-{p90}).",
         "agent_no_forecast": "No forecast available yet for {drug} at {facility}.",
         "agent_stock": "Latest stock at {facility}: {lines}.",
@@ -44,6 +47,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "That is outside your jurisdiction: {detail}",
     },
     "hi": {
+        "agent_capacity": "{district} आज: {full} केंद्र कम से कम 90% भरे ({total} में से {occupied} बेड उपयोग में); {rostered} में से {present} स्टाफ़ केंद्र पर, {off_site} हाज़िरी केंद्र से दूर।",
+        "agent_referral": "सुझाया गया रेफ़रल: {src} से {dst} तक {n} मरीज़।",
+        "agent_deputation": "सुझाई गई प्रतिनियुक्ति: {src} से {dst} तक {n} {role}।",
         "receipt_ok": "स्थानांतरण {code} की प्राप्ति दर्ज की गई। धन्यवाद।",
         "receipt_unknown": "इस केंद्र के लिए कोई स्थानांतरण {code} रास्ते में नहीं है। आदेश संदेश में कोड जाँचें।",
         "bad_quantity": "दर्ज नहीं किया गया: {lines}। बिना माइनस या दशमलव के पूरी संख्या भेजें, जैसे 'ORS 1000'।",
@@ -76,6 +82,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "यह आपके अधिकार क्षेत्र से बाहर है: {detail}",
     },
     "mr": {
+        "agent_capacity": "{district} आज: {full} केंद्रे किमान 90% भरलेली ({total} पैकी {occupied} बेड वापरात); {rostered} पैकी {present} कर्मचारी केंद्रावर, {off_site} हजेऱ्या केंद्रापासून दूर.",
+        "agent_referral": "सुचवलेले रेफरल: {src} येथून {dst} येथे {n} रुग्ण.",
+        "agent_deputation": "सुचवलेली प्रतिनियुक्ती: {src} येथून {dst} येथे {n} {role}.",
         "receipt_ok": "हस्तांतरण {code} मिळाल्याची नोंद झाली. धन्यवाद.",
         "receipt_unknown": "या केंद्रासाठी {code} हे हस्तांतरण मार्गावर नाही. आदेश संदेशातील कोड तपासा.",
         "bad_quantity": "नोंदवले नाही: {lines}. वजा चिन्ह किंवा दशांश नसलेली पूर्ण संख्या पाठवा, उदा. 'ORS 1000'.",
@@ -108,6 +117,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "हे तुमच्या कार्यक्षेत्राबाहेर आहे: {detail}",
     },
     "bn": {
+        "agent_capacity": "{district} আজ: {full}টি কেন্দ্র অন্তত 90% ভর্তি ({total}টির মধ্যে {occupied}টি শয্যা ব্যবহৃত); {rostered} জনের মধ্যে {present} জন কর্মী কেন্দ্রে, {off_site}টি হাজিরা কেন্দ্র থেকে দূরে।",
+        "agent_referral": "প্রস্তাবিত রেফারাল: {src} থেকে {dst}-তে {n} জন রোগী।",
+        "agent_deputation": "প্রস্তাবিত ডেপুটেশন: {src} থেকে {dst}-তে {n} জন {role}।",
         "receipt_ok": "স্থানান্তর {code} প্রাপ্তি নথিভুক্ত হয়েছে। ধন্যবাদ।",
         "receipt_unknown": "এই কেন্দ্রের জন্য কোনো স্থানান্তর {code} পথে নেই। আদেশ বার্তার কোডটি দেখুন।",
         "bad_quantity": "নথিভুক্ত হয়নি: {lines}। বিয়োগ চিহ্ন বা দশমিক ছাড়া পূর্ণ সংখ্যা পাঠান, যেমন 'ORS 1000'।",
@@ -140,6 +152,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "এটি আপনার এক্তিয়ারের বাইরে: {detail}",
     },
     "ta": {
+        "agent_capacity": "{district} இன்று: {full} நிலையங்கள் குறைந்தது 90% நிரம்பியுள்ளன ({total}இல் {occupied} படுக்கைகள் பயன்பாட்டில்); {rostered}இல் {present} பணியாளர்கள் நிலையத்தில், {off_site} வருகைகள் நிலையத்திலிருந்து தொலைவில்.",
+        "agent_referral": "பரிந்துரைக்கப்பட்ட பரிந்துரை: {src} இலிருந்து {dst}க்கு {n} நோயாளி(கள்).",
+        "agent_deputation": "பரிந்துரைக்கப்பட்ட பணி மாற்றம்: {src} இலிருந்து {dst}க்கு {n} {role}.",
         "receipt_ok": "இடமாற்றம் {code} பெறப்பட்டது பதிவு செய்யப்பட்டது. நன்றி.",
         "receipt_unknown": "இந்த நிலையத்திற்கு {code} என்ற இடமாற்றம் வரவில்லை. ஆணைச் செய்தியில் உள்ள குறியீட்டைச் சரிபார்க்கவும்.",
         "bad_quantity": "பதிவு செய்யப்படவில்லை: {lines}. கழித்தல் குறி அல்லது தசமம் இல்லாத முழு எண்ணை அனுப்பவும், எ.கா. 'ORS 1000'.",
@@ -172,6 +187,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "இது உங்கள் அதிகார வரம்பிற்கு வெளியே உள்ளது: {detail}",
     },
     "te": {
+        "agent_capacity": "{district} ఈరోజు: {full} కేంద్రాలు కనీసం 90% నిండాయి ({total}లో {occupied} పడకలు వాడుకలో); {rostered}లో {present} మంది సిబ్బంది కేంద్రంలో, {off_site} హాజరులు కేంద్రానికి దూరంగా.",
+        "agent_referral": "సూచించిన రిఫరల్: {src} నుండి {dst}కి {n} రోగి(లు).",
+        "agent_deputation": "సూచించిన డిప్యుటేషన్: {src} నుండి {dst}కి {n} {role}.",
         "receipt_ok": "బదిలీ {code} అందినట్లు నమోదైంది. ధన్యవాదాలు.",
         "receipt_unknown": "ఈ కేంద్రానికి {code} బదిలీ రావడం లేదు. ఆర్డర్ సందేశంలోని కోడ్‌ను తనిఖీ చేయండి.",
         "bad_quantity": "నమోదు కాలేదు: {lines}. మైనస్ గుర్తు లేదా దశాంశం లేని పూర్ణ సంఖ్య పంపండి, ఉదా. 'ORS 1000'.",
@@ -204,6 +222,9 @@ MESSAGES: dict[str, dict[str, str]] = {
         "agent_outside": "ఇది మీ అధికార పరిధికి వెలుపల ఉంది: {detail}",
     },
     "kn": {
+        "agent_capacity": "{district} ಇಂದು: {full} ಕೇಂದ್ರಗಳು ಕನಿಷ್ಠ 90% ಭರ್ತಿ ({total}ರಲ್ಲಿ {occupied} ಹಾಸಿಗೆಗಳು ಬಳಕೆಯಲ್ಲಿ); {rostered}ರಲ್ಲಿ {present} ಸಿಬ್ಬಂದಿ ಕೇಂದ್ರದಲ್ಲಿ, {off_site} ಹಾಜರಾತಿಗಳು ಕೇಂದ್ರದಿಂದ ದೂರ.",
+        "agent_referral": "ಸೂಚಿಸಿದ ರೆಫರಲ್: {src}ನಿಂದ {dst}ಗೆ {n} ರೋಗಿ(ಗಳು).",
+        "agent_deputation": "ಸೂಚಿಸಿದ ನಿಯೋಜನೆ: {src}ನಿಂದ {dst}ಗೆ {n} {role}.",
         "receipt_ok": "ವರ್ಗಾವಣೆ {code} ಸ್ವೀಕೃತಿ ದಾಖಲಾಗಿದೆ. ಧನ್ಯವಾದಗಳು.",
         "receipt_unknown": "ಈ ಕೇಂದ್ರಕ್ಕೆ {code} ವರ್ಗಾವಣೆ ಬರುತ್ತಿಲ್ಲ. ಆದೇಶ ಸಂದೇಶದಲ್ಲಿನ ಕೋಡ್ ಪರಿಶೀಲಿಸಿ.",
         "bad_quantity": "ದಾಖಲಾಗಿಲ್ಲ: {lines}. ಮೈನಸ್ ಚಿಹ್ನೆ ಅಥವಾ ದಶಮಾಂಶ ಇಲ್ಲದ ಪೂರ್ಣ ಸಂಖ್ಯೆ ಕಳುಹಿಸಿ, ಉದಾ. 'ORS 1000'.",
@@ -275,6 +296,10 @@ CONFIRM_WORDS = {"YES", "Y", "CONFIRM", "OK", "हाँ", "हां", "हो"
 # Intent keywords for the local-mode agent (cloud mode uses Gemini, which reads any language).
 INTENT_WORDS = {
     "propose": ("propose", "draft", "transfer", "redistribut", "प्रस्ताव", "स्थानांतरण", "हस्तांतरण", "প্রস্তাব", "স্থানান্তর", "பரிமாற்ற", "முன்மொழி", "బదిలీ", "ప్రతిపాద", "ವರ್ಗಾವಣೆ", "ಪ್ರಸ್ತಾವ"),
+    "capacity": ("bed", "staff", "attendance", "check-in", "checked in", "checkin", "off-site", "referral", "deput", "absent", "full",
+                 "बेड", "स्टाफ", "हाज़िर", "हाजिर", "हजेरी", "कर्मचारी", "শয্যা", "কর্মী", "படுக்கை", "பணியாளர்", "పడక", "సిబ్బంది", "ಹಾಸಿಗೆ", "ಸಿಬ್ಬಂದಿ"),
+    # Requests to act are refused before any model sees them: the agent has no tool to act anyway.
+    "action": ("approv", "send ", "sign the", "sign all", "execute", "dispatch", "मंजूर", "भेजो", "भेजें", "पाठवा", "অনুমোদন", "ஒப்புத", "ఆమోద", "ಅನುಮೋದ"),
     "risk": ("risk", "shortage", "stock-out", "stockout", "running out", "low", "जोखिम", "कमी", "धोका", "तुटवडा", "ঝুঁকি", "ঘাটতি", "அபாய", "பற்றாக்குறை", "ప్రమాద", "కొరత", "ಅಪಾಯ", "ಕೊರತೆ"),
 }
 

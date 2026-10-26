@@ -92,7 +92,7 @@ def from_audio(audio: bytes, mime: str, facility_id: str, reporter_phone_hash: s
         f"{STOCK_VOICE_PROMPT}\n\nTranscript: {transcript.text}", [], StockExtraction,
     )
     if field_confidence:
-        extraction.confidence = {**extraction.confidence, **field_confidence}
+        extraction.confidence = {**field_confidence, **extraction.confidence}  # what the model reported wins; unreported fields stay at the provider floor
     record = _to_stock_record(extraction, facility_id, reporter_phone_hash, raw_message_id, ConfidenceSource.CHIRP)
     overall = Confidence(field_confidence=extraction.confidence, overall=record.confidence.overall, source=ConfidenceSource.CHIRP)
     return ExtractionResult(records=[record], confidence=overall, transcript=transcript.text)

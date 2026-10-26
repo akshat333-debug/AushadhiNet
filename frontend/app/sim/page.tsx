@@ -47,7 +47,8 @@ async function shrinkPhoto(file: File): Promise<{ base64: string; type: string; 
   return { base64: dataUrl.split(",")[1], type: "image/jpeg", url: dataUrl };
 }
 
-type Bubble = { key: string; mine: boolean; text: string; buttons: string[]; photo?: string; voice?: number; location?: boolean };
+type Bubble = { key: string; mine: boolean; text: string; buttons: string[]; photo?: string; voice?: number; location?: boolean; seq?: number };
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 export default function SimulatorPage() {
   const { t, lang } = useI18n();
@@ -191,7 +192,7 @@ export default function SimulatorPage() {
   for (let i = 0; i <= replies.length; i++) {
     sent.filter((s) => s.repliesBefore === i).forEach((s) => thread.push({ key: s.id, mine: true, text: s.text, buttons: [], photo: s.photo, voice: s.voice, location: s.location }));
     const r = replies[i];
-    if (r) thread.push({ key: `r-${r.seq}`, mine: false, text: r.body, buttons: r.buttons });
+    if (r) thread.push({ key: `r-${r.seq}`, mine: false, text: r.body, buttons: r.buttons, seq: r.seq });
   }
 
   const examples = [t("sim_example_local"), "IFA 20", t("sim_example_yes"), "BEDS 4/6"];
@@ -302,6 +303,11 @@ export default function SimulatorPage() {
                           <span className="inline-flex items-center gap-1.5" data-testid="sim-voice-bubble">
                             <Microphone size={14} weight="fill" /> {t("sim_voice_note")}
                             {m.voice !== undefined && <span className="muted font-mono text-xs">0:{String(m.voice).padStart(2, "0")}</span>}
+                            {!m.mine && m.seq !== undefined && (
+                              // The spoken alert WhatsApp would deliver (Cloud Text-to-Speech in cloud mode).
+                              <audio controls preload="none" className="ml-1 h-8 max-w-[200px]" data-testid="sim-voice-audio"
+                                src={`${API_BASE}/simulator/media?phone=${encodeURIComponent(phone)}&seq=${m.seq}`} />
+                            )}
                           </span>
                         ) : (
                           m.text

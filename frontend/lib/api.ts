@@ -94,6 +94,7 @@ interface Route {
   to_id: string;
   to_name: string;
   minutes: number;
+  order_id?: string | null; // set once an officer approved this suggestion today
 }
 
 /** Today's beds and staff for one district, with referral and deputation suggestions (backend/capacity.py). */
@@ -170,6 +171,8 @@ export const api = {
   rejectOrder: (orderId: string) => request<TransferOrder>(`/officer/orders/${orderId}/reject`, { method: "POST" }),
   proposeOrders: (districtId: string) => request<TransferOrder[]>(`/officer/propose/${districtId}`, { method: "POST" }),
   runEscalation: () => request<TransferOrder[]>("/officer/escalation/sweep", { method: "POST" }),
+  approveCapacity: (kind: "referral" | "deputation", fromId: string, toId: string) =>
+    request<TransferOrder>("/officer/capacity/approve", { method: "POST", body: JSON.stringify({ kind, from_id: fromId, to_id: toId }) }),
   capacity: (districtId: string) => request<Capacity>(`/officer/capacity/${districtId}`),
   districtFacilities: (districtId: string) => request<FacilitySummary[]>(`/officer/districts/${districtId}/facilities`),
   facilityDetail: (facilityId: string) => request<FacilityDetail>(`/officer/facility/${encodeURIComponent(facilityId)}`),

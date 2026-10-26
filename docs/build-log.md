@@ -310,3 +310,19 @@ Reviewing the cloud path found more than the three gaps listed after the Terrafo
 - Beds and staff wired: `BEDS 4/6` and shared-location check-ins on WhatsApp, `/officer/capacity`, referral and deputation suggestions. The isolation test caught the first version importing bed and staff norms from the sealed generator; the norms now live in `backend/capacity.py`.
 - Render: backend suspended; the frontend (the submitted link) calls the Cloud Run backend.
 - Verified: 356 backend tests; 17/17 Playwright against Cloud Run; 8/8 against the Render link.
+
+## Mock-judge review (2026-10-26)
+A mock judge scored 58/100 and probed the operational flow. Confirmed and fixed:
+- Approval committed stock the donor no longer had (50 ORS from zero) and re-proposals re-offered approved units. Now approval checks projected stock (transfers approved since the donor's last report) and proposals use it.
+- A failed WhatsApp alert left an approved order that retrying could not re-alert; `alerted_at` now marks delivery, and approving again resends.
+- "ORS 1,000" read 0, "ORS -5" read 5, "ORS 10.5" read 5, all at confidence 1.0. Grouped numbers now read whole; negatives and decimals are refused with a reply naming the line.
+- YES confirmed every pending report of a facility, including an older wrong read. A new report now rejects older pending ones.
+- Redelivered messages created duplicate records; each message id is handled once.
+- `backend/ingest/media.py` existed but nothing called it; uploads are now checked by type, size and file signature.
+- Attendance counted one person twice; a census from 2020 counted as today's; generated staff stayed after real check-ins. All fixed.
+- Two-letter state prefixes collided (1,939 Uttar Pradesh/Uttarakhand IDs); ISO codes now, with a uniqueness assertion.
+- The facility-week held-out block was never excluded (no block column, and the lock spells it "trimbakeshwar" where the directory says "Trimbak"). Enforced now; earlier facility-week tuning numbers are labelled as pre-fix.
+- The federated local-only arm scaled validation with its own statistics; WAPE 0.9928 became 0.9931 with training statistics.
+- Live proposals drafted 1-unit shipments and up to 40 donors for one need: now at least 10 units and at most 5 donors (160 drafts to 77, keeping 68% of units).
+- Cross-district: state officers propose state-wide; tested on a Nashik/Dhule pair.
+- Claims relabelled live / offline / planned (federation is a simulation with no DP noise; Terraform provisions inside an existing project; the 19% gain is not the served model; the replay's unmet units and transfer count shown next to its -6%).

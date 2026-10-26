@@ -60,13 +60,13 @@ real facility list, synthetic stock ledger), **offline** (measured in a frozen e
 | Live demo (simulated pilot: real facility list, synthetic stock) | **Nashik: 760 facilities x 16 essential HMIS medicines**, plus beds and staff at its 186 PHCs, CHCs and hospitals |
 | Ready to onboard (MoHFW facility directory, 2016) | **1,90,609 facilities, 678 districts, 36 states and UTs** |
 | Medicines escalated to the state (short district-wide, with quantities) | **4** |
-| Transfer drafts for Nashik (live) | **77**, each at least 10 units, at most 5 donors per need: 68% of the units an unconstrained run moves in 160 drafts |
+| Transfer drafts (live) | Nashik alone: **77**, each at least 10 units, at most 5 donors per need (68% of the units an unconstrained run moves in 160 drafts). State-wide: **58** more cross the line from Dhule's labelled demo stock |
 | Forecast error vs naive baseline (offline: real HMIS, district-month, held-out window; not the model the app serves) | **0.871 vs 1.078, 19% better** |
 | 26-week replay (offline simulation, 760 facilities) | Stock-out weeks **-6.0%** (10,774 to 10,131), but unmet units **+0.25%**, fill rate 67.83% to 67.75%, and **14,815 transfers** (about 570 a week). Rebalancing spreads scarcity; it adds no supply |
 | Federation (offline simulation, 4 states, data-poor Meghalaya) | Local-only 0.993, federated 0.996, centralised 1.000 WAPE: **a tie, no accuracy gain** |
 | Gemini register reading (206 synthetic lines, 4 scripts) | **98.1% medicine, 100% quantity** |
 | Languages, end to end (UI, WhatsApp replies, voice, agent) | **7** (en, hi, mr, bn, ta, te, kn) |
-| Automated tests | **392** (375 backend + 17 Playwright E2E, run against the live site) |
+| Automated tests | **398** (381 backend + 17 Playwright E2E, run against the live site) |
 
 ## Try it in 2 minutes
 
@@ -148,7 +148,7 @@ Requires: Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 20+.
 uv sync --extra ml --extra dev    # add --extra gcp only for cloud mode
 cp .env.example .env               # defaults are all local-mode; no keys needed
 uv run python -m eval.seal_generator   # rebuilds data/synthetic/, fails if hash != protocol.lock
-uv run pytest -q                   # 375 tests, about 4 minutes
+uv run pytest -q                   # 381 tests, about 5 minutes
 uv run uvicorn backend.app:app --reload --port 8000
 
 # 2. Frontend (separate terminal)
@@ -252,7 +252,7 @@ numbers behind these headlines):
 ## Testing
 
 ```bash
-uv run pytest -q                          # backend + ml + eval: 375 tests
+uv run pytest -q                          # backend + ml + eval: 381 tests
 cd frontend && npx playwright test        # frontend e2e, needs both dev servers (playwright.config.ts starts them)
 ```
 

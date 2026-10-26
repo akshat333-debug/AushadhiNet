@@ -76,6 +76,12 @@ agent answers, native-script reports). Audited against the Vercel web interface 
   codes (no ID collisions); live drafts at least 10 units, at most 5 donors per need (160 to 77);
   state-wide proposals cross district lines; the held-out block is enforced; federated local-only arm
   scaled with training statistics (0.9931). 375 backend tests.
+- Second mock-judge pass (2026-10-26): agent takes facility names and beds/staff questions, and
+  sends anything else to Gemini function calling (read-only, jurisdiction-checked, numbers guarded),
+  checked live; 15 Dhule facilities carry labelled demo stock, so a state-wide run drafts 58
+  cross-district transfers live; referrals and deputations approve into signed orders; simulator
+  plays voice alerts; backend kept warm (min instances 1) until results. 381 backend tests, 17/17
+  e2e live (one intermittent client error right after a deploy, passed on two reruns).
 - Limits: backend max 1 instance (in-memory simulator outbox; caps cost), frontend max 2, both scale
   to zero. Budget alert Rs 850/month (alerts only).
 - Not configured: Firebase Auth and Twilio (demo sign-in and the simulator stand in), Maps

@@ -326,3 +326,12 @@ A mock judge scored 58/100 and probed the operational flow. Confirmed and fixed:
 - Live proposals drafted 1-unit shipments and up to 40 donors for one need: now at least 10 units and at most 5 donors (160 drafts to 77, keeping 68% of units).
 - Cross-district: state officers propose state-wide; tested on a Nashik/Dhule pair.
 - Claims relabelled live / offline / planned (federation is a simulation with no DP noise; Terraform provisions inside an existing project; the 19% gain is not the served model; the replay's unmet units and transfer count shown next to its -6%).
+
+## Second mock-judge review (2026-10-26)
+- Agent: template answers now accept facility names ("Sinnar Phata" for "NSKMC Sinnar Phata") and beds/staff questions; comparisons and multi-facility questions go to Gemini function calling (manual loop, six read-only functions through the jurisdiction check). Checked live: "Compare what Dindori and Nandgaon hold" answered from both facilities' stock. Answers stating a number no function returned are dropped. Found while building: "have" fuzzily matched ribavirin (drug matches now need score 0.8), and a Dhule officer re-approving a Nashik suggestion got the order back before the jurisdiction check (fixed).
+- Gemini extraction no longer defaults missing per-field confidence to 1.0.
+- Dhule demo stock (`python -m backend.runtime seed-neighbour`): 240 records for 15 facilities; state-wide propose drafts 58 cross-district transfers live. District officers see those without an Approve button.
+- Referral and deputation suggestions approve into KMS-signed orders with WhatsApp alerts (`POST /officer/capacity/approve`).
+- Simulator plays voice alerts (`GET /simulator/media`).
+- Cloud Build keeps the backend warm via `_BACKEND_MIN_INSTANCES`; set back to 0 after results.
+- Screenshots retaken from the production build; deck slides 1, 5, 6, 7 and 9 updated.

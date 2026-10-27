@@ -214,15 +214,19 @@ _latest: tuple[object, dict[tuple[str, str], StockRecord]] | None = None
 def latest_records() -> dict[tuple[str, str], StockRecord]:
     """Newest confirmed stock record per (facility, drug). Read from the store once (a full
     Firestore read of the district takes ~8 s), then kept current by note_confirmed()."""
-    global _latest, _use, _use_version
+    global _latest, _use, _use_version, _moves
     live = factory.get("store_live")
     if _latest is None or _latest[0] is not live:
         newest: dict[tuple[str, str], StockRecord] = {}
         _use = None
         _dates.clear()
         _use_version += 1
-        for r in sorted(live.query("stock_records", {"status": RecordStatus.CONFIRMED}), key=lambda r: r.reported_at):
-            note_confirmed(r, newest)
+        _moves = _moved_orders()  # one read, not one per report: startup must fit Cloud Run's probe
+        try:
+            for r in sorted(live.query("stock_records", {"status": RecordStatus.CONFIRMED}), key=lambda r: r.reported_at):
+                note_confirmed(r, newest)
+        finally:
+            _moves = None
         _latest = (live, newest)
     # A copy: reports update the index from other threads, and adding a key while a caller loops
     # over it raises "dictionary changed size during iteration". dict() copies atomically.
@@ -247,19 +251,28 @@ _dates: dict[tuple[str, str], object] = {}
 _use_version = 0
 
 
+_moves: list | None = None  # moved transfer orders, read once while the index is rebuilt
+
+
+def _moved_orders() -> list:
+    from backend.domain import OrderKind, OrderStatus
+    if _moves is not None:
+        return _moves
+    return [o for status in (OrderStatus.DISPATCHED, OrderStatus.RECEIVED)
+            for o in factory.get("store_live").query("orders", {"status": status}) if o.kind == OrderKind.DRUG_TRANSFER]
+
+
 def _net_in(facility_id: str, drug_id: str, since: datetime, until: datetime) -> float:
     """Units that arrived at a facility minus units that left it, in (since, until]."""
-    from backend.domain import OrderKind, OrderStatus
     net = 0.0
-    for status in (OrderStatus.DISPATCHED, OrderStatus.RECEIVED):
-        for o in factory.get("store_live").query("orders", {"status": status}):
-            if o.kind != OrderKind.DRUG_TRANSFER or o.drug_id != drug_id:
-                continue
-            left, arrived = o.dispatched_at or o.received_at, o.received_at
-            if o.to_facility_id == facility_id and arrived and since < arrived <= until:
-                net += o.quantity
-            if o.from_facility_id == facility_id and left and since < left <= until:
-                net -= o.quantity
+    for o in _moved_orders():
+        if o.drug_id != drug_id:
+            continue
+        left, arrived = o.dispatched_at or o.received_at, o.received_at
+        if o.to_facility_id == facility_id and arrived and since < arrived <= until:
+            net += o.quantity
+        if o.from_facility_id == facility_id and left and since < left <= until:
+            net -= o.quantity
     return net
 
 

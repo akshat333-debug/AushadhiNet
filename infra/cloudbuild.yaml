@@ -46,6 +46,9 @@ steps:
       - --allow-unauthenticated
       - --memory=2Gi
       - --cpu-boost
+      # Startup loads the drug index, facility directory and stock index: about 3.7 min on 1 vCPU,
+      # past the default 4-minute TCP probe on a slow start. 8 x 60 s gives it room.
+      - --startup-probe=tcpSocket.port=8080,periodSeconds=60,timeoutSeconds=60,failureThreshold=8
       # One instance: the demo's simulator outbox lives in memory, and it caps the bill.
       - --min-instances=${_BACKEND_MIN_INSTANCES}
       - --max-instances=1

@@ -380,3 +380,16 @@ def test_a_retried_bed_report_never_outranks_a_newer_one(monkeypatch):
         handle_inbound({**old, "body": "BEDS 0/6", "message_sid": "SM-beds-new"})
         handle_inbound(old)
         assert _live(today())[0][SRC] == (0, 6)
+
+
+def test_the_demo_count_lets_one_typed_count_measure_use_live():
+    """Demo only: Nandgaon's earlier ORS count (seed_neighbour) means a count typed in the simulator
+    moves its forecast to its own reported use at once."""
+    from backend.runtime import DEMO_PRIOR, recent_use
+    fid, drug = DEMO_PRIOR
+    with TestClient(create_app()) as client:  # local mode seeds the demo data at startup
+        before = latest_records()[DEMO_PRIOR].on_hand
+        _send(client, phone=phone_for_facility(fid), body=f"ORS {before - 30}")
+        assert recent_use()[DEMO_PRIOR][0] == pytest.approx(70, rel=1e-3)  # 30 used in 3 days
+        forecast = client.get(f"/officer/facility/{fid}", headers=OFFICER).json()["forecasts"]
+        assert next(f for f in forecast if f["drug_id"] == drug)["model"] == "reported_use"

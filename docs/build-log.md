@@ -418,3 +418,4 @@ Replay rerun after the estimator fix (`--breakdown`): demand from counts -1.8% s
 -1.06% unmet units, fill 68.17%, 4,170 transfers; 303 facilities better, 196 worse, vitamin A syrup 417
 to 517. The earlier run is kept in `eval/reports/replay_breakdown_0c90044.json`. Nothing was tuned on
 the test window.
+- Demo: `seed-neighbour` also stores one Nandgaon ORS count three days back (`demo-prior`), so a count typed live measures use at once.

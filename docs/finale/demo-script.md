@@ -29,6 +29,13 @@ Live site (Google Cloud Run): https://aushadhinet-frontend-449585498230.asia-sou
 | 4:15-4:45 | Public view, scroll to Across India | "Citizens see district totals, never a facility name. And every state is already here: 1,90,609 facilities from the national directory. A district goes live with its nurses' WhatsApp numbers; each state gets its own Google Cloud project from the same Terraform." |
 | 4:45-5:00 | Back to overview | "Running on Google Cloud with a simulated Nashik pilot, every state listed from the national directory, 7 languages. Next: a four-week pilot in one Nashik block with real registers." |
 
+## If asked to show demand read from counts
+
+Use the simulator as Nandgaon (MH-0000230) and send an ORS count about 30 below what its page shows. Its
+ORS forecast switches to "this facility's own counts" (about 70 a week). Readings need a day between
+counts, so `seed-neighbour` stores one earlier Nandgaon ORS count three days back. Say that it is
+demo data.
+
 ## If something breaks
 
 - Photo reply says "please type it": Gemini was rate-limited or the key is missing. Say "free-tier

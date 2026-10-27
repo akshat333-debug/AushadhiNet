@@ -11,7 +11,7 @@ import logging
 import pathlib
 import re
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 
 import pandas as pd
@@ -52,6 +52,7 @@ def forecast_panel() -> pd.DataFrame:
 NEIGHBOUR_DISTRICT = "mh/dhule"
 NEIGHBOUR_FACILITIES = 15
 NEIGHBOUR_REPORTER = "demo-neighbour"  # marks the generated Dhule stock wherever it is stored
+DEMO_PRIOR = ("MH-0000230", "ors")  # Nandgaon ORS: seed_neighbour gives it an earlier count for the live demo
 
 
 def neighbour_demo_facilities() -> list:
@@ -83,7 +84,8 @@ def neighbour_demo_panel(panel: pd.DataFrame) -> pd.DataFrame:
 
 def seed_neighbour() -> int:
     """Demo stock for the Dhule facilities: four weeks of their demand, so they hold surplus beyond
-    the two weeks a donor keeps. Writes only these facilities; Nashik's live stock is untouched."""
+    the two weeks a donor keeps. In Nashik it adds only an older ORS count at Nandgaon (DEMO_PRIOR),
+    so Nashik's current stock is untouched."""
     from backend.domain import Contact
     from backend.capacity import today
     live = factory.get("store_live")
@@ -100,6 +102,14 @@ def seed_neighbour() -> int:
             on_hand=int(round(4 * g["dispensed"].mean())), status=RecordStatus.CONFIRMED,
             confidence=Confidence(field_confidence={"on_hand": 1.0}, overall=1.0, source=ConfidenceSource.IMPORT),
             reporter_phone_hash=NEIGHBOUR_REPORTER, raw_message_id="demo-neighbour-seed")
+    # Demo only: one earlier count for Nandgaon's ORS, three days back, so a count typed in the
+    # simulator measures use at once (readings need a day between counts). Not a real report.
+    current = latest_records().get(DEMO_PRIOR)
+    if current is not None:
+        rid = f"demo-prior-{DEMO_PRIOR[0]}-{DEMO_PRIOR[1]}"
+        records[rid] = current.model_copy(update={
+            "record_id": rid, "reported_at": now - timedelta(days=3), "as_of_date": today() - timedelta(days=3),
+            "reporter_phone_hash": "demo-prior", "raw_message_id": "demo-prior-seed"})
     live.put_many("stock_records", records)
     for fid in ids:
         phone = phone_for_facility(fid)

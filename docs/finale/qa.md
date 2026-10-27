@@ -74,6 +74,11 @@ live estimator) -1.8% stock-out weeks, -1.06% unmet units, fill 67.83% to 68.17%
 worse off (vitamin A syrup worse). Neither is a large win; it does not create supply. The state supply
 request is the real fix for district-wide gaps. Breakdown: `eval/reports/replay_breakdown.json`.
 
+**Can you show demand from counts changing live?**
+Yes, for Nandgaon's ORS. A reading needs two counts at least a day apart, so one earlier count three
+days back is stored as demo data (`seed-neighbour`, marked `demo-prior`). One count typed now moves
+its forecast to the facility's own use. Any other facility needs two real counts a day apart.
+
 **Cost to scale?**
 Not measured yet. One district (760 facilities) peaks at about 374 MB in memory; the Cloud Run backend
 is given 2 GiB for headroom and keeps one instance warm during judging.

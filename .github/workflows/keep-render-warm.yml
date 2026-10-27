@@ -1,0 +1,12 @@
+# The submitted demo link is on Render's free tier, which sleeps after 15 idle minutes and takes
+# 30-50 s to wake. Until results (30 Oct 2026) this pings it every 10 minutes. Delete after.
+name: keep-render-warm
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS -o /dev/null -m 90 https://aushadhinet-frontend.onrender.com/ || true

@@ -220,6 +220,7 @@ const en = {
   forecast_note: "Demand: units used in the last ledger week ({date}), carried forward one week, until this facility's own counts show its use.",
   forecast_note_reported: "Demand for {n} medicines comes from this facility's own counts (latest {date}); the rest from the last ledger week.",
   no_history: "No demand history for this facility yet. It can report stock now; forecasts and transfers start once its past issues are loaded (see onboarding in the README).",
+  risk_uncalibrated: "Risk % is a model estimate from the demand range; it has not yet been checked against real stock-outs.",
   agent_q_capacity: "Which facilities are full today?",
   needs_state_officer: "Crosses a district line: a state officer approves",
 };

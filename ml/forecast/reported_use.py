@@ -4,8 +4,8 @@
 Between two counts a day or more apart, use = first count + units that arrived - units that
 left - second count. Counts closer together than a day keep the older count as the anchor, so
 frequent reporting still measures. A second count of zero is censored: the shelf was empty for
-part of the interval, so true demand is at least what was used; it can raise the estimate,
-never lower it. Otherwise each new reading is averaged with the previous one (half weight
+part of the interval, so true demand is at least what was used; it can raise the estimate
+(or, before the first reading, the caller's baseline), never lower it. Otherwise each new reading is averaged with the previous one (half weight
 each), so one odd count does not swing next week's demand.
 """
 from __future__ import annotations
@@ -23,9 +23,10 @@ class UseEstimator:
     def anchor(self, key):
         return self.anchors.get(key)
 
-    def observe(self, key, day: float, on_hand: float, net_in: float = 0.0) -> bool:
+    def observe(self, key, day: float, on_hand: float, net_in: float = 0.0, baseline: float = 0.0) -> bool:
         """`day` in days (any origin); `net_in` = units received minus units sent since the
-        anchor's day. Returns True when the estimate changed."""
+        anchor's day; `baseline` = the demand the caller uses until there is a reading.
+        Returns True when the estimate changed."""
         anchor = self.anchors.get(key)
         if anchor is None:
             self.anchors[key] = (day, on_hand)
@@ -39,7 +40,7 @@ class UseEstimator:
             return False
         rate = 7 * used / days
         if on_hand <= 0:
-            if rate <= self.rates.get(key, 0.0):
+            if rate <= self.rates.get(key, baseline):
                 return False
             self.rates[key] = rate  # a lower bound: true use was at least this
             return True

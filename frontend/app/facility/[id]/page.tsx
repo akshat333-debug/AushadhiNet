@@ -141,7 +141,8 @@ export default function FacilityPage({ params }: { params: Promise<{ id: string 
           <p className="muted border-t border-zinc-100 px-4 py-2.5 text-xs dark:border-zinc-800" data-testid="forecast-note">
             {reported.length
               ? t("forecast_note_reported", { n: num(reported.length), date: date(reported.reduce((m, f) => (f.origin_date > m ? f.origin_date : m), "")) })
-              : t("forecast_note", { date: date(detail.forecasts[0].origin_date) })}
+              : t("forecast_note", { date: date(detail.forecasts[0].origin_date) })}{" "}
+            {t("risk_uncalibrated")}
           </p>
         )}
       </Reveal>

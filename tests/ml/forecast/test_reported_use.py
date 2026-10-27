@@ -34,3 +34,12 @@ def test_a_facility_new_to_the_ledger_is_forecast_from_its_own_use():
                          recent_use={("NEW-1", "ors"): (70.0, datetime.date(2026, 10, 27))})
     assert len(f) == 1 and f[0].model == "reported_use" and f[0].p50 == 70 and f[0].p10 < 70 < f[0].p90
     assert f[0].stockout_prob > 0.5  # 10 on hand against 70 a week
+
+
+def test_a_first_empty_shelf_never_lowers_the_baseline():
+    e = UseEstimator()
+    e.observe("k", 0, 10, baseline=700)
+    assert not e.observe("k", 1, 0, baseline=700)  # at least 70 a week says nothing against 700
+    assert "k" not in e.rates
+    assert e.observe("k", 2, 0, net_in=200, baseline=700)  # 200 in and gone within a day: at least 1400
+    assert e.rates["k"] == 1400

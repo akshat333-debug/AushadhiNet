@@ -26,7 +26,7 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 
 | Check | Result |
 |---|---|
-| Backend, ML, eval tests | 413 passed (2026-10-27) |
+| Backend, ML, eval tests | 419 passed (2026-10-28) |
 | Playwright e2e, real UI sign-in | 17/17 on the live Cloud Run site (2026-10-27) |
 | Fresh clone from GitHub (`scripts/fresh_clone_check.sh`) | passes end to end |
 | `docker compose up --build` | healthy; ledger sealed at image build |
@@ -39,7 +39,7 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 |---|---|---|
 | AC4 forecasting, real HMIS frozen test | LightGBM WAPE 0.871 vs lag-1 naive 1.078, median-of-3 0.959 | Clean win (-19%). Second logged attempt; the first (1.110) lost and is kept. |
 | AC6 stock-out replay, synthetic test window, deployed policy (>= 10 units, <= 5 donors) | stock-out weeks 10,774 → 10,244 (-4.9%) | Unmet units +0.41%, fill 67.83% → 67.70%, ~230 transfers/week. Unconstrained run kept: -6.0%, +0.25% unmet, ~570/week, 2.7x the driving. |
-| AC6 end to end, demand read from weekly counts (live estimator), same window and events | stock-out weeks 10,774 → 10,568 (-1.9%) | Unmet units -1.07%, fill 67.83% → 68.17%, 4,204 transfers. 310 facilities better, 194 worse; vitamin A syrup worse (417 → 516). `eval/reports/replay_breakdown.json`. |
+| AC6 end to end, demand read from weekly counts (live estimator), same window and events | stock-out weeks 10,774 → 10,584 (-1.8%) | Unmet units -1.06%, fill 67.83% → 68.17%, 4,170 transfers. 303 facilities better, 196 worse; vitamin A syrup worse (417 → 517). `eval/reports/replay_breakdown.json`. |
 | AC9 federation, Meghalaya validation | local 0.993, federated 0.996, centralised 1.000 | Ties local-only (all ~21% better than naive). Value is privacy, not accuracy. |
 | App forecasts, facility-week | lag-1 naive kept | Beats best LightGBM variant 0.220 vs 0.239 on the last 13 train weeks. |
 | AC3 extraction accuracy | measured on synthetic renders | Gemini (gemini-3.1-flash-lite) on 206 of 220 rendered register lines (14 hit free-tier 429s), 4 scripts: medicine 98.1% (Bengali 92.2%, others 100%), quantity 100%, batch 100% outside Devanagari. Devanagari batch scores 0% because the render font has no Latin "B" (drawn as a box), so the label is unreadable in the image itself: an eval-data bug, not a read error. Images are rendered text, not photographs; no real-photo number yet. Report: eval/reports/extraction_gemini.json. |
@@ -103,7 +103,7 @@ agent answers, native-script reports). Audited against the Vercel web interface 
   as reported; approval rechecks the donor's two-week buffer; dispatch and receipt are checked on the
   stored order; new facilities forecast from their own use; agent capacity and orders take a
   facility; voice clips expire after a week (Firestore TTL); end-to-end replay with demand from
-  counts (-1.9% stock-out weeks, -1.07% unmet units).
+  counts (-1.8% stock-out weeks, -1.06% unmet units).
 - Limits: backend max 1 instance (in-memory simulator outbox; caps cost), frontend max 2, both scale
   to zero. Budget alert Rs 850/month (alerts only).
 - Not configured: Firebase Auth and Twilio (demo sign-in and the simulator stand in), Maps
@@ -113,8 +113,8 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 **Render (2026-10-26):** backend suspended; the frontend at https://aushadhinet-frontend.onrender.com (the submitted link)
 is the same app against the Cloud Run backend, which allows its origin. 8/8 e2e pass on it.
 
-Serving fits a 512 MB free instance: ~312 MB at startup, ~374 MB peak while proposing
-transfers (was ~860 MB before the serving footprint was trimmed). Free instances sleep
+Serving measured ~312 MB at startup, ~374 MB peak while proposing
+transfers (was ~860 MB before the serving footprint was trimmed); Cloud Run is given 2 GiB for headroom. Free instances sleep
 when idle, so the first request after a pause takes 30-60s. This runs in local mode: the
 sealed ledger, no GCP credentials. AC11 (real GCP services) is still unrun.
 

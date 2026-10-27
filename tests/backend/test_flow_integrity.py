@@ -340,3 +340,43 @@ def test_approval_keeps_the_donors_own_two_weeks(monkeypatch):
         _order("o-buf", 80)
         response = client.post("/officer/orders/o-buf/approve", headers=OFFICER)
         assert response.status_code == 409 and "two weeks" in response.json()["detail"]
+
+
+def _flaky(monkeypatch, method):
+    """The first reply of this kind fails, as a WhatsApp timeout would; later ones go through."""
+    from backend.providers import messaging_local
+    real, calls = getattr(messaging_local.LocalMessaging, method), {"n": 0}
+
+    def flaky(self, *args):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("WhatsApp down")
+        return real(self, *args)
+    monkeypatch.setattr(messaging_local.LocalMessaging, method, flaky)
+
+
+def test_a_retried_report_never_undoes_the_nurses_yes(monkeypatch):
+    """Judge's case: the card's send failed, the nurse said YES, then the message came again."""
+    from backend.runtime import handle_inbound
+    with TestClient(create_app()):
+        _flaky(monkeypatch, "send_buttons")
+        report = {"from": PHONE, "reporter_phone_hash": "h", "body": "Zync 40", "num_media": 0, "message_sid": "SM-card"}
+        with pytest.raises(RuntimeError):
+            handle_inbound(report)
+        handle_inbound({"from": PHONE, "reporter_phone_hash": "h", "body": "YES", "num_media": 0, "message_sid": "SM-yes"})
+        handle_inbound(report)
+        stored = factory.get("store_live").get("stock_records", "SM-card-0")
+        assert stored.status == RecordStatus.CONFIRMED and latest_records()[(SRC, stored.drug_id)].on_hand == 40
+
+
+def test_a_retried_bed_report_never_outranks_a_newer_one(monkeypatch):
+    from backend.capacity import _live, today
+    from backend.runtime import handle_inbound
+    with TestClient(create_app()):
+        _flaky(monkeypatch, "send_text")
+        old = {"from": PHONE, "reporter_phone_hash": "h", "body": "BEDS 6/6", "num_media": 0, "message_sid": "SM-beds-old"}
+        with pytest.raises(RuntimeError):
+            handle_inbound(old)
+        handle_inbound({**old, "body": "BEDS 0/6", "message_sid": "SM-beds-new"})
+        handle_inbound(old)
+        assert _live(today())[0][SRC] == (0, 6)

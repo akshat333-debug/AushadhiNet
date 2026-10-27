@@ -227,6 +227,11 @@ def _gemini_tools(question: str, officer: OfficerCtx, lang: str) -> tuple[str, l
     seen: list[str] = []   # every tool result, to check the answer's numbers against
     cited: list[str] = []
 
+    def facility(args: dict) -> str | None:
+        """An ID, or a name Gemini passed without calling find_facility first."""
+        raw = str(args.get("facility_id") or "").strip()
+        return (_facility_in(raw, district_id) or raw.upper()) if raw else None
+
     def call(name: str, args: dict):
         def tool(tool_name, **kw):
             return tools.call_tool(tool_name, officer.uid, officer.jurisdiction, **kw)
@@ -234,13 +239,13 @@ def _gemini_tools(question: str, officer: OfficerCtx, lang: str) -> tuple[str, l
             if name == "find_facility":
                 result = tool("find_facility", query=str(args.get("name", "")), district_id=district_id)
             elif name == "facility_stock":
-                fid = str(args.get("facility_id", "")).upper()
+                fid = facility(args) or ""
                 demand = weekly_demand()
                 result = [{"medicine": drug_name(r.drug_id, "en"), "on_hand": r.on_hand, "weekly_demand": round(demand.get((fid, r.drug_id), 0.0), 1),
                            "reported": r.reported_at.date().isoformat()} for r in tool("get_stock", facility_id=fid)]
                 cited.append(fid)
             elif name == "facility_forecast":
-                fid, drug_id = str(args.get("facility_id", "")).upper(), _drug_from(str(args.get("medicine", "")))
+                fid, drug_id = facility(args) or "", _drug_from(str(args.get("medicine", "")))
                 if not drug_id:
                     result = {"error": "unknown medicine"}
                 else:
@@ -256,19 +261,22 @@ def _gemini_tools(question: str, officer: OfficerCtx, lang: str) -> tuple[str, l
                 result = {"short_district_wide": [drug_name(d, "en") for d in gaps],
                           "facilities": [{**r, "medicine": drug_name(r.pop("drug_id"), "en")} for r in tool("list_at_risk", district_id=district_id, exclude_drugs=frozenset(gaps))]}
             elif name == "capacity":
-                fid = str(args.get("facility_id") or "").upper() or None
+                fid = facility(args)
                 cap = tool("get_capacity", district_id=district_id, facility_id=fid)
-                result = {"date": cap["date"], "generated_baseline_for_unreported": cap["demo_baseline"], "beds": cap["beds"],
-                          "staff": {k: v for k, v in cap["staff"].items()}, **({"facility": cap["facility"]} if "facility" in cap else {})}
-                if fid:
+                result = {"date": cap["date"], "generated_baseline_for_unreported": cap["demo_baseline"]}
+                if fid:  # only that facility's figures, so district totals are not read as its own
+                    result["facility"] = cap.get("facility") or {"error": f"no beds or staff for {fid}"}
                     cited.append(fid)
+                else:
+                    result.update(beds=cap["beds"], staff=cap["staff"])
             elif name == "orders":
                 from collections import Counter
-                fid = str(args.get("facility_id") or "").upper() or None
+                fid = facility(args)
                 orders = [o for o in tool("list_orders", district_id=district_id)
                           if fid is None or fid in (o.from_facility_id, o.to_facility_id)]  # filtered before the cut below
                 result = {"by_status": dict(Counter(o.status.value for o in orders)),
                           "orders": [{"medicine": drug_name(o.drug_id, "en") if o.drug_id else o.kind.value, "units": o.quantity,
+                                      "patients": o.patient_count, "staff": o.staff_count, "role": o.role,
                                       "status": o.status.value, "from": o.from_facility_id, "to": o.to_facility_id}
                                      for o in orders if fid or o.status.value == "draft"][:5 if fid is None else 50]}
                 if fid:

@@ -70,7 +70,8 @@ def neighbour_demo_panel(panel: pd.DataFrame) -> pd.DataFrame:
     """Each demo Dhule facility mirrors the demand of its nearest Nashik facility (same weeks)."""
     from ml.data.facilities import served_facility_index
     index = served_facility_index()
-    pilot = [f for f in index.values() if f.district_id == PILOT_DISTRICT and f.facility_id in set(panel["facility_id"].astype(str))]
+    in_panel = set(panel["facility_id"].astype(str))  # built once: inside the filter it was rebuilt per facility, minutes at startup
+    pilot = [f for f in index.values() if f.district_id == PILOT_DISTRICT and f.facility_id in in_panel]
     rows = []
     for f in neighbour_demo_facilities():
         twin = min(pilot, key=lambda p: (p.lat - f.lat) ** 2 + (p.lon - f.lon) ** 2)
@@ -84,6 +85,7 @@ def seed_neighbour() -> int:
     """Demo stock for the Dhule facilities: four weeks of their demand, so they hold surplus beyond
     the two weeks a donor keeps. Writes only these facilities; Nashik's live stock is untouched."""
     from backend.domain import Contact
+    from backend.capacity import today
     live = factory.get("store_live")
     panel = forecast_panel()
     ids = {f.facility_id for f in neighbour_demo_facilities()}
@@ -94,7 +96,7 @@ def seed_neighbour() -> int:
     for (fid, drug), g in recent.groupby(["facility_id", "drug_id"], observed=True):
         rid = f"demo-{fid}-{drug}"
         records[rid] = StockRecord(
-            record_id=rid, facility_id=str(fid), drug_id=str(drug), reported_at=now, as_of_date=now.date(),
+            record_id=rid, facility_id=str(fid), drug_id=str(drug), reported_at=now, as_of_date=today(),
             on_hand=int(round(4 * g["dispensed"].mean())), status=RecordStatus.CONFIRMED,
             confidence=Confidence(field_confidence={"on_hand": 1.0}, overall=1.0, source=ConfidenceSource.IMPORT),
             reporter_phone_hash=NEIGHBOUR_REPORTER, raw_message_id="demo-neighbour-seed")
@@ -290,7 +292,7 @@ def _note_use(record: StockRecord) -> None:
     day = record.reported_at.timestamp() / 86400
     anchor = _use.anchor(key)
     net = 0.0 if anchor is None else _net_in(*key, datetime.fromtimestamp(anchor[0] * 86400, timezone.utc), record.reported_at)
-    if _use.observe(key, day, record.on_hand, net):
+    if _use.observe(key, day, record.on_hand, net, _ledger_demand().get(key, 0.0)):
         _dates[key] = record.as_of_date
         _use_version += 1
 
@@ -459,6 +461,8 @@ def _handle_inbound(payload: dict) -> None:
     live = factory.get("store_live")
     stale = live.query("stock_records", {"facility_id": facility_id, "status": RecordStatus.PENDING})
     decision = handle_stock_message(payload, facility_id)
+    if decision is None:
+        return
     if decision.confirmed or decision.pending:
         new = decision.confirmed + decision.pending
         fresh, first = {r.record_id for r in new}, min(r.reported_at for r in new)

@@ -393,3 +393,28 @@ Reproduced and fixed, each with a test:
 End-to-end replay (`eval/run_replay.py --breakdown`), same window and hidden events, deployed policy:
 ledger demand -4.9% stock-out weeks / +0.41% unmet; demand from weekly counts -1.9% / -1.07%. The
 objective was not changed. The count version helps fewer facilities and makes vitamin A syrup worse.
+
+## Review round 6 (2026-10-28): retries, commitments, startup
+- A redelivered photo re-read the image and turned a record the nurse had confirmed back to pending.
+  A redelivered stock message now keeps what is stored and only resends the reply; bed censuses and
+  check-ins keep their first record too, so a late retry never outranks a newer report.
+- Referral reservations ended at dispatch, or as soon as any newer census arrived. They now hold through
+  dispatch, and a census counts the move only once it was taken after SENT (source) or RECEIVED
+  (destination).
+- Two simultaneous approvals of one capacity suggestion made two orders; check and create now run
+  under one lock (one backend instance; several would need a Firestore transaction).
+- An empty shelf on the first reading could lower demand below the ledger fallback (700 to 70 a week);
+  a censored reading is now compared with the caller's baseline and can only raise it.
+- Report dates came from the host clock and report age from UTC (age -1 in the early IST morning);
+  both use the IST date now.
+- Voice clip `expires_at` was written as a string, which Firestore TTL ignores; it is a timestamp now.
+- Agent: a facility name passed where an ID was expected is resolved; a one-facility capacity call
+  returns only that facility; orders list patients and staff for referrals and deputations.
+- Startup: about 3 of the 3.7 minutes went to `neighbour_demo_panel`, which rebuilt a 100k-row set once
+  per Nashik facility (61 s to 0.4 s locally). Not the NLEM embeddings, as one review guessed.
+- Facility page says the risk % is a model estimate not yet checked against real stock-outs.
+
+Replay rerun after the estimator fix (`--breakdown`): demand from counts -1.8% stock-out weeks (10,584),
+-1.06% unmet units, fill 68.17%, 4,170 transfers; 303 facilities better, 196 worse, vitamin A syrup 417
+to 517. The earlier run is kept in `eval/reports/replay_breakdown_0c90044.json`. Nothing was tuned on
+the test window.

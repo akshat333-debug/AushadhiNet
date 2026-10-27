@@ -62,11 +62,11 @@ real facility list, synthetic stock ledger), **offline** (measured in a frozen e
 | Medicines escalated to the state (short district-wide, with quantities) | **4** |
 | Transfer drafts (live, measured 2026-10-26) | Nashik alone: **77**, each at least 10 units, at most 5 donors per need (68% of the units an unconstrained run moves in 160 drafts). State-wide: **58** more cross the line from Dhule's labelled demo stock |
 | Forecast error vs naive baseline (offline: real HMIS, district-month, held-out window; not the model the app serves) | **0.871 vs 1.078, 19% better** |
-| 26-week replay (offline simulation, 760 facilities), policy the app deploys (at least 10 units, at most 5 donors); objective: fewer facility-weeks with unmet demand | Demand from the ledger: stock-out weeks **-4.9%** (10,774 to 10,244), unmet units **+0.41%**, fill rate 67.83% to 67.70%, 6,016 transfers. Demand read from weekly counts, as the app now does: stock-out weeks **-1.9%** (10,568), unmet units **-1.07%**, fill rate **68.17%**, 4,204 transfers. Neither reaches the objective by much; the count version serves more demand but helps fewer facilities (310 better, 194 worse; ledger: 400 better, 124 worse), and makes vitamin A syrup worse (417 to 516 stock-out weeks). Per medicine and facility: `eval/reports/replay_breakdown.json`. Unconstrained policy, earlier run: -6.0%, +0.25% unmet, 14,815 transfers. Rebalancing spreads scarcity; it adds no supply |
+| 26-week replay (offline simulation, 760 facilities), policy the app deploys (at least 10 units, at most 5 donors); objective: fewer facility-weeks with unmet demand | Demand from the ledger: stock-out weeks **-4.9%** (10,774 to 10,244), unmet units **+0.41%**, fill rate 67.83% to 67.70%, 6,016 transfers. Demand read from weekly counts, as the app now does: stock-out weeks **-1.8%** (10,584), unmet units **-1.06%**, fill rate **68.17%**, 4,170 transfers. Neither reaches the objective by much; the count version serves more demand but helps fewer facilities (303 better, 196 worse; ledger: 400 better, 124 worse), and makes vitamin A syrup worse (417 to 517 stock-out weeks). Per medicine and facility: `eval/reports/replay_breakdown.json`. Unconstrained policy, earlier run: -6.0%, +0.25% unmet, 14,815 transfers. Rebalancing spreads scarcity; it adds no supply |
 | Federation (offline experiment, 4 states, data-poor Meghalaya) | Local-only 0.993, federated 0.996, centralised 1.000 WAPE: **a tie, no accuracy gain**. Connected demo (2 processes, 1 round): served model's WAPE 0.90 on Meghalaya's latest validation month |
 | Gemini register reading (206 synthetic lines, 4 scripts) | **98.1% medicine, 100% quantity** |
 | Languages, end to end (UI, WhatsApp replies, voice, agent) | **7** (en, hi, mr, bn, ta, te, kn) |
-| Automated tests | **430** (413 backend + 17 Playwright E2E, run against the live site) |
+| Automated tests | **436** (419 backend + 17 Playwright E2E, run against the live site) |
 
 ## Try it in 2 minutes
 
@@ -151,7 +151,7 @@ Requires: Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 20+.
 uv sync --extra ml --extra dev    # add --extra gcp only for cloud mode
 cp .env.example .env               # defaults are all local-mode; no keys needed
 uv run python -m eval.seal_generator   # rebuilds data/synthetic/, fails if hash != protocol.lock
-uv run pytest -q                   # 413 tests, about 5 minutes
+uv run pytest -q                   # 419 tests, about 5 minutes
 uv run uvicorn backend.app:app --reload --port 8000
 
 # 2. Frontend (separate terminal)
@@ -255,9 +255,12 @@ numbers behind these headlines):
     14,815 transfers (about 570 a week).
   - Deployed policy (at least 10 units, at most 5 donors), ledger demand: -4.9% stock-out weeks,
     unmet units +0.41%, fill rate 67.83% to 67.70%, 6,016 transfers.
-  - Deployed policy, demand read from weekly counts (the live estimator, end to end): -1.9% stock-out
-    weeks, unmet units -1.07%, fill rate 68.17%, 4,204 transfers; 310 facilities better, 194 worse;
-    vitamin A syrup worse (417 to 516 stock-out weeks). Detail: `eval/reports/replay_breakdown.json`.
+  - Deployed policy, demand read from weekly counts (the live estimator, end to end): -1.8% stock-out
+    weeks, unmet units -1.06%, fill rate 68.17%, 4,170 transfers; 303 facilities better, 196 worse;
+    vitamin A syrup worse (417 to 517 stock-out weeks). Detail: `eval/reports/replay_breakdown.json`.
+    Rerun on 28 Oct after an empty shelf stopped lowering the fallback demand on a first reading; the
+    run before that fix (-1.9%, -1.07%, 310 better, 194 worse) is kept in `replay_breakdown_0c90044.json`.
+    Nothing was tuned on this window: the harmed medicines are reported, not fitted away.
 
   Redistribution spreads scarce stock; it does not add supply. None of these is a large win, and the
   live estimator trades fewer facilities helped for more demand served.
@@ -265,7 +268,7 @@ numbers behind these headlines):
 ## Testing
 
 ```bash
-uv run pytest -q                          # backend + ml + eval: 413 tests
+uv run pytest -q                          # backend + ml + eval: 419 tests
 cd frontend && npx playwright test        # frontend e2e, needs both dev servers (playwright.config.ts starts them)
 ```
 

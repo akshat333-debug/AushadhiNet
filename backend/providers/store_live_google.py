@@ -32,7 +32,10 @@ class GoogleLiveStore:
 
     def put(self, collection: str, doc_id: str, model: BaseModel) -> None:
         try:
-            self._client.collection(collection).document(doc_id).set(model.model_dump(mode="json"))
+            data = model.model_dump(mode="json")
+            if getattr(model, "expires_at", None) is not None:
+                data["expires_at"] = model.expires_at  # a native timestamp: Firestore TTL ignores a string
+            self._client.collection(collection).document(doc_id).set(data)
         except Exception as e:  # noqa: BLE001
             raise ProviderError(f"Firestore write failed: {e}") from e
 

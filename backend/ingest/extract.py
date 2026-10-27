@@ -7,8 +7,9 @@ import hashlib
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 
+from backend.capacity import today
 from backend.domain import Confidence, ConfidenceSource, RecordStatus, StockRecord
 from backend.providers import factory
 from backend.providers.base import Media, ProviderError
@@ -34,7 +35,7 @@ def _to_stock_record(extraction: StockExtraction, facility_id: str, reporter_pho
     confidence = Confidence(field_confidence=extraction.confidence, overall=min(extraction.confidence.values(), default=0.0), source=source)
     return StockRecord(
         record_id=str(uuid.uuid4()), facility_id=facility_id, drug_id=drug_id,
-        reported_at=datetime.now(timezone.utc), as_of_date=date.today(),
+        reported_at=datetime.now(timezone.utc), as_of_date=today(),
         on_hand=extraction.on_hand, received=extraction.received, dispensed=extraction.dispensed,
         batch_no=extraction.batch_no, expiry=extraction.expiry, status=RecordStatus.PENDING,
         confidence=confidence, reporter_phone_hash=reporter_phone_hash, raw_message_id=raw_message_id,

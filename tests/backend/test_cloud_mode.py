@@ -154,6 +154,11 @@ def test_firestore_store_returns_models_like_the_local_store(monkeypatch):
     store.put("orders", "o", order)
     assert store.get("orders", "o") == order
     assert store.query("orders", {"status": OrderStatus.DRAFT}) == [order]
+    from backend.action.alerts import VoiceClip
+    clip = VoiceClip(audio_b64="eA==", expires_at=datetime.now(timezone.utc))
+    store.put("voice_clips", "v", clip)
+    assert isinstance(docs[("voice_clips", "v")]["expires_at"], datetime)  # TTL needs a timestamp, not a string
+    assert store.get("voice_clips", "v") == clip
 
 
 def test_failed_pubsub_publish_is_reported_not_swallowed(monkeypatch):

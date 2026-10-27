@@ -109,6 +109,6 @@ fixed during the build: `docs/build-log.md`.
 ## Measured results
 
 See `state.md` "Results". Summary: forecasting -19% WAPE vs naive (real HMIS); 26-week replay of the
-deployed policy: stock-out weeks -4.9% with ledger demand (unmet +0.41%), -1.9% with demand read from
-counts (unmet -1.07%); federation ties local-only; Gemini extraction 98.1% medicine / 100% quantity on
-206 synthetic register renders; 413 backend tests, 17/17 e2e on the live site.
+deployed policy: stock-out weeks -4.9% with ledger demand (unmet +0.41%), -1.8% with demand read from
+counts (unmet -1.06%); federation ties local-only; Gemini extraction 98.1% medicine / 100% quantity on
+206 synthetic register renders; 419 backend tests, 17/17 e2e on the live site.

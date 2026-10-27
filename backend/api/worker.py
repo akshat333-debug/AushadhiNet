@@ -16,7 +16,7 @@ from backend.runtime import write_history, note_confirmed
 
 from backend.ingest.cards import build_photo_card
 from backend.ingest.extract import from_audio, from_image
-from backend.ingest.gate import apply as gate_apply
+from backend.ingest.gate import GateDecision, apply as gate_apply
 from backend.ingest.media import validate as validate_media
 from backend.ingest.parse_text import from_text
 
@@ -40,8 +40,26 @@ def handle_stock_message(payload: dict, facility_id: str):
     settings = get_settings()
     messaging = factory.get("messaging")
     live_store = factory.get("store_live")
+    lang = payload.get("lang", "en")
+    media = payload.get("num_media", 0) > 0
 
-    if payload.get("num_media", 0) > 0 and payload.get("media_url"):
+    sid = payload.get("message_sid")
+    stored = []
+    while sid and (earlier := live_store.get("stock_records", f"{sid}-{len(stored)}")) is not None:
+        stored.append(earlier)
+    if stored:
+        # A redelivery (the reply failed the first time): what is stored stands, including a YES
+        # given since, so nothing is read again; only the reply goes out again.
+        pending = [r for r in stored if r.status == RecordStatus.PENDING]
+        card = (build_photo_card(pending, lang) if media else gate_apply([r.model_copy() for r in pending], settings.confidence_threshold, lang).card) if pending else None
+        decision = GateDecision([r for r in stored if r.status == RecordStatus.CONFIRMED], pending, card)
+        if decision.card is not None:
+            messaging.send_buttons(payload["from"], decision.card.text, decision.card.buttons)
+        elif not decision.confirmed:
+            return None  # replaced by a newer report since: nothing to resend
+        return decision
+
+    if media and payload.get("media_url"):
         media_bytes = _download_media(payload["media_url"], settings)
         content_type = payload.get("media_content_type", "")
         try:
@@ -62,14 +80,9 @@ def handle_stock_message(payload: dict, facility_id: str):
     else:
         result = from_text(payload.get("body") or "", facility_id, payload["reporter_phone_hash"])
 
-    if payload.get("message_sid"):  # a redelivered message overwrites its own records instead of adding more
+    if sid:  # keyed by the message, so a redelivery finds its records above
         for n, record in enumerate(result.records):
-            record.record_id = f"{payload['message_sid']}-{n}"
-            earlier = live_store.get("stock_records", record.record_id)
-            if earlier is not None:  # keep when it was first reported, so a late retry never outranks a newer count
-                record.reported_at = earlier.reported_at
-    lang = payload.get("lang", "en")
-    media = payload.get("num_media", 0) > 0
+            record.record_id = f"{sid}-{n}"
     voice = media and payload.get("media_content_type", "").startswith("audio/")
     # A model reading a photo or hearing a voice note can be confidently wrong, so every such
     # read waits for the reporter's YES, shown with the values as read (and what was heard).
@@ -119,6 +132,9 @@ def handle_bed_census(payload: dict, facility_id: str, beds_total: int, beds_occ
     from datetime import datetime, timezone
     from backend.capacity import today
 
+    live = factory.get("store_live")
+    if payload.get("message_sid") and (earlier := live.get("bed_census", payload["message_sid"])) is not None:
+        return earlier  # a redelivery: the first report stands, so it never outranks a newer one
     record = BedCensus(
         # Keyed by the message id, so a redelivered message overwrites rather than duplicates.
         record_id=payload.get("message_sid") or str(uuid.uuid4()), facility_id=facility_id, as_of_date=today(),
@@ -126,7 +142,7 @@ def handle_bed_census(payload: dict, facility_id: str, beds_total: int, beds_occ
         confidence=Confidence(field_confidence={"beds_total": 1.0, "beds_occupied": 1.0}, overall=1.0, source=ConfidenceSource.MANUAL),
         raw_message_id=hashlib.sha256(payload.get("message_sid", "").encode()).hexdigest()[:16],
     )
-    factory.get("store_live").put("bed_census", record.record_id, record)
+    live.put("bed_census", record.record_id, record)
     write_history(record, "bed_census")
     return record
 
@@ -140,6 +156,9 @@ def handle_checkin(payload: dict, facility_id: str, staff_id_hash: str, role: St
     from datetime import datetime, timezone
 
     settings = get_settings()
+    live = factory.get("store_live")
+    if payload.get("message_sid") and (earlier := live.get("checkins", payload["message_sid"])) is not None:
+        return earlier  # a redelivery: the first check-in stands, with its own time
     distance = _haversine_m(lat, lon, facility_lat, facility_lon)
     record = CheckIn(
         record_id=payload.get("message_sid") or str(uuid.uuid4()), facility_id=facility_id, staff_id_hash=staff_id_hash, role=role,
@@ -147,6 +166,6 @@ def handle_checkin(payload: dict, facility_id: str, staff_id_hash: str, role: St
         geofence_ok=distance <= settings.geofence_radius_m, status=RecordStatus.CONFIRMED,
         raw_message_id=hashlib.sha256(payload.get("message_sid", "").encode()).hexdigest()[:16],
     )
-    factory.get("store_live").put("checkins", record.record_id, record)
+    live.put("checkins", record.record_id, record)
     write_history(record, "checkins")
     return record

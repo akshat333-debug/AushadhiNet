@@ -62,8 +62,8 @@ def counts_policy(world, cfg):
             last = observed[observed["week"] == observed["week"].max()]
             when = last["week"].iloc[0].date()
             day = last["week"].iloc[0].value / 86_400e9 + 7  # the close of that week
-            for f, d, close in zip(last["facility_id"], last["drug_id"], last["on_hand_close"]):
-                est.observe((f, d), day, float(close), moved.pop((f, d), 0.0))
+            for f, d, close, used in zip(last["facility_id"], last["drug_id"], last["on_hand_close"], last["dispensed"]):
+                est.observe((f, d), day, float(close), moved.pop((f, d), 0.0), float(used))  # baseline: the forecast's lag-1
         use = {k: (r, when) for k, r in est.rates.items()}
         orders = propose(facilities, drug_ids, {}, on_hand, cfg=cfg, panel=observed, recent_use=use)
         for o in orders:

@@ -137,7 +137,7 @@ def district_capacity(district_id: str, facility_id: str | None = None) -> dict:
     # facilities reported stays as reported, and the solvers plan around the commitments so the
     # same beds or the same person are not suggested twice.
     from backend.domain import OrderKind, OrderStatus
-    approved = [o for status in (OrderStatus.APPROVED, OrderStatus.RECEIVED)
+    approved = [o for status in (OrderStatus.APPROVED, OrderStatus.DISPATCHED, OrderStatus.RECEIVED)
                 for o in factory.get("store_live").query("orders", {"status": status})
                 if o.kind in (OrderKind.REFERRAL, OrderKind.DEPUTATION) and o.approved_at and o.approved_at.astimezone(IST).date() == day
                 and o.from_facility_id in index and o.to_facility_id in index]
@@ -147,8 +147,10 @@ def district_capacity(district_id: str, facility_id: str | None = None) -> dict:
     leaving: Counter = Counter()               # (facility, role) -> people promised elsewhere
     for o in approved:
         if o.kind == OrderKind.REFERRAL:
-            for fid, sign in ((o.from_facility_id, -1), (o.to_facility_id, 1)):
-                if fid in planned and not (fid in census_at and census_at[fid] > o.approved_at):  # a newer census already counts them
+            # Patients leave when the source sends SENT and arrive at RECEIVED; a census taken after
+            # that already counts them, one taken before (or with nobody moved yet) does not.
+            for fid, sign, moved in ((o.from_facility_id, -1, o.dispatched_at), (o.to_facility_id, 1, o.received_at)):
+                if fid in planned and not (moved and fid in census_at and census_at[fid] > moved):
                     occ, total = planned[fid]
                     planned[fid] = (min(max(occ + sign * (o.patient_count or 0), 0), total), total)
         else:

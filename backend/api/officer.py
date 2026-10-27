@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -88,6 +89,7 @@ def list_orders(district_id: str, user: AuthUser = Depends(OFFICER)):
     from ml.data.facilities import served_facility_index as facility_index
     from backend.api.public import district_summary
     from backend.runtime import SCENARIO_REPORTERS, latest_records, projected_stock, weekly_demand
+    from backend.capacity import today
     index, latest = facility_index(), latest_records()
     try:
         demand = weekly_demand()
@@ -126,7 +128,7 @@ def list_orders(district_id: str, user: AuthUser = Depends(OFFICER)):
                 "dest_cover_after_days": cover(dst, None if dst_units is None else dst_units + (incoming.get(dst, 0) if draft else 0)),
                 "src_on_hand_after": None if src_units is None else src_units - (o.quantity or 0) * draft,
                 "src_cover_after_days": cover(src, None if src_units is None else src_units - (o.quantity or 0) * draft),
-                "report_age_days": None if report is None else (now.date() - report.as_of_date).days,
+                "report_age_days": None if report is None else (today() - report.as_of_date).days,
                 "report_date": None if report is None else report.as_of_date.isoformat(),
                 "scenario_stock": report is not None and report.reporter_phone_hash in SCENARIO_REPORTERS,
                 "unit": UNITS.get(o.drug_id),
@@ -307,14 +309,20 @@ def approve_capacity(body: CapacityApproval, user: AuthUser = Depends(OFFICER)):
     suggestion the solver is making right now can be approved, so no arbitrary order is created."""
     from ml.data.facilities import served_facility_index
     from backend.capacity import district_capacity
-    from backend.domain import OrderKind
     index = served_facility_index()
     src, dst = index.get(body.from_id), index.get(body.to_id)
     if src is None or dst is None:
         raise HTTPException(404, "facility not found")
     for district in {src.district_id, dst.district_id}:
         check_jurisdiction(user, district)
-    cap = district_capacity(src.district_id)
+    with _CAPACITY_LOCK:  # two clicks on the same suggestion must not both become orders
+        return _approve_suggestion(body, user, district_capacity(src.district_id))
+
+
+_CAPACITY_LOCK = threading.Lock()  # shortcut: one backend instance; several need a Firestore transaction
+
+
+def _approve_suggestion(body: CapacityApproval, user: AuthUser, cap: dict):
     rows = cap["beds"]["referrals"] if body.kind == "referral" else cap["staff"]["deputations"]
     match = next((r for r in rows if r["from_id"] == body.from_id and r["to_id"] == body.to_id
                   and (body.kind == "referral" or r["role"] == body.role)), None)

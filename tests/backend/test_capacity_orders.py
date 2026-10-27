@@ -60,3 +60,50 @@ def test_approved_moves_are_planned_around_not_reported():
         open_to_same_place = [d for d in after["staff"]["deputations"]
                               if d["to_id"] == dep["to_id"] and d["role"] == dep["role"] and not d["order_id"]]
         assert not open_to_same_place  # the gap is covered
+
+
+def _no_new_suggestion(client, referral):
+    after = client.get("/officer/capacity/mh/nashik", headers=OFFICER).json()["beds"]["referrals"]
+    return not [r for r in after if r["from_id"] == referral["from_id"] and not r["order_id"] and r["patients"] >= referral["patients"]]
+
+
+def test_a_referral_stays_reserved_through_an_unchanged_census_and_dispatch():
+    """Judge's case: a census sent after approval, with nobody moved yet, or the referral marked
+    dispatched, made the same patients appear again."""
+    import uuid
+    from backend.capacity import district_capacity
+    from backend.api.officer import mark_dispatched
+    with TestClient(create_app()) as client:
+        referral = client.get("/officer/capacity/mh/nashik", headers=OFFICER).json()["beds"]["referrals"][0]
+        beds = district_capacity("mh/nashik", referral["from_id"])["facility"]["beds"]
+        order = client.post("/officer/capacity/approve", json={"kind": "referral", "from_id": referral["from_id"], "to_id": referral["to_id"]},
+                            headers=OFFICER).json()
+        client.post("/simulator/message", json={"from_phone": phone_for_facility(referral["from_id"]), "message_id": uuid.uuid4().hex,
+                                                "body": f"BEDS {beds['occupied']}/{beds['total']}"})  # nobody has left yet
+        assert _no_new_suggestion(client, referral)
+        mark_dispatched(factory.get("store_live").get("orders", order["order_id"]))
+        assert _no_new_suggestion(client, referral)
+
+
+def test_two_simultaneous_approvals_of_one_suggestion_make_one_order(monkeypatch):
+    import threading
+    import time
+    from backend import capacity
+    with TestClient(create_app()) as client:
+        referral = client.get("/officer/capacity/mh/nashik", headers=OFFICER).json()["beds"]["referrals"][0]
+        real = capacity.district_capacity
+
+        def slow(*a, **kw):  # both requests read the suggestion before either writes its order
+            result = real(*a, **kw)
+            time.sleep(0.5)
+            return result
+        monkeypatch.setattr(capacity, "district_capacity", slow)
+        body = {"kind": "referral", "from_id": referral["from_id"], "to_id": referral["to_id"]}
+        ids = []
+        threads = [threading.Thread(target=lambda: ids.append(client.post("/officer/capacity/approve", json=body, headers=OFFICER).json()["order_id"]))
+                   for _ in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        assert len(set(ids)) == 1

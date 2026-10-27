@@ -27,15 +27,15 @@
   },
   "count_demand": {
    "wanted_units": 29780535.564426932,
-   "unmet_units": 9478319.974097714,
-   "stockout_weeks": 10568.0,
+   "unmet_units": 9479314.807963157,
+   "stockout_weeks": 10584.0,
    "expired_units": 0.0,
-   "transfers": 4204.0,
-   "units_moved": 516774.0,
-   "drive_minutes": 57089.467169962714,
-   "fill_rate": 0.6817276857364636,
-   "units_per_transfer": 122.9243577545195,
-   "drive_minutes_per_unit_moved": 0.11047279307775297
+   "transfers": 4170.0,
+   "units_moved": 517065.0,
+   "drive_minutes": 49834.930554852894,
+   "fill_rate": 0.6816942802302632,
+   "units_per_transfer": 123.99640287769785,
+   "drive_minutes_per_unit_moved": 0.09638039812180846
   }
  },
  "by_medicine": {
@@ -240,7 +240,7 @@
     "stockout_weeks": 1651,
     "unmet_units": 429170,
     "fill_rate": 0.767,
-    "units_moved": 11673
+    "units_moved": 8489
    },
    "blood-transfusion-set": {
     "stockout_weeks": 0,
@@ -249,10 +249,10 @@
     "units_moved": 0
    },
    "calcium-tab": {
-    "stockout_weeks": 5105,
-    "unmet_units": 8927445,
+    "stockout_weeks": 5110,
+    "unmet_units": 8928055,
     "fill_rate": 0.6145,
-    "units_moved": 290330
+    "units_moved": 293849
    },
    "fluconazole-tab": {
     "stockout_weeks": 2,
@@ -273,10 +273,10 @@
     "units_moved": 0
    },
    "ifa-adult": {
-    "stockout_weeks": 702,
-    "unmet_units": 83899,
-    "fill_rate": 0.9741,
-    "units_moved": 118819
+    "stockout_weeks": 712,
+    "unmet_units": 84177,
+    "fill_rate": 0.974,
+    "units_moved": 118308
    },
    "ifa-blue": {
     "stockout_weeks": 0,
@@ -321,10 +321,10 @@
     "units_moved": 0
    },
    "vitamin-a-syrup": {
-    "stockout_weeks": 516,
-    "unmet_units": 2424,
-    "fill_rate": 0.9847,
-    "units_moved": 5624
+    "stockout_weeks": 517,
+    "unmet_units": 2531,
+    "fill_rate": 0.984,
+    "units_moved": 6091
    },
    "zinc-20mg": {
     "stockout_weeks": 0,
@@ -456,22 +456,16 @@
    ]
   },
   "count_demand": {
-   "facilities_fewer_stockout_weeks": 310,
-   "facilities_more_stockout_weeks": 194,
-   "facilities_unchanged": 256,
-   "facilities_more_unmet_units": 245,
+   "facilities_fewer_stockout_weeks": 303,
+   "facilities_more_stockout_weeks": 196,
+   "facilities_unchanged": 261,
+   "facilities_more_unmet_units": 256,
    "worst_10_by_added_unmet_units": [
     [
      "MH-0000284",
-     1979,
+     1671,
      -1,
-     23
-    ],
-    [
-     "MH-0000470",
-     1942,
-     0,
-     12
+     17
     ],
     [
      "MH-0002267",
@@ -480,98 +474,104 @@
      13
     ],
     [
-     "MH-0002049",
-     1185,
-     -2,
-     7
-    ],
-    [
      "MH-0010710",
-     936,
+     937,
      1,
-     12
+     13
     ],
     [
-     "MH-0002027",
-     846,
-     3,
-     10
+     "MH-0002416",
+     888,
+     0,
+     16
+    ],
+    [
+     "MH-0008919",
+     869,
+     0,
+     11
     ],
     [
      "MH-0009851",
-     844,
+     861,
+     1,
+     7
+    ],
+    [
+     "MH-0002261",
+     782,
      0,
      5
     ],
     [
-     "MH-0010504",
-     583,
-     -2,
-     1
+     "MH-0002049",
+     619,
+     -3,
+     5
     ],
     [
-     "MH-0002050",
-     561,
+     "MH-0010420",
+     552,
      2,
-     10
+     17
     ],
     [
-     "MH-0002562",
-     521,
-     1,
-     17
+     "MH-0009620",
+     544,
+     2,
+     9
     ]
    ],
    "busiest_10_donors_by_trips": [
     [
      "MH-0000477",
-     35,
-     121
+     30,
+     145
     ],
     [
      "MH-0000352",
-     30,
-     -831
-    ],
-    [
-     "MH-0000223",
-     25,
-     -10102
+     26,
+     -1045
     ],
     [
      "MH-0000312",
      24,
-     91
-    ],
-    [
-     "MH-0000284",
-     23,
-     1979
+     92
     ],
     [
      "MH-0000257",
      22,
-     -1519
+     -830
     ],
     [
-     "MH-0010247",
+     "MH-0000237",
      21,
-     176
+     301
     ],
     [
-     "MH-0002248",
-     20,
-     173
-    ],
-    [
-     "MH-0000229",
-     19,
-     3
+     "MH-0000344",
+     21,
+     -13
     ],
     [
      "MH-0000247",
-     19,
+     20,
      36
+    ],
+    [
+     "MH-0003160",
+     20,
+     181
+    ],
+    [
+     "MH-0000223",
+     19,
+     -6901
+    ],
+    [
+     "MH-0002436",
+     19,
+     -621
     ]
    ]
   }

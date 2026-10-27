@@ -9,10 +9,11 @@ from __future__ import annotations
 import hashlib
 import re
 import uuid
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 
 from backend.domain import Confidence, ConfidenceSource, RecordStatus, StockRecord
 
+from backend.capacity import today
 from backend.ingest.extract import ExtractionResult
 from backend.i18n import find_local_drug
 from backend.ingest.nlem import match as nlem_match
@@ -57,7 +58,7 @@ def from_text(body: str, facility_id: str, reporter_phone_hash: str) -> Extracti
         confidence = Confidence(field_confidence={"on_hand": 1.0, "drug_id": drug_conf}, overall=drug_conf, source=ConfidenceSource.MANUAL)
         records.append(StockRecord(
             record_id=str(uuid.uuid4()), facility_id=facility_id, drug_id=drug_id,
-            reported_at=datetime.now(timezone.utc), as_of_date=date.today(),
+            reported_at=datetime.now(timezone.utc), as_of_date=today(),
             on_hand=qty, status=RecordStatus.PENDING, confidence=confidence,
             reporter_phone_hash=reporter_phone_hash, raw_message_id=raw_message_id,
         ))

@@ -1,0 +1,579 @@
+{
+ "window_weeks": 26,
+ "arms": {
+  "status_quo": {
+   "wanted_units": 29780535.564426932,
+   "unmet_units": 9580662.441886434,
+   "stockout_weeks": 10774.0,
+   "expired_units": 0.0,
+   "transfers": 0.0,
+   "units_moved": 0.0,
+   "drive_minutes": 0.0,
+   "fill_rate": 0.6782911300852962,
+   "units_per_transfer": 0.0,
+   "drive_minutes_per_unit_moved": 0.0
+  },
+  "ledger_demand": {
+   "wanted_units": 29780535.564426932,
+   "unmet_units": 9619630.842188977,
+   "stockout_weeks": 10244.0,
+   "expired_units": 0.0,
+   "transfers": 6016.0,
+   "units_moved": 1123916.0,
+   "drive_minutes": 76326.07562277115,
+   "fill_rate": 0.6769826109615136,
+   "units_per_transfer": 186.82114361702128,
+   "drive_minutes_per_unit_moved": 0.06791083641728667
+  },
+  "count_demand": {
+   "wanted_units": 29780535.564426932,
+   "unmet_units": 9478319.974097714,
+   "stockout_weeks": 10568.0,
+   "expired_units": 0.0,
+   "transfers": 4204.0,
+   "units_moved": 516774.0,
+   "drive_minutes": 57089.467169962714,
+   "fill_rate": 0.6817276857364636,
+   "units_per_transfer": 122.9243577545195,
+   "drive_minutes_per_unit_moved": 0.11047279307775297
+  }
+ },
+ "by_medicine": {
+  "status_quo": {
+   "albendazole-400mg": {
+    "stockout_weeks": 1651,
+    "unmet_units": 429170,
+    "fill_rate": 0.767,
+    "units_moved": 0
+   },
+   "blood-transfusion-set": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   },
+   "calcium-tab": {
+    "stockout_weeks": 5242,
+    "unmet_units": 9013039,
+    "fill_rate": 0.6108,
+    "units_moved": 0
+   },
+   "fluconazole-tab": {
+    "stockout_weeks": 2,
+    "unmet_units": 9,
+    "fill_rate": 0.9942,
+    "units_moved": 0
+   },
+   "gloves": {
+    "stockout_weeks": 1,
+    "unmet_units": 1,
+    "fill_rate": 0.9998,
+    "units_moved": 0
+   },
+   "glutaraldehyde-2pct": {
+    "stockout_weeks": 0,
+    "unmet_units": 1,
+    "fill_rate": 0.9121,
+    "units_moved": 0
+   },
+   "ifa-adult": {
+    "stockout_weeks": 751,
+    "unmet_units": 100716,
+    "fill_rate": 0.9689,
+    "units_moved": 0
+   },
+   "ifa-blue": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   },
+   "ifa-pink": {
+    "stockout_weeks": 1,
+    "unmet_units": 152,
+    "fill_rate": 0.9998,
+    "units_moved": 0
+   },
+   "ifa-syrup": {
+    "stockout_weeks": 166,
+    "unmet_units": 1562,
+    "fill_rate": 0.9924,
+    "units_moved": 0
+   },
+   "mva-syringe": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   },
+   "ors": {
+    "stockout_weeks": 2398,
+    "unmet_units": 33773,
+    "fill_rate": 0.9183,
+    "units_moved": 0
+   },
+   "paed-antibiotics": {
+    "stockout_weeks": 145,
+    "unmet_units": 357,
+    "fill_rate": 0.9819,
+    "units_moved": 0
+   },
+   "rti-sti-kit": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   },
+   "vitamin-a-syrup": {
+    "stockout_weeks": 417,
+    "unmet_units": 1882,
+    "fill_rate": 0.9881,
+    "units_moved": 0
+   },
+   "zinc-20mg": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   }
+  },
+  "ledger_demand": {
+   "albendazole-400mg": {
+    "stockout_weeks": 1692,
+    "unmet_units": 424931,
+    "fill_rate": 0.7693,
+    "units_moved": 19827
+   },
+   "blood-transfusion-set": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   },
+   "calcium-tab": {
+    "stockout_weeks": 5174,
+    "unmet_units": 9078559,
+    "fill_rate": 0.608,
+    "units_moved": 785936
+   },
+   "fluconazole-tab": {
+    "stockout_weeks": 2,
+    "unmet_units": 9,
+    "fill_rate": 0.9942,
+    "units_moved": 0
+   },
+   "gloves": {
+    "stockout_weeks": 1,
+    "unmet_units": 1,
+    "fill_rate": 0.9998,
+    "units_moved": 0
+   },
+   "glutaraldehyde-2pct": {
+    "stockout_weeks": 0,
+    "unmet_units": 1,
+    "fill_rate": 0.9121,
+    "units_moved": 0
+   },
+   "ifa-adult": {
+    "stockout_weeks": 587,
+    "unmet_units": 78793,
+    "fill_rate": 0.9757,
+    "units_moved": 204416
+   },
+   "ifa-blue": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   },
+   "ifa-pink": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 68780
+   },
+   "ifa-syrup": {
+    "stockout_weeks": 88,
+    "unmet_units": 1473,
+    "fill_rate": 0.9928,
+    "units_moved": 21495
+   },
+   "mva-syringe": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   },
+   "ors": {
+    "stockout_weeks": 2249,
+    "unmet_units": 33863,
+    "fill_rate": 0.9181,
+    "units_moved": 9921
+   },
+   "paed-antibiotics": {
+    "stockout_weeks": 139,
+    "unmet_units": 335,
+    "fill_rate": 0.983,
+    "units_moved": 304
+   },
+   "rti-sti-kit": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   },
+   "vitamin-a-syrup": {
+    "stockout_weeks": 312,
+    "unmet_units": 1666,
+    "fill_rate": 0.9895,
+    "units_moved": 13237
+   },
+   "zinc-20mg": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   }
+  },
+  "count_demand": {
+   "albendazole-400mg": {
+    "stockout_weeks": 1651,
+    "unmet_units": 429170,
+    "fill_rate": 0.767,
+    "units_moved": 11673
+   },
+   "blood-transfusion-set": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   },
+   "calcium-tab": {
+    "stockout_weeks": 5105,
+    "unmet_units": 8927445,
+    "fill_rate": 0.6145,
+    "units_moved": 290330
+   },
+   "fluconazole-tab": {
+    "stockout_weeks": 2,
+    "unmet_units": 9,
+    "fill_rate": 0.9942,
+    "units_moved": 0
+   },
+   "gloves": {
+    "stockout_weeks": 1,
+    "unmet_units": 1,
+    "fill_rate": 0.9998,
+    "units_moved": 0
+   },
+   "glutaraldehyde-2pct": {
+    "stockout_weeks": 0,
+    "unmet_units": 1,
+    "fill_rate": 0.9121,
+    "units_moved": 0
+   },
+   "ifa-adult": {
+    "stockout_weeks": 702,
+    "unmet_units": 83899,
+    "fill_rate": 0.9741,
+    "units_moved": 118819
+   },
+   "ifa-blue": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   },
+   "ifa-pink": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 68780
+   },
+   "ifa-syrup": {
+    "stockout_weeks": 173,
+    "unmet_units": 1855,
+    "fill_rate": 0.9909,
+    "units_moved": 12714
+   },
+   "mva-syringe": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   },
+   "ors": {
+    "stockout_weeks": 2273,
+    "unmet_units": 33159,
+    "fill_rate": 0.9198,
+    "units_moved": 8709
+   },
+   "paed-antibiotics": {
+    "stockout_weeks": 145,
+    "unmet_units": 356,
+    "fill_rate": 0.9819,
+    "units_moved": 125
+   },
+   "rti-sti-kit": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   },
+   "vitamin-a-syrup": {
+    "stockout_weeks": 516,
+    "unmet_units": 2424,
+    "fill_rate": 0.9847,
+    "units_moved": 5624
+   },
+   "zinc-20mg": {
+    "stockout_weeks": 0,
+    "unmet_units": 0,
+    "fill_rate": 1.0,
+    "units_moved": 0
+   }
+  }
+ },
+ "by_facility": {
+  "ledger_demand": {
+   "facilities_fewer_stockout_weeks": 400,
+   "facilities_more_stockout_weeks": 124,
+   "facilities_unchanged": 236,
+   "facilities_more_unmet_units": 279,
+   "worst_10_by_added_unmet_units": [
+    [
+     "MH-0000303",
+     10658,
+     0,
+     44
+    ],
+    [
+     "MH-0000344",
+     8062,
+     -2,
+     50
+    ],
+    [
+     "MH-0000284",
+     7576,
+     -2,
+     26
+    ],
+    [
+     "MH-0000352",
+     6292,
+     -2,
+     74
+    ],
+    [
+     "MH-0003147",
+     5613,
+     -3,
+     71
+    ],
+    [
+     "MH-0000257",
+     5322,
+     -2,
+     19
+    ],
+    [
+     "MH-0002036",
+     5283,
+     -1,
+     21
+    ],
+    [
+     "MH-0002262",
+     5177,
+     -3,
+     21
+    ],
+    [
+     "MH-0000345",
+     3670,
+     -2,
+     31
+    ],
+    [
+     "MH-0002069",
+     3568,
+     0,
+     21
+    ]
+   ],
+   "busiest_10_donors_by_trips": [
+    [
+     "MH-0000352",
+     74,
+     6292
+    ],
+    [
+     "MH-0003147",
+     71,
+     5613
+    ],
+    [
+     "MH-0000470",
+     57,
+     -587
+    ],
+    [
+     "MH-0003160",
+     51,
+     12
+    ],
+    [
+     "MH-0000344",
+     50,
+     8062
+    ],
+    [
+     "MH-0003152",
+     47,
+     396
+    ],
+    [
+     "MH-0000477",
+     45,
+     -341
+    ],
+    [
+     "MH-0000303",
+     44,
+     10658
+    ],
+    [
+     "MH-0000312",
+     42,
+     47
+    ],
+    [
+     "MH-0000332",
+     41,
+     -1197
+    ]
+   ]
+  },
+  "count_demand": {
+   "facilities_fewer_stockout_weeks": 310,
+   "facilities_more_stockout_weeks": 194,
+   "facilities_unchanged": 256,
+   "facilities_more_unmet_units": 245,
+   "worst_10_by_added_unmet_units": [
+    [
+     "MH-0000284",
+     1979,
+     -1,
+     23
+    ],
+    [
+     "MH-0000470",
+     1942,
+     0,
+     12
+    ],
+    [
+     "MH-0002267",
+     1410,
+     1,
+     13
+    ],
+    [
+     "MH-0002049",
+     1185,
+     -2,
+     7
+    ],
+    [
+     "MH-0010710",
+     936,
+     1,
+     12
+    ],
+    [
+     "MH-0002027",
+     846,
+     3,
+     10
+    ],
+    [
+     "MH-0009851",
+     844,
+     0,
+     5
+    ],
+    [
+     "MH-0010504",
+     583,
+     -2,
+     1
+    ],
+    [
+     "MH-0002050",
+     561,
+     2,
+     10
+    ],
+    [
+     "MH-0002562",
+     521,
+     1,
+     17
+    ]
+   ],
+   "busiest_10_donors_by_trips": [
+    [
+     "MH-0000477",
+     35,
+     121
+    ],
+    [
+     "MH-0000352",
+     30,
+     -831
+    ],
+    [
+     "MH-0000223",
+     25,
+     -10102
+    ],
+    [
+     "MH-0000312",
+     24,
+     91
+    ],
+    [
+     "MH-0000284",
+     23,
+     1979
+    ],
+    [
+     "MH-0000257",
+     22,
+     -1519
+    ],
+    [
+     "MH-0010247",
+     21,
+     176
+    ],
+    [
+     "MH-0002248",
+     20,
+     173
+    ],
+    [
+     "MH-0000229",
+     19,
+     3
+    ],
+    [
+     "MH-0000247",
+     19,
+     36
+    ]
+   ]
+  }
+ }
+}

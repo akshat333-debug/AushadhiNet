@@ -126,3 +126,13 @@ def test_capacity_for_one_facility_is_not_cut_to_the_district_top_ten(cloud_agen
         fake = cloud_agent(script)
         assert _ask(client, "Compare beds at Sinnar Phata")["text"].endswith("has its numbers.")
         assert fake.results[0]["facility"]["posts"]
+
+
+def test_a_facility_name_in_place_of_an_id_still_resolves(cloud_agent):
+    def script(call, results):
+        results.append(call("capacity", {"facility_id": "Sinnar Phata"}))
+        return "Sinnar Phata has its numbers."
+    with TestClient(create_app()) as client:
+        fake = cloud_agent(script)
+        _ask(client, "Compare beds at Sinnar Phata")
+    assert fake.results[0]["facility"]["posts"] and "beds" not in fake.results[0]  # no district totals beside it

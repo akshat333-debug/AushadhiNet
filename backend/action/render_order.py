@@ -33,4 +33,6 @@ def render(order: TransferOrder, from_facility: Facility, to_facility: Facility,
     if order.drug_id:
         lines.append(f"Source: when it leaves, reply SENT {order.order_id[:8]}")
         lines.append(f"Destination: when it arrives, reply RECEIVED {order.order_id[:8]}")
+    else:
+        lines.append(f"Destination: when they arrive, reply RECEIVED {order.order_id[:8]}")
     return "\n".join(lines)

@@ -167,6 +167,16 @@ export interface ForecastRow {
   model: string; // "reported_use": demand from the facility's own counts; "naive_lag1": last ledger week
 }
 
+export interface FederatedModel {
+  states: string[];
+  training_rows: Record<string, number>;
+  rounds: number;
+  trained_at: string;
+  month: string;
+  wape: number;
+  rows: { district_id: string; drug: string; actual: number; estimate: number }[];
+}
+
 export interface FacilityDetail {
   facility: { facility_id: string; name: string; district_id: string; block: string | null; facility_type: string };
   stock: StockRow[];
@@ -193,6 +203,7 @@ export const api = {
   simulatorOutbox: (phone: string) => request<OutboxMessage[]>(`/simulator/outbox?phone=${encodeURIComponent(phone)}`),
   districtSummary: () => request<DistrictSummaryRow[]>("/public/district-summary"),
   coverage: () => request<CoverageRow[]>("/public/coverage"),
+  federated: () => request<FederatedModel>("/public/federated"),
   simulatorSend: (payload: { from_phone: string; body?: string; media_base64?: string; media_content_type?: string; message_id: string; lang?: string; latitude?: number; longitude?: number }) =>
     request<{ status: string }>("/simulator/message", { method: "POST", body: JSON.stringify(payload) }),
   askAgent: (question: string, lang = "en") => request<{ text: string; cited_ids: string[]; draft_order_id: string | null }>("/agent/ask", {

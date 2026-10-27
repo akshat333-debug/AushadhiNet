@@ -37,14 +37,21 @@ def send_transfer_alerts(
         manifest_local = manifest_en if phone_lang == "en" else translate.translate(manifest_en, phone_lang)
         messaging.send_text(phone, manifest_local)
         audio = tts.synthesize(manifest_local, phone_lang)
-        messaging.send_media(phone, voice_url(audio))
+        url = voice_url(audio)
+        if url:  # a clip too large to store goes out as text only
+            messaging.send_media(phone, url)
 
 
 class VoiceClip(BaseModel):
     audio_b64: str
 
 
-def voice_url(audio: bytes) -> str:
+# shortcut: clips live in Firestore (1 MiB per document, no expiry); an order alert is well under
+# this cap. Move them to a Cloud Storage bucket with a lifecycle rule before alerts run at volume.
+MAX_CLIP_B64 = 900_000
+
+
+def voice_url(audio: bytes) -> str | None:
     """Twilio fetches media from a public URL, so the clip is stored and served by this API at
     an unguessable address (backend/api/public.py). The simulator takes it inline instead."""
     import base64
@@ -55,6 +62,8 @@ def voice_url(audio: bytes) -> str:
     base = get_settings().public_api_url
     if isinstance(factory.get("messaging"), LocalMessaging) or "REPLACE_ME" in base:
         return f"data:audio/ogg;base64,{encoded}"
+    if len(encoded) > MAX_CLIP_B64:
+        return None
     token = uuid.uuid4().hex
     factory.get("store_live").put("voice_clips", token, VoiceClip(audio_b64=encoded))
     return f"{base.rstrip('/')}/public/voice/{token}.ogg"

@@ -149,3 +149,17 @@ send never reach a model.
 **Are beds and staff only suggestions?**
 No longer: an officer approves a referral or deputation, and it becomes a KMS-signed order sent to both
 facilities on WhatsApp, like a transfer. Bed and staff numbers per facility type are IPHS-style norms.
+
+**Why does the screenshot say 133 drafts when the README says 77 and 58?**
+The Nashik officer's view counts every draft touching Nashik: 77 inside Nashik plus 58 from Dhule after a
+state-wide run, less 2 already approved, is 133.
+
+**Why only one backend instance?**
+The stock index, reported-use readings, the order lock and the duplicate check live in process memory,
+so the backend runs one warm instance (`min=max=1`): correct, and enough for a district. Scaling out
+means moving those to Firestore (transactions for the lock and duplicates, a snapshot listener for the
+index); the code marks each spot with `shortcut:`.
+
+**Does the live solver use expiry (FEFO) and cold chain?**
+The solver supports both (unit-tested), but the live stock reports carry no batch or cold-chain fields
+yet, so live orders show one unbatched line. Batches come with the register photo fields in the pilot.

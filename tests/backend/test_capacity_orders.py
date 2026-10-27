@@ -42,3 +42,20 @@ def test_deputation_approval_and_stale_or_foreign_suggestions_are_refused():
         assert client.post("/officer/capacity/approve", json=made_up, headers=OFFICER).status_code == 409
         dhule = {"Authorization": "Bearer dev:o2:district:mh/dhule"}
         assert client.post("/officer/capacity/approve", json=body, headers=dhule).status_code == 403
+
+
+def test_approved_moves_count_where_they_went():
+    """Patients referred leave the source's beds; a deputed person is not suggested again."""
+    with TestClient(create_app()) as client:
+        cap = client.get("/officer/capacity/mh/nashik", headers=OFFICER).json()
+        referral, dep = cap["beds"]["referrals"][0], cap["staff"]["deputations"][0]
+        before = next(f for f in cap["beds"]["full"] if f["facility_id"] == referral["from_id"])
+        client.post("/officer/capacity/approve", json={"kind": "referral", "from_id": referral["from_id"], "to_id": referral["to_id"]}, headers=OFFICER)
+        client.post("/officer/capacity/approve", json={"kind": "deputation", "from_id": dep["from_id"], "to_id": dep["to_id"], "role": dep["role"]}, headers=OFFICER)
+        after = client.get("/officer/capacity/mh/nashik", headers=OFFICER).json()
+        still_full = [f for f in after["beds"]["full"] if f["facility_id"] == referral["from_id"]]
+        assert not still_full or still_full[0]["occupied"] == before["occupied"] - referral["patients"]
+        assert after["beds"]["occupied"] == cap["beds"]["occupied"]  # moved, not discharged
+        open_to_same_place = [d for d in after["staff"]["deputations"]
+                              if d["to_id"] == dep["to_id"] and d["role"] == dep["role"] and not d["order_id"]]
+        assert not open_to_same_place  # the gap is covered

@@ -119,6 +119,9 @@ def _keyword_dispatch(question: str, officer: OfficerCtx, lang: str = "en") -> t
         return None
 
     facility_id = _facility_in(question, district_id)
+    # A facility's beds, staff or transfers is not its medicine stock: Gemini, with those tools, answers it.
+    if facility_id and not _drug_from(question) and any(w in lowered for w in INTENT_WORDS["capacity"] + INTENT_WORDS["propose"] + ("order",)):
+        return None
     if facility_id:
         from ml.data.facilities import served_facility_index
         known = served_facility_index().get(facility_id)
@@ -267,6 +270,8 @@ def _gemini_tools(question: str, officer: OfficerCtx, lang: str) -> tuple[str, l
 
     system = (f"{INSTRUCTIONS}\n\nYou serve a health officer for {district_id}. Answer in {LANG_NAMES.get(lang, 'English')}, "
               "in at most four sentences, using only facts the functions return. Name facilities by name and ID. "
+              "Quote numbers exactly as returned; a difference or total of two of them is fine, other arithmetic "
+              "(ratios, percentages, projections) is not. "
               "If the functions cannot answer, say what you can answer instead.")
     try:
         text = _llm().run_tools(system, question, _DECLARATIONS, call)
@@ -277,11 +282,19 @@ def _gemini_tools(question: str, officer: OfficerCtx, lang: str) -> tuple[str, l
     # function result (or counts one of its lists). A number only the officer typed is not a fact.
     retrieved = [json.loads(r) for r in seen if '"error"' not in r[:12]]
     known = set(_NUMBER_RE.findall(" ".join(seen).replace(",", ""))) | {str(n) for n in _list_lengths(retrieved)}
+    known |= _sums_and_differences(known)
     extra = set(_NUMBER_RE.findall(text.replace(",", ""))) - known
     if not text or not retrieved or extra or any(w in text.lower() for w in _ACTION_WORDS if w != "transfer now"):
         _log.warning("agent answer dropped (empty, no function result, new numbers %s, or an action): %s", sorted(extra), text[:200])
         return None
     return text, list(dict.fromkeys(cited)) or [district_id], None
+def _sums_and_differences(known: set[str]) -> set[str]:
+    """"50 and 20, a difference of 30": a sum or difference of two returned whole numbers is
+    grounded too. Ratios and other arithmetic are not; the prompt asks Gemini to quote, not compute."""
+    ints = sorted({int(n) for n in known if n.isdigit()})[:400]  # bounds the pairs on a large result
+    return {str(a + b) for a in ints for b in ints} | {str(abs(a - b)) for a in ints for b in ints}
+
+
 def _list_lengths(value) -> set[int]:
     """How many items each list in a function result holds: "3 facilities" is grounded too."""
     if isinstance(value, list):

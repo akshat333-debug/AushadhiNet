@@ -26,8 +26,8 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 
 | Check | Result |
 |---|---|
-| Backend, ML, eval tests | 333 passed (2026-10-24, with the gcp extra) |
-| Playwright e2e, real UI sign-in | 14/14 locally and 14/14 on the live Render URLs (2026-10-24, includes the photo test) |
+| Backend, ML, eval tests | 404 passed (2026-10-27) |
+| Playwright e2e, real UI sign-in | 17/17 on the live Cloud Run site (2026-10-27) |
 | Fresh clone from GitHub (`scripts/fresh_clone_check.sh`) | passes end to end |
 | `docker compose up --build` | healthy; ledger sealed at image build |
 | `terraform validate` | passes (Terraform 1.16, google provider 5.45) |
@@ -90,6 +90,12 @@ agent answers, native-script reports). Audited against the Vercel web interface 
   demand from each facility's own counts; replay of the deployed policy; two-process federation demo
   served at `/public/federated`; alerts to the contacts registry; voice alerts served for Twilio.
   399 backend tests.
+- Fourth review (2026-10-27): a facility's beds, staff or transfers question goes to Gemini, not its
+  stock template; a sum or difference of two returned numbers counts as grounded; reported use adds
+  back transfers received between counts and averages with the previous reading; approved referrals
+  and deputations move patients and staff in today's numbers (no double suggestion), and their
+  alerts ask for RECEIVED; voice clips over the store limit go as text only; the public page shows
+  the federated model's estimates. 404 backend tests.
 - Limits: backend max 1 instance (in-memory simulator outbox; caps cost), frontend max 2, both scale
   to zero. Budget alert Rs 850/month (alerts only).
 - Not configured: Firebase Auth and Twilio (demo sign-in and the simulator stand in), Maps

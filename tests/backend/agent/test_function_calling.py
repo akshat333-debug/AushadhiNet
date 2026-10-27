@@ -97,3 +97,20 @@ def test_current_stock_is_the_latest_confirmed_count_only():
             if status == RecordStatus.CONFIRMED:
                 note_confirmed(r)
         assert [r.on_hand for r in get_stock("MH-0000221", "ors")] == [20]
+
+
+def test_a_difference_of_two_returned_numbers_is_grounded(cloud_agent):
+    def script(call, results):
+        found = call("find_facility", {"name": "Dindori"})
+        stock = sorted(call("facility_stock", {"facility_id": found[0]["facility_id"]}), key=lambda r: -r["on_hand"])
+        a, b = stock[0]["on_hand"], stock[1]["on_hand"]
+        return f"{stock[0]['medicine']} {a} and {stock[1]['medicine']} {b}: a difference of {a - b}."
+    with TestClient(create_app()) as client:
+        cloud_agent(script)
+        assert "a difference of" in _ask(client)["text"]
+
+
+def test_a_facilitys_beds_question_is_not_answered_with_its_medicine_stock(cloud_agent):
+    with TestClient(create_app()) as client:
+        cloud_agent(lambda call, _: (call("capacity", {}), "Sinnar Phata is not on today's full list.")[1])
+        assert _ask(client, "Does Sinnar Phata have full beds today?")["text"] == "Sinnar Phata is not on today's full list."

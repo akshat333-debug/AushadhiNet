@@ -247,15 +247,28 @@ _use_version = 0
 
 
 def _note_use(before: StockRecord, after: StockRecord) -> None:
-    """Units used per week between two of a facility's own counts, a day or more apart. A count
-    that went up (a delivery) says nothing about use, and a loaded scenario count is not a count.
-    shortcut: deliveries between the two counts are not added back, so use is under-read across
-    a restock; add received orders here once receipts are routine."""
-    days = (after.reported_at - before.reported_at).total_seconds() / 86400
-    if before.reporter_phone_hash in SCENARIO_REPORTERS or days < 1 or after.on_hand > before.on_hand:
-        return
+    """Units used per week between two of a facility's own counts a day or more apart: the
+    first count, plus transfers received in between, minus the second. Averaged with the
+    previous reading (half weight each), so one odd count does not swing next week's demand.
+    A loaded scenario count is not a count. Counts minutes apart are skipped: a week's use
+    extrapolated from minutes is noise. shortcut: deliveries outside AushadhiNet (the state's
+    monthly supply) are not known, so use is under-read across one; add them when indents are
+    recorded."""
+    from backend.domain import OrderStatus
     global _use_version
-    _observed[(after.facility_id, after.drug_id)] = (7 * (before.on_hand - after.on_hand) / days, after.as_of_date)
+    days = (after.reported_at - before.reported_at).total_seconds() / 86400
+    if before.reporter_phone_hash in SCENARIO_REPORTERS or days < 1:
+        return
+    received = sum(o.quantity or 0 for o in factory.get("store_live").query("orders", {"to_facility_id": after.facility_id, "status": OrderStatus.RECEIVED})
+                   if o.drug_id == after.drug_id and o.received_at and before.reported_at < o.received_at <= after.reported_at)
+    used = before.on_hand + received - after.on_hand
+    if used < 0:
+        return
+    key = (after.facility_id, after.drug_id)
+    rate = 7 * used / days
+    if key in _observed:
+        rate = (rate + _observed[key][0]) / 2
+    _observed[key] = (rate, after.as_of_date)
     _use_version += 1
 
 

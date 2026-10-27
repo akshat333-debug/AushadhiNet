@@ -9,7 +9,7 @@
 import { useEffect, useState } from "react";
 import { Buildings } from "@phosphor-icons/react";
 import { CountUp, Notice, PageHeader, Reveal, Skeleton, Stat } from "@/components/ui";
-import { api, CoverageRow, DistrictSummaryRow } from "@/lib/api";
+import { api, CoverageRow, DistrictSummaryRow, FederatedModel } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
 export default function PublicPage() {
@@ -17,10 +17,12 @@ export default function PublicPage() {
   const [rows, setRows] = useState<DistrictSummaryRow[] | null>(null);
   const [states, setStates] = useState<CoverageRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fed, setFed] = useState<FederatedModel | null>(null);
 
   useEffect(() => {
     api.districtSummary().then(setRows).catch((e) => setError((e as Error).message));
     api.coverage().then(setStates).catch((e) => setError((e as Error).message));
+    api.federated().then(setFed).catch(() => setFed(null)); // optional: the page works without it
   }, []);
 
   const live = (rows ?? []).filter((r) => r.facilities_reporting > 0);
@@ -146,6 +148,36 @@ export default function PublicPage() {
           </ul>
         )}
       </Reveal>
+      {fed && (
+        <Reveal delay={0.12} className="card mt-6 overflow-hidden" data-testid="federated-card">
+          <h2 className="h2 px-4 pt-4">{t("fed_title")}</h2>
+          <p className="muted px-4 pt-1 text-sm">
+            {t("fed_sub", { states: fed.states.map((s) => place(s.toLowerCase())).join(" + "), rows: num(Object.values(fed.training_rows).reduce((a, b) => a + b, 0)), wape: num(fed.wape, 2), month: fed.month.slice(0, 7) })}
+          </p>
+          <div className="overflow-x-auto">
+            <table className="mt-2 w-full text-sm">
+              <thead className="bg-zinc-50 text-left dark:bg-zinc-800/50">
+                <tr>
+                  <th className="px-4 py-2 font-medium">{t("fed_district")}</th>
+                  <th className="px-4 py-2 font-medium">{t("fed_item")}</th>
+                  <th className="px-4 py-2 text-right font-medium">{t("fed_actual")}</th>
+                  <th className="px-4 py-2 text-right font-medium">{t("fed_estimate")}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                {fed.rows.slice(0, 8).map((r) => (
+                  <tr key={`${r.district_id}-${r.drug}`}>
+                    <td className="px-4 py-2">{r.district_id.split("/").pop()!.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ")}</td>
+                    <td className="px-4 py-2">{r.drug}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{num(r.actual)}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{num(r.estimate)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Reveal>
+      )}
     </div>
   );
 }

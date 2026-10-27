@@ -53,3 +53,11 @@ def test_two_proposals_at_once_leave_one_active_plan():
             t.join()
         active = {o.order_id for o in factory.get("store_live").query("orders", {"status": OrderStatus.DRAFT})}
         assert active in ({o.order_id for o in drafts[0]}, {o.order_id for o in drafts[1]})
+
+
+def test_a_clip_over_the_store_limit_is_not_stored(monkeypatch):
+    from backend.action import alerts
+    from backend.config import get_settings
+    monkeypatch.setattr(get_settings(), "public_api_url", "https://api.example")
+    monkeypatch.setattr(factory, "get", (lambda real: lambda name: object() if name == "messaging" else real(name))(factory.get))
+    assert alerts.voice_url(b"x" * 700_000) is None

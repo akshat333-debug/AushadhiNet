@@ -250,3 +250,28 @@ def test_reported_use_moves_demand_and_forecast():
         from backend.agent.tools import get_forecast
         f = get_forecast(SRC, "ors")[0]
         assert f.model == "reported_use" and f.p50 == pytest.approx(70)
+
+
+def test_reported_use_adds_back_a_transfer_received_between_counts_and_smooths():
+    from datetime import timedelta
+    from backend.domain import Confidence, ConfidenceSource, StockRecord
+    from backend.runtime import latest_records, note_confirmed, recent_use
+    with TestClient(create_app()):
+        latest_records()
+        start = datetime.now(timezone.utc)
+        factory.get("store_live").put("orders", "in-1", TransferOrder(
+            order_id="in-1", kind=OrderKind.DRUG_TRANSFER, from_facility_id=DST, to_facility_id=SRC, drug_id="ors",
+            quantity=50, batches=[BatchLine(batch_no="B1", quantity=50)], drive_minutes=10.0, rationale="t",
+            created_at=start, created_by="solver", status=OrderStatus.RECEIVED, received_at=start + timedelta(hours=12)))
+
+        def count(days, on_hand):
+            note_confirmed(StockRecord(
+                record_id=f"r{days}", facility_id=SRC, drug_id="ors", reported_at=start + timedelta(days=days),
+                as_of_date=(start + timedelta(days=days)).date(), on_hand=on_hand, status=RecordStatus.CONFIRMED,
+                confidence=Confidence(field_confidence={"on_hand": 1.0}, overall=1.0, source=ConfidenceSource.MANUAL),
+                reporter_phone_hash="nurse", raw_message_id=f"r{days}"))
+        count(0, 100)
+        count(1, 120)   # went up, but 50 arrived: 30 used in a day = 210 a week
+        assert recent_use()[(SRC, "ors")][0] == pytest.approx(210)
+        count(2, 110)   # 10 used = 70 a week, averaged with 210
+        assert recent_use()[(SRC, "ors")][0] == pytest.approx(140)

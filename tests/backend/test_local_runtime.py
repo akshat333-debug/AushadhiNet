@@ -95,7 +95,6 @@ def test_healthz_is_instant_and_does_no_work():
 
 def test_photo_report_is_read_held_for_yes_then_recorded():
     import base64
-    import json
 
     from tests.backend.ingest.test_extract import _register_llm_fixture
     from backend.ingest.prompts import STOCK_REGISTER_PROMPT

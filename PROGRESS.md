@@ -101,13 +101,14 @@ fixed during the build: `docs/build-log.md`.
 24. **Several items on one line are split** by the parser: "ओआरएस 50 जिंक 120" used to be saved as
     ORS 120 at full confidence (a silent wrong write).
 25. **National reach from the real directory**, not new data: 190,609 facilities in 36 states and UTs
-    are listed as ready to onboard; only Nashik has stock. The duplicate "Andhra Pradesh Old" rows
+    are listed from the directory, not onboarded; Nashik has the synthetic ledger and 15 Dhule facilities labelled demo stock. The duplicate "Andhra Pradesh Old" rows
     (pre-2014, 98% repeats) are excluded.
 26. **Claims scoped to what runs**: the app serves the last-week forecast per facility; LightGBM's 19%
     is the district-level real-HMIS result, and the deck and README now say so.
 
 ## Measured results
 
-See `state.md` "Results". Summary: forecasting -19% WAPE vs naive (real HMIS); stock-out weeks -6.0%
-in a 26-week simulation; Gemini extraction 98.1% medicine / 100% quantity on 206 synthetic register
-renders; 13/13 e2e on the live site.
+See `state.md` "Results". Summary: forecasting -19% WAPE vs naive (real HMIS); 26-week replay of the
+deployed policy: stock-out weeks -4.9% with ledger demand (unmet +0.41%), -1.9% with demand read from
+counts (unmet -1.07%); federation ties local-only; Gemini extraction 98.1% medicine / 100% quantity on
+206 synthetic register renders; 413 backend tests, 17/17 e2e on the live site.

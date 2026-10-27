@@ -18,7 +18,7 @@ Requirements: `project.md`. Data: `data/README.md`. Layer diagram: `docs/review1
 | Forecasting | `lightgbm` 4.7 plus naive baselines | LightGBM (offline eval), lag-1 naive (served) |
 | Optimisation | `ortools` 9.15 (`SimpleMinCostFlow`, CP-SAT for deputation) | Fast, exact, and Google's own solver |
 | Agent | `google-genai` function calling (manual loop) + fixed templates | Templates answer common questions predictably; Gemini picks among read-only, jurisdiction-checked functions for the rest |
-| Federation | `flwr` 1.37 client API (FedProx) + a clipping/noise wrapper, run as an in-process simulation; scored runs use noise 0, so no DP guarantee | Standard; a real deployment would run one client per state project |
+| Federation | `flwr` 1.37 client API (FedProx) + a clipping/noise wrapper: an in-process experiment and a connected two-process demo; noise 0, so no DP guarantee | Standard; a real deployment would run one client per state project |
 | Messaging | Twilio WhatsApp sandbox (`twilio` SDK) | Real WhatsApp in hours; the adapter can be swapped to the Meta Cloud API |
 | Signing | Cloud KMS (HMAC-SHA256 with a local key when offline) | Tamper-evident transfer orders |
 | Infra | Docker Compose (local), Cloud Run, Terraform, Cloud Build | One command locally; serverless in the cloud |
@@ -49,7 +49,7 @@ ml/
   data/             HMIS parsers (M19 stock flows, M10/M11 disease), facility graph, weather
   forecast/         baselines, features, lgbm, stockout, service
   optimize/         min-cost-flow transfers, deputation, referral
-  federated/        flower client/server, fedprox, clipping/noise wrapper, experiments (simulation)
+  federated/        flower client/server, fedprox, clipping/noise wrapper, experiments, node + demo (two state processes)
 eval/               protocol.lock (splits, seeds, generator hash), tuning (val/dev only), scoring runners, replay simulator, reports
 frontend/           Next.js app
 infra/              docker-compose.yml, Dockerfiles, terraform/ (state module), cloudbuild.yaml
@@ -66,11 +66,11 @@ docs/               review1/, api/, finale/ (demo script, Q&A), pitch/ (deck, vi
 5. When an officer clicks "Propose transfers" or asks the agent: next-week forecast from reported history → stock-out probabilities using live stock → the solver proposes transfers (donors keep 2 weeks of cover) → stored as `draft`, replacing the district's earlier drafts. No scheduled job runs this yet.
 6. Officer PWA and agent: queries go through read-only tools; `propose_order` can only create drafts. Only a human click on `POST /officer/orders/{id}/approve` (role and jurisdiction checked against the order's own facilities) moves an order to `approved`.
 7. Beds and staff: `BEDS 4/6` writes a `BedCensus`; a shared location writes a `CheckIn` with `geofence_ok` (200 m). `GET /officer/capacity/{district}` runs the referral solver on facilities at least 90% full and the CP-SAT deputation solver on roles nobody covers today; an officer approves one into a signed REFERRAL or DEPUTATION order (role and head count signed).
-8. Stock movement: approved units stay reserved at the source until it replies `SENT <code>`; approval counts only physical stock (incoming units count for planning, not for sending onward); the destination replies `RECEIVED <code>`.
-9. Demand: next week's demand is a facility's own use between two of its counts a day or more apart (`backend/runtime.py: recent_use`), else the ledger's last week.
-10. Federation demo: `ml/federated/node.py` runs one state per process (own files only); `ml/federated/demo.py` aggregates counts, sums and FedProx updates into `backend/federated/model.npz`, served by `GET /public/federated`.
-8. Approved order → signed → alerts sent in the recipient's language plus a route plan → escalation timer starts → dashboard updates in real time.
-9. Federation (offline simulation, not deployed): each state client trains on its own partition → sends model updates (clipping and noise available, noise 0 in scored runs) → the server aggregates with FedProx → the global model is sent back. The app's forecasts do not use it.
+8. Approved order → signed (Cloud KMS) → text and voice alerts to both facilities' registered numbers, in each one's language, with the route time. Approval first rechecks that the donor physically holds the units, not already promised, and keeps two weeks of its own demand. If the alerts fail the order stays approved and the card offers Resend.
+9. Stock movement: approved units stay reserved at the source until it replies `SENT <code>`; incoming units count for planning, not for sending onward; the destination replies `RECEIVED <code>`. Transitions are checked on the stored order and only move forward.
+10. Demand: next week's demand is a facility's own use from its counts (`ml/forecast/reported_use.py`: a day or more apart, net of transfers in and out, an empty shelf only raises it), else the ledger's last week. The same estimator runs in the end-to-end replay.
+11. Beds and staff commitments: approved referrals and deputations are planned around by the solvers; the reported beds and staff on site change only with a new census or check-in.
+12. Federation demo: `ml/federated/node.py` runs one state per process (own files only); `ml/federated/demo.py` aggregates counts, sums and FedProx updates into `backend/federated/model.npz` (weights, feature scale and schema), served by `GET /public/federated` on Meghalaya's historical features. The app's transfer forecasts do not use it.
 
 ## 5. Evaluation integrity (enforced in code)
 - `eval/protocol.lock` fixes the time windows, the held-out district (Dhule) and held-out state (Meghalaya), the seeds and the generator's content hash. It is committed before any file under `ml/forecast/` exists.
@@ -81,7 +81,7 @@ docs/               review1/, api/, finale/ (demo script, Q&A), pitch/ (deck, vi
 | Risk | Control |
 |---|---|
 | Forged webhooks | Twilio `X-Twilio-Signature` validation; reject unsigned requests |
-| Malicious uploads | Allow-list of MIME types (jpeg/png/ogg/amr/mp3), 10 MB cap, never executed, stored in a private bucket |
+| Malicious uploads | Allow-list of MIME types (jpeg/png/webp, ogg/amr/mp3/webm/mp4 audio) checked against file signatures, 10 MB cap, never executed |
 | AuthN / AuthZ | Firebase Auth. Custom claims: role (facility/block/district/state/public) and jurisdiction. Every officer route checks role and jurisdiction |
 | Agent misuse / prompt injection from extracted text | The agent has read-only tools plus draft-only `propose_order`. Extracted text is passed as data, not instructions. There is no tool that sends messages or approves orders |
 | Secrets | `.env` only (gitignored), Secret Manager in the cloud, `.env.example` holds placeholders |

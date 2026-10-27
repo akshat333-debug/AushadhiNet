@@ -189,7 +189,7 @@ def test_source_confirms_dispatch_on_whatsapp():
 def test_saved_report_with_a_failed_reply_is_not_saved_twice_on_redelivery(monkeypatch):
     """Judge's case: the record is saved, the acknowledgement fails, the message comes again."""
     from backend.providers import messaging_local
-    with TestClient(create_app()) as client:
+    with TestClient(create_app()):
         real = messaging_local.LocalMessaging.send_text
         calls = {"n": 0}
 

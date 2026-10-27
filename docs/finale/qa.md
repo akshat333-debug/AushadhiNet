@@ -163,3 +163,12 @@ index); the code marks each spot with `shortcut:`.
 **Does the live solver use expiry (FEFO) and cold chain?**
 The solver supports both (unit-tested), but the live stock reports carry no batch or cold-chain fields
 yet, so live orders show one unbatched line. Batches come with the register photo fields in the pilot.
+
+**Why does the federated card show 0 for South Garo Hills (4,57,500 distributed)?**
+That district had reported no earlier month of that item, so every lag feature was empty and the
+model had nothing to go on (marked * on the card); a state's own model has the same gap. Where history
+exists it still undershoots big one-off issues (Ri Bhoi calcium: 54,986 vs 3,99,000): district issues
+are lumpy, and one linear model in log space smooths spikes. Overall 0.90 WAPE, the same as each state
+alone: federation's value here is keeping rows in their state, not accuracy. Next step: keep a local
+output layer per state on the shared weights, and treat "no history" rows with a separate cold-start
+rule instead of the regression.

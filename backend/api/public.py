@@ -48,7 +48,8 @@ def federated_model() -> dict:
     w = model["w"]
     latest = json.loads((folder / "ML.latest.json").read_text())
     rows = [{"district_id": r["district_id"], "drug": r["drug"], "actual": r["actual"],
-             "estimate": round(float(np.expm1(np.dot(r["x"], w[:-1]) + w[-1])))} for r in latest["rows"]]
+             "estimate": round(float(np.expm1(np.dot(r["x"], w[:-1]) + w[-1]))),
+             "history": r.get("history", True)} for r in latest["rows"]]  # False: no earlier month reported for this item
     return {**json.loads(str(model["card"])), "month": latest["month"],
             "wape": round(float(wape(np.array([r["actual"] for r in rows]), np.array([r["estimate"] for r in rows]))), 3),
             "rows": sorted(rows, key=lambda r: -r["actual"])[:20]}

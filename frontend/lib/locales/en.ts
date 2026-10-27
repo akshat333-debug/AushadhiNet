@@ -185,6 +185,7 @@ const en = {
   fed_item: "Item",
   fed_actual: "Distributed",
   fed_estimate: "Model estimate",
+  fed_note: "Largest districts first, nothing left out. * No earlier month of this item was reported in this district, so the model had no history to go on: a state's own model has the same gap.",
   sim_record: "Record a voice note",
   sim_recording: "Recording {s}s · tap the mic to send",
   sim_mic_denied: "Microphone not available. Allow it in the browser, or type the values.",

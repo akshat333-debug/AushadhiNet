@@ -44,8 +44,8 @@ def _latest_features(val: pd.DataFrame, mean: np.ndarray, std: np.ndarray) -> di
     cols = list(feature_columns(featured, TARGET))
     X = (np.log1p(last[cols].fillna(0.0).clip(lower=0).to_numpy(dtype=float)) - mean) / std
     return {"month": str(pd.Timestamp(last["month"].max()).date()), "rows": [
-        {"district_id": d, "drug": n, "actual": float(a), "x": [round(float(v), 6) for v in x]}
-        for d, n, a, x in zip(last["district_id"], last["drug_name"], last[TARGET], X)]}
+        {"district_id": d, "drug": n, "actual": float(a), "x": [round(float(v), 6) for v in x], "history": bool(h)}
+        for d, n, a, x, h in zip(last["district_id"], last["drug_name"], last[TARGET], X, last[f"{TARGET}_lag1"].notna())]}
 
 
 def main(state: str, phase: str, workdir: pathlib.Path) -> None:

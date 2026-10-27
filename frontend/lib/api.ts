@@ -174,7 +174,7 @@ export interface FederatedModel {
   trained_at: string;
   month: string;
   wape: number;
-  rows: { district_id: string; drug: string; actual: number; estimate: number }[];
+  rows: { district_id: string; drug: string; actual: number; estimate: number; history: boolean }[];
 }
 
 export interface FacilityDetail {

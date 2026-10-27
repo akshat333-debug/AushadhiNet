@@ -65,6 +65,9 @@ def handle_stock_message(payload: dict, facility_id: str):
     if payload.get("message_sid"):  # a redelivered message overwrites its own records instead of adding more
         for n, record in enumerate(result.records):
             record.record_id = f"{payload['message_sid']}-{n}"
+            earlier = live_store.get("stock_records", record.record_id)
+            if earlier is not None:  # keep when it was first reported, so a late retry never outranks a newer count
+                record.reported_at = earlier.reported_at
     lang = payload.get("lang", "en")
     media = payload.get("num_media", 0) > 0
     voice = media and payload.get("media_content_type", "").startswith("audio/")

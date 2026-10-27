@@ -71,6 +71,16 @@ resource "google_firestore_database" "live_state" {
   depends_on  = [google_project_service.required]
 }
 
+# Spoken order alerts (backend/action/alerts.py) are fetched once by Twilio; Firestore deletes
+# them after `expires_at` (TTL deletion runs within about a day of it).
+resource "google_firestore_field" "voice_clip_ttl" {
+  project    = var.project_id
+  database   = google_firestore_database.live_state.name
+  collection = "voice_clips"
+  field      = "expires_at"
+  ttl_config {}
+}
+
 resource "google_bigquery_dataset" "history" {
   project    = var.project_id
   dataset_id = "aushadhinet_${lower(var.state_code)}"

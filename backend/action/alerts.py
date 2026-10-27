@@ -5,6 +5,8 @@ route plan.
 """
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 from pydantic import BaseModel
 
 from backend.domain import Facility, TransferOrder
@@ -44,10 +46,14 @@ def send_transfer_alerts(
 
 class VoiceClip(BaseModel):
     audio_b64: str
+    expires_at: datetime | None = None  # Firestore's TTL policy deletes the clip after this (infra/terraform)
 
 
-# shortcut: clips live in Firestore (1 MiB per document, no expiry); an order alert is well under
-# this cap. Move them to a Cloud Storage bucket with a lifecycle rule before alerts run at volume.
+CLIP_DAYS = 7
+
+
+# shortcut: clips live in Firestore (1 MiB per document, deleted a week later by a TTL policy); an
+# order alert is well under this cap. Move them to Cloud Storage before alerts run at volume.
 MAX_CLIP_B64 = 900_000
 
 
@@ -65,7 +71,8 @@ def voice_url(audio: bytes) -> str | None:
     if len(encoded) > MAX_CLIP_B64:
         return None
     token = uuid.uuid4().hex
-    factory.get("store_live").put("voice_clips", token, VoiceClip(audio_b64=encoded))
+    factory.get("store_live").put("voice_clips", token, VoiceClip(
+        audio_b64=encoded, expires_at=datetime.now(timezone.utc) + timedelta(days=CLIP_DAYS)))
     return f"{base.rstrip('/')}/public/voice/{token}.ogg"
 
 

@@ -52,8 +52,8 @@ def main(state: str, phase: str, workdir: pathlib.Path) -> None:
     from ml.federated.client import LinearHeadClient, _design_matrix
     train, val = own_data(state)
     if phase == "stats":
-        X, _, _ = _design_matrix(train, TARGET)
-        np.savez(workdir / f"{state}.stats.npz", n=len(X), total=X.sum(axis=0), squares=(X ** 2).sum(axis=0))
+        X, _, cols = _design_matrix(train, TARGET)
+        np.savez(workdir / f"{state}.stats.npz", n=len(X), total=X.sum(axis=0), squares=(X ** 2).sum(axis=0), columns=np.array(cols))
     elif phase == "fit":
         g = np.load(workdir / "global.npz")
         client = LinearHeadClient(state, train, proximal_mu=0.1, feature_mean=g["mean"], feature_std=g["std"])

@@ -214,11 +214,12 @@ _latest: tuple[object, dict[tuple[str, str], StockRecord]] | None = None
 def latest_records() -> dict[tuple[str, str], StockRecord]:
     """Newest confirmed stock record per (facility, drug). Read from the store once (a full
     Firestore read of the district takes ~8 s), then kept current by note_confirmed()."""
-    global _latest, _use_version
+    global _latest, _use, _use_version
     live = factory.get("store_live")
     if _latest is None or _latest[0] is not live:
         newest: dict[tuple[str, str], StockRecord] = {}
-        _observed.clear()
+        _use = None
+        _dates.clear()
         _use_version += 1
         for r in sorted(live.query("stock_records", {"status": RecordStatus.CONFIRMED}), key=lambda r: r.reported_at):
             note_confirmed(r, newest)
@@ -236,45 +237,55 @@ def note_confirmed(record: StockRecord, index: dict | None = None) -> None:
         index = _latest[1]
     key = (record.facility_id, record.drug_id)
     if key not in index or record.reported_at > index[key].reported_at:
-        if key in index:
-            _note_use(index[key], record)
+        _note_use(record)
         index[key] = record
 
 
 SCENARIO_REPORTERS = {"seed", "demo-neighbour"}  # loaded ledger stock, not a nurse's count
-_observed: dict[tuple[str, str], tuple[float, object]] = {}
+_use = None  # ml.forecast.reported_use.UseEstimator, rebuilt with the stock index
+_dates: dict[tuple[str, str], object] = {}
 _use_version = 0
 
 
-def _note_use(before: StockRecord, after: StockRecord) -> None:
-    """Units used per week between two of a facility's own counts a day or more apart: the
-    first count, plus transfers received in between, minus the second. Averaged with the
-    previous reading (half weight each), so one odd count does not swing next week's demand.
-    A loaded scenario count is not a count. Counts minutes apart are skipped: a week's use
-    extrapolated from minutes is noise. shortcut: deliveries outside AushadhiNet (the state's
-    monthly supply) are not known, so use is under-read across one; add them when indents are
-    recorded."""
-    from backend.domain import OrderStatus
-    global _use_version
-    days = (after.reported_at - before.reported_at).total_seconds() / 86400
-    if before.reporter_phone_hash in SCENARIO_REPORTERS or days < 1:
+def _net_in(facility_id: str, drug_id: str, since: datetime, until: datetime) -> float:
+    """Units that arrived at a facility minus units that left it, in (since, until]."""
+    from backend.domain import OrderKind, OrderStatus
+    net = 0.0
+    for status in (OrderStatus.DISPATCHED, OrderStatus.RECEIVED):
+        for o in factory.get("store_live").query("orders", {"status": status}):
+            if o.kind != OrderKind.DRUG_TRANSFER or o.drug_id != drug_id:
+                continue
+            left, arrived = o.dispatched_at or o.received_at, o.received_at
+            if o.to_facility_id == facility_id and arrived and since < arrived <= until:
+                net += o.quantity
+            if o.from_facility_id == facility_id and left and since < left <= until:
+                net -= o.quantity
+    return net
+
+
+def _note_use(record: StockRecord) -> None:
+    """Feeds a nurse's confirmed count to the shared use estimator (ml/forecast/reported_use.py),
+    with the transfers that moved in and out since its anchor count. A loaded scenario count is
+    not a count. shortcut: deliveries outside AushadhiNet (the state's monthly supply) are not
+    known, so a count that rose across one gives no reading; add them when indents are recorded."""
+    global _use, _use_version
+    from ml.forecast.reported_use import UseEstimator
+    if record.reporter_phone_hash in SCENARIO_REPORTERS:
         return
-    received = sum(o.quantity or 0 for o in factory.get("store_live").query("orders", {"to_facility_id": after.facility_id, "status": OrderStatus.RECEIVED})
-                   if o.drug_id == after.drug_id and o.received_at and before.reported_at < o.received_at <= after.reported_at)
-    used = before.on_hand + received - after.on_hand
-    if used < 0:
-        return
-    key = (after.facility_id, after.drug_id)
-    rate = 7 * used / days
-    if key in _observed:
-        rate = (rate + _observed[key][0]) / 2
-    _observed[key] = (rate, after.as_of_date)
-    _use_version += 1
+    _use = _use or UseEstimator()
+    key = (record.facility_id, record.drug_id)
+    day = record.reported_at.timestamp() / 86400
+    anchor = _use.anchor(key)
+    net = 0.0 if anchor is None else _net_in(*key, datetime.fromtimestamp(anchor[0] * 86400, timezone.utc), record.reported_at)
+    if _use.observe(key, day, record.on_hand, net):
+        _dates[key] = record.as_of_date
+        _use_version += 1
 
 
 def recent_use() -> dict[tuple[str, str], tuple[float, object]]:
+    """(units per week, date of the count) per (facility, drug), from nurses' own counts."""
     latest_records()  # builds the index, and with it the observed use
-    return dict(_observed)
+    return {k: (r, _dates[k]) for k, r in (_use.rates.items() if _use else ())}
 
 
 def latest_stock(facility_ids: set[str]) -> dict[tuple[str, str], float]:
@@ -330,15 +341,16 @@ def propose_for_district(scope: str) -> list:
     from ml.data.facilities import served_facility_index as facility_index
     from ml.optimize.service import propose
     panel = forecast_panel()
-    known = set(panel["facility_id"].unique())
+    use = recent_use()
+    known = set(panel["facility_id"].unique()) | {f for f, _ in use}  # history, or its own reported use
     facilities = [f for f in facility_index().values() if in_scope(f.district_id, scope) and f.facility_id in known]
     ids = {f.facility_id for f in facilities}
-    drug_ids = sorted(panel.loc[panel["facility_id"].isin(ids), "drug_id"].unique())
+    drug_ids = sorted(set(panel.loc[panel["facility_id"].isin(ids), "drug_id"].unique()) | {d for f, d in use if f in ids})
     if not drug_ids:
         return []
     from ml.optimize.constraints import SolverConfig
     return propose(facilities, drug_ids, {}, projected_stock(ids), cfg=SolverConfig(min_transfer_units=MIN_SHIPMENT, max_sources=MAX_SOURCES),
-                   panel=panel, recent_use=recent_use())
+                   panel=panel, recent_use=use)
 
 
 def replace_drafts(district_id: str, drafts: list) -> list:
@@ -435,8 +447,9 @@ def _handle_inbound(payload: dict) -> None:
     stale = live.query("stock_records", {"facility_id": facility_id, "status": RecordStatus.PENDING})
     decision = handle_stock_message(payload, facility_id)
     if decision.confirmed or decision.pending:
-        fresh = {r.record_id for r in decision.confirmed + decision.pending}
-        for record in (r for r in stale if r.record_id not in fresh):
+        new = decision.confirmed + decision.pending
+        fresh, first = {r.record_id for r in new}, min(r.reported_at for r in new)
+        for record in (r for r in stale if r.record_id not in fresh and r.reported_at < first):  # a late retry spares newer cards
             live.put("stock_records", record.record_id, record.model_copy(update={"status": RecordStatus.REJECTED}))
     if decision.confirmed:
         items = ", ".join(f"{drug_name(r.drug_id, lang)} {r.on_hand}" for r in decision.confirmed)

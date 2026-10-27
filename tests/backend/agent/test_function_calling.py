@@ -114,3 +114,15 @@ def test_a_facilitys_beds_question_is_not_answered_with_its_medicine_stock(cloud
     with TestClient(create_app()) as client:
         cloud_agent(lambda call, _: (call("capacity", {}), "Sinnar Phata is not on today's full list.")[1])
         assert _ask(client, "Does Sinnar Phata have full beds today?")["text"] == "Sinnar Phata is not on today's full list."
+
+
+def test_capacity_for_one_facility_is_not_cut_to_the_district_top_ten(cloud_agent):
+    def script(call, results):
+        found = call("find_facility", {"name": "Sinnar Phata"})
+        cap = call("capacity", {"facility_id": found[0]["facility_id"]})
+        results.append(cap)
+        return f"{found[0]['name']} has its numbers." if "facility" in cap else "missing"
+    with TestClient(create_app()) as client:
+        fake = cloud_agent(script)
+        assert _ask(client, "Compare beds at Sinnar Phata")["text"].endswith("has its numbers.")
+        assert fake.results[0]["facility"]["posts"]

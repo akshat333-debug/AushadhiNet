@@ -170,13 +170,13 @@ export default function PublicPage() {
                     <td className="px-4 py-2">{r.district_id.split("/").pop()!.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ")}</td>
                     <td className="px-4 py-2">{r.drug}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{num(r.actual)}</td>
-                    <td className="px-4 py-2 text-right tabular-nums">{r.history ? num(r.estimate) : <span className="muted">{num(r.estimate)}*</span>}</td>
+                    <td className="px-4 py-2 text-right tabular-nums">{r.history ? num(r.estimate) : <span className="muted">—</span>}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="muted px-4 py-2.5 text-xs">{t("fed_note")}</p>
+          <p className="muted px-4 py-2.5 text-xs">{t("fed_note", { n: num(fed.rows_total) })}</p>
         </Reveal>
       )}
     </div>

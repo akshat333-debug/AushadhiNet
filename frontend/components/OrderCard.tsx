@@ -65,8 +65,10 @@ export default function OrderCard({
             <Truck size={20} weight="duotone" />
           </span>
           <div>
-            <div className="font-semibold">{order.drug_id ? drug(order.drug_id) : order.kind}</div>
+            <div className="font-semibold">{order.drug_id ? drug(order.drug_id) : t(`kind_${order.kind}` as MessageKey)}</div>
             {order.quantity != null && <div className="muted text-sm">{qty(order.quantity)}</div>}
+            {order.patient_count != null && <div className="muted text-sm">{t("order_patients", { n: num(order.patient_count) })}</div>}
+            {order.role && <div className="muted text-sm">{t("order_staff", { n: num(order.staff_count ?? 1), role: order.role })}</div>}
           </div>
         </div>
         <div className="flex flex-col items-end gap-1.5">

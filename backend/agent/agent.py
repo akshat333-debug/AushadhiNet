@@ -192,9 +192,10 @@ def _llm():
     return factory.get("llm")
 
 
-def _declare(function: str, description: str, **params: str) -> dict:
+def _declare(function: str, description: str, optional: tuple[str, ...] = (), **params: str) -> dict:
     return {"name": function, "description": description, "parameters_json_schema": {
-        "type": "object", "properties": {k: {"type": "string", "description": v} for k, v in params.items()}, "required": list(params)}}
+        "type": "object", "properties": {k: {"type": "string", "description": v} for k, v in params.items()},
+        "required": [k for k in params if k not in optional]}}
 
 
 _DECLARATIONS = [
@@ -203,8 +204,11 @@ _DECLARATIONS = [
     _declare("facility_forecast", "Next-week demand forecast and stock-out probability for one medicine at one facility.",
              facility_id="facility ID", medicine="medicine name, e.g. ORS"),
     _declare("at_risk", "Facilities in the district under a week of cover, and medicines short district-wide."),
-    _declare("capacity", "Today's beds and staff in the district: full facilities, referrals, staff gaps, off-site check-ins."),
-    _declare("orders", "Transfer orders in the district by status, with the most urgent drafts."),
+    _declare("capacity", "Today's beds and staff in the district: full facilities, referrals, staff gaps, off-site check-ins. "
+             "Give facility_id for one facility's own beds, staff and suggestions.", optional=("facility_id",),
+             facility_id="optional facility ID"),
+    _declare("orders", "Transfer orders in the district by status, with the most urgent drafts. Give facility_id for every "
+             "order touching one facility.", optional=("facility_id",), facility_id="optional facility ID"),
 ]
 
 
@@ -252,15 +256,23 @@ def _gemini_tools(question: str, officer: OfficerCtx, lang: str) -> tuple[str, l
                 result = {"short_district_wide": [drug_name(d, "en") for d in gaps],
                           "facilities": [{**r, "medicine": drug_name(r.pop("drug_id"), "en")} for r in tool("list_at_risk", district_id=district_id, exclude_drugs=frozenset(gaps))]}
             elif name == "capacity":
-                cap = tool("get_capacity", district_id=district_id)
+                fid = str(args.get("facility_id") or "").upper() or None
+                cap = tool("get_capacity", district_id=district_id, facility_id=fid)
                 result = {"date": cap["date"], "generated_baseline_for_unreported": cap["demo_baseline"], "beds": cap["beds"],
-                          "staff": {k: v for k, v in cap["staff"].items()}}
+                          "staff": {k: v for k, v in cap["staff"].items()}, **({"facility": cap["facility"]} if "facility" in cap else {})}
+                if fid:
+                    cited.append(fid)
             elif name == "orders":
                 from collections import Counter
-                orders = tool("list_orders", district_id=district_id)
+                fid = str(args.get("facility_id") or "").upper() or None
+                orders = [o for o in tool("list_orders", district_id=district_id)
+                          if fid is None or fid in (o.from_facility_id, o.to_facility_id)]  # filtered before the cut below
                 result = {"by_status": dict(Counter(o.status.value for o in orders)),
-                          "drafts": [{"medicine": drug_name(o.drug_id, "en") if o.drug_id else o.kind.value, "units": o.quantity,
-                                      "from": o.from_facility_id, "to": o.to_facility_id} for o in orders if o.status.value == "draft"][:5]}
+                          "orders": [{"medicine": drug_name(o.drug_id, "en") if o.drug_id else o.kind.value, "units": o.quantity,
+                                      "status": o.status.value, "from": o.from_facility_id, "to": o.to_facility_id}
+                                     for o in orders if fid or o.status.value == "draft"][:5 if fid is None else 50]}
+                if fid:
+                    cited.append(fid)
             else:
                 result = {"error": f"no function {name}"}
         except PermissionError as e:

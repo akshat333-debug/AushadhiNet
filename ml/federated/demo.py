@@ -55,7 +55,11 @@ def main(rounds: int = 1) -> dict:
         OUT.mkdir(exist_ok=True)
         card = {"states": list(STATES), "training_rows": {s: int(st["n"]) for s, st in zip(STATES, stats)}, "rounds": rounds,
                 "trained_at": datetime.now(timezone.utc).isoformat(), "target": "units distributed per district, medicine and month"}
-        np.savez(OUT / "model.npz", w=w, card=json.dumps(card))
+        columns = [list(s["columns"]) for s in stats]
+        assert all(c == columns[0] for c in columns), "states must share one feature schema"
+        # Weights with the preprocessing that makes them usable on fresh inputs: feature names
+        # (log1p of each, missing as 0) and the shared scale.
+        np.savez(OUT / "model.npz", w=w, mean=mean, std=std, columns=np.array(columns[0]), card=json.dumps(card))
         (OUT / "ML.latest.json").write_text((workdir / "ML.latest.json").read_text())
     return card
 

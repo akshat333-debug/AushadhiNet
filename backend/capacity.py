@@ -114,7 +114,9 @@ def _live(day: date) -> tuple[dict, list]:
     return beds, checkins
 
 
-def district_capacity(district_id: str) -> dict:
+def district_capacity(district_id: str, facility_id: str | None = None) -> dict:
+    """Today's beds and staff for a district. With `facility_id`, also that facility's own
+    reported beds and staff on site, and every suggestion touching it (the lists are cut to SHOW)."""
     from backend.config import get_settings
     from ml.data.facilities import served_facility_index
     from ml.data.graph import drive_matrix
@@ -131,26 +133,27 @@ def district_capacity(district_id: str) -> dict:
     reported = {c["facility_id"] for c in live_checkins}  # a facility's own check-ins replace its generated ones
     checkins = [c for c in live_checkins if c["facility_id"] in index] + [c for c in base_checkins if c["facility_id"] not in reported]
 
-    # Today's approved referrals and deputations already moved patients and staff: count them where
-    # they went, so the solvers do not suggest the same beds or the same person twice.
+    # Today's approved referrals and deputations are commitments, not observations: what the
+    # facilities reported stays as reported, and the solvers plan around the commitments so the
+    # same beds or the same person are not suggested twice.
     from backend.domain import OrderKind, OrderStatus
     approved = [o for status in (OrderStatus.APPROVED, OrderStatus.RECEIVED)
                 for o in factory.get("store_live").query("orders", {"status": status})
                 if o.kind in (OrderKind.REFERRAL, OrderKind.DEPUTATION) and o.approved_at and o.approved_at.astimezone(IST).date() == day
                 and o.from_facility_id in index and o.to_facility_id in index]
     census_at = _census_times(day)
-    checkins = [dict(c) for c in checkins]  # the baseline is cached: move copies, not its rows
+    planned = dict(beds)
+    covered: set[tuple[str, str]] = set()      # (facility, role) a deputation is on its way to
+    leaving: Counter = Counter()               # (facility, role) -> people promised elsewhere
     for o in approved:
         if o.kind == OrderKind.REFERRAL:
             for fid, sign in ((o.from_facility_id, -1), (o.to_facility_id, 1)):
-                if fid in beds and not (fid in census_at and census_at[fid] > o.approved_at):  # a newer census already counts them
-                    occ, total = beds[fid]
-                    beds[fid] = (min(max(occ + sign * (o.patient_count or 0), 0), total), total)
+                if fid in planned and not (fid in census_at and census_at[fid] > o.approved_at):  # a newer census already counts them
+                    occ, total = planned[fid]
+                    planned[fid] = (min(max(occ + sign * (o.patient_count or 0), 0), total), total)
         else:
-            role = StaffRole(o.role) if o.role in {r.value for r in StaffRole} else StaffRole.OTHER
-            moving = [c for c in checkins if c["facility_id"] == o.from_facility_id and c["role"] == role][: o.staff_count or 1]
-            for c in moving:
-                c["facility_id"], c["distance_m"] = o.to_facility_id, 0.0
+            covered.add((o.to_facility_id, o.role))
+            leaving[(o.from_facility_id, o.role)] += o.staff_count or 1
 
     on_site = [c for c in checkins if c["distance_m"] <= settings.geofence_radius_m]
     present: dict[tuple[str, StaffRole], list[str]] = {}
@@ -165,24 +168,26 @@ def district_capacity(district_id: str) -> dict:
     name = lambda fid: index[fid].name
 
     full = sorted(((fid, o, t) for fid, (o, t) in beds.items() if t and o >= FULL * t), key=lambda x: -x[1] / x[2])
-    pressure = pd.DataFrame([{"facility_id": fid, "patients_to_refer": o - math.floor(TARGET * t)} for fid, o, t in full])
+    pressure = pd.DataFrame([{"facility_id": fid, "patients_to_refer": o - math.floor(TARGET * t)}
+                             for fid, (o, t) in planned.items() if t and o >= FULL * t])
     free = pd.DataFrame([{"facility_id": fid, "free_beds": math.floor(TARGET * t) - o}
-                         for fid, (o, t) in beds.items() if o < math.floor(TARGET * t)])
+                         for fid, (o, t) in planned.items() if o < math.floor(TARGET * t)])
     referrals, _ = referral.solve(pressure, free, drive, involved, cfg)
 
     # A role with nobody on site is a gap; staff above half their facility's posts for that role can be spared.
     gaps = pd.DataFrame([{"facility_id": fid, "role": role.value, "gap": n}
-                         for fid, roles in roster.items() for role, n in roles.items() if not present.get((fid, role))],
+                         for fid, roles in roster.items() for role, n in roles.items()
+                         if not present.get((fid, role)) and (fid, role.value) not in covered],
                         columns=["facility_id", "role", "gap"])
     spare = pd.DataFrame([{"facility_id": fid, "role": role.value, "staff_id_hash": s, "spare": True}
                           for (fid, role), staff in present.items() if fid in roster
-                          for s in staff[math.ceil(roster[fid].get(role, 0) / 2) or 1:]],
+                          for s in staff[(math.ceil(roster[fid].get(role, 0) / 2) or 1) + leaving[(fid, role.value)]:]],
                          columns=["facility_id", "role", "staff_id_hash", "spare"])
     deputations, _ = deputation.solve(gaps, spare, drive, involved, cfg)
     role_of = dict(zip(spare["staff_id_hash"], spare["role"]))
 
     nobody = [fid for fid in roster if not any(c["facility_id"] == fid for c in on_site)]
-    return {
+    result = {
         "date": day.isoformat(),
         "demo_baseline": demo,
         "beds": {
@@ -216,3 +221,15 @@ def district_capacity(district_id: str) -> dict:
                 for o in approved if o.kind == OrderKind.DEPUTATION],
         },
     }
+    if facility_id in index:
+        result["facility"] = {
+            "facility_id": facility_id, "name": name(facility_id),
+            "beds": dict(zip(("occupied", "total"), beds[facility_id])) if facility_id in beds else None,
+            "staff_on_site": {role.value: len(present.get((facility_id, role), [])) for role in roster.get(facility_id, {})},
+            "posts": {role.value: n for role, n in roster.get(facility_id, {}).items()},
+            "referrals": [{"from_id": r.from_facility_id, "to_id": r.to_facility_id, "patients": r.patient_count}
+                          for r in referrals if facility_id in (r.from_facility_id, r.to_facility_id)],
+            "deputations": [{"from_id": d.from_facility_id, "to_id": d.to_facility_id, "role": role_of.get(d.staff_id_hash, "")}
+                            for d in deputations if facility_id in (d.from_facility_id, d.to_facility_id)],
+        }
+    return result

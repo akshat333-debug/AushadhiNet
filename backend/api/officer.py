@@ -163,6 +163,14 @@ def approve_order(order_id: str, user: AuthUser = Depends(OFFICER)):
                 if current.quantity > available:
                     raise HTTPException(409, f"the source holds {available:g} units not already promised (stock on its way does not count until it arrives), "
                                              f"fewer than the {current.quantity} ordered: propose transfers again")
+                # The draft was safe when proposed; the donor may have reported less since. It keeps the
+                # same cover the solver plans for (ml/optimize/constraints.py cover_weeks) at its current demand.
+                from backend.runtime import weekly_demand
+                from ml.optimize.constraints import SolverConfig
+                keep = SolverConfig().cover_weeks * weekly_demand().get((current.from_facility_id, current.drug_id), 0.0)
+                if available - current.quantity < keep:
+                    raise HTTPException(409, f"sending {current.quantity} would leave the source {available - current.quantity:g} units, under the "
+                                             f"{keep:.0f} it keeps for its own two weeks: propose transfers again")
             live.put("orders", order_id, signed)
         _audit(user, "approve_order", signed)
     else:
@@ -211,27 +219,27 @@ def dispatch_order(order_id: str, user: AuthUser = Depends(OFFICER)):
 
 
 def mark_dispatched(order: TransferOrder) -> TransferOrder:
-    if order.status in (OrderStatus.DISPATCHED, OrderStatus.RECEIVED):
-        return order
-    if order.status != OrderStatus.APPROVED:
-        raise HTTPException(409, f"cannot dispatch an order that is {order.status.value}")
     live = factory.get("store_live")
-    with ORDER_LOCK:
-        dispatched = live.get("orders", order.order_id).model_copy(
-            update={"status": OrderStatus.DISPATCHED, "dispatched_at": datetime.now(timezone.utc)})
+    with ORDER_LOCK:  # checked on the stored order, so a late SENT never undoes a receipt
+        current = live.get("orders", order.order_id)
+        if current.status in (OrderStatus.DISPATCHED, OrderStatus.RECEIVED):
+            return current
+        if current.status != OrderStatus.APPROVED:
+            raise HTTPException(409, f"cannot dispatch an order that is {current.status.value}")
+        dispatched = current.model_copy(update={"status": OrderStatus.DISPATCHED, "dispatched_at": datetime.now(timezone.utc)})
         live.put("orders", order.order_id, dispatched)
     return dispatched
 
 
 def mark_received(order: TransferOrder) -> TransferOrder:
-    if order.status == OrderStatus.RECEIVED:
-        return order
-    if order.status not in (OrderStatus.APPROVED, OrderStatus.DISPATCHED):
-        raise HTTPException(409, f"cannot receive an order that is {order.status.value}")
     live = factory.get("store_live")
     with ORDER_LOCK:
-        received = live.get("orders", order.order_id).model_copy(
-            update={"status": OrderStatus.RECEIVED, "received_at": datetime.now(timezone.utc)})
+        current = live.get("orders", order.order_id)
+        if current.status == OrderStatus.RECEIVED:
+            return current
+        if current.status not in (OrderStatus.APPROVED, OrderStatus.DISPATCHED):
+            raise HTTPException(409, f"cannot receive an order that is {current.status.value}")
+        received = current.model_copy(update={"status": OrderStatus.RECEIVED, "received_at": datetime.now(timezone.utc)})
         live.put("orders", order.order_id, received)
     return received
 
@@ -352,5 +360,5 @@ def facility_detail(facility_id: str, user: AuthUser = Depends(OFFICER)):
         "stock": sorted(stock, key=lambda r: r.drug_id),
         "forecasts": latest_forecasts([facility_id], drug_ids, panel=forecast_panel(), on_hand=latest_stock({facility_id}),
                                       recent_use=recent_use()) if drug_ids else [],
-        "has_history": facility_id in set(forecast_panel()["facility_id"].astype(str)),
+        "has_history": facility_id in set(forecast_panel()["facility_id"].astype(str)) or any(f == facility_id for f, _ in recent_use()),
     }

@@ -44,18 +44,19 @@ def test_deputation_approval_and_stale_or_foreign_suggestions_are_refused():
         assert client.post("/officer/capacity/approve", json=body, headers=dhule).status_code == 403
 
 
-def test_approved_moves_count_where_they_went():
-    """Patients referred leave the source's beds; a deputed person is not suggested again."""
+def test_approved_moves_are_planned_around_not_reported():
+    """Judge's case: approving a referral or deputation must not change reported beds or presence."""
     with TestClient(create_app()) as client:
         cap = client.get("/officer/capacity/mh/nashik", headers=OFFICER).json()
         referral, dep = cap["beds"]["referrals"][0], cap["staff"]["deputations"][0]
-        before = next(f for f in cap["beds"]["full"] if f["facility_id"] == referral["from_id"])
         client.post("/officer/capacity/approve", json={"kind": "referral", "from_id": referral["from_id"], "to_id": referral["to_id"]}, headers=OFFICER)
         client.post("/officer/capacity/approve", json={"kind": "deputation", "from_id": dep["from_id"], "to_id": dep["to_id"], "role": dep["role"]}, headers=OFFICER)
         after = client.get("/officer/capacity/mh/nashik", headers=OFFICER).json()
-        still_full = [f for f in after["beds"]["full"] if f["facility_id"] == referral["from_id"]]
-        assert not still_full or still_full[0]["occupied"] == before["occupied"] - referral["patients"]
-        assert after["beds"]["occupied"] == cap["beds"]["occupied"]  # moved, not discharged
+        # Approval is a commitment, not an observation: the reported numbers do not move.
+        assert after["beds"]["full"] == cap["beds"]["full"] and after["beds"]["full_count"] == cap["beds"]["full_count"]
+        assert after["beds"]["occupied"] == cap["beds"]["occupied"] and after["staff"]["present"] == cap["staff"]["present"]
+        assert not [r for r in after["beds"]["referrals"] if r["from_id"] == referral["from_id"] and not r["order_id"]
+                    and r["patients"] >= referral["patients"]]  # the same patients are not suggested again
         open_to_same_place = [d for d in after["staff"]["deputations"]
                               if d["to_id"] == dep["to_id"] and d["role"] == dep["role"] and not d["order_id"]]
         assert not open_to_same_place  # the gap is covered

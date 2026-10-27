@@ -121,10 +121,11 @@ def find_facility(query: str, district_id: str) -> list[dict]:
     return [{"facility_id": f.facility_id, "name": f.name, "block": f.block, "type": f.facility_type.value} for f in hits[:5]]
 
 
-def get_capacity(district_id: str) -> dict:
-    """Today's beds and staff for a district: full facilities, referral and deputation suggestions."""
+def get_capacity(district_id: str, facility_id: str | None = None) -> dict:
+    """Today's beds and staff for a district: full facilities, referral and deputation suggestions;
+    with `facility_id`, that facility's own numbers too."""
     from backend.capacity import district_capacity
-    return district_capacity(district_id)
+    return district_capacity(district_id, facility_id)
 
 
 TOOL_REGISTRY = {
@@ -149,7 +150,7 @@ def _check_scope(jurisdiction: str, kwargs: dict) -> None:
     from ml.data.facilities import served_facility_index as facility_index
     user = AuthUser(uid="agent", role="district", jurisdiction=jurisdiction)
     districts = []
-    if "facility_id" in kwargs:
+    if kwargs.get("facility_id") is not None:
         facility = facility_index().get(kwargs["facility_id"])
         if facility is None:
             raise PermissionError(f"unknown facility {kwargs['facility_id']}")

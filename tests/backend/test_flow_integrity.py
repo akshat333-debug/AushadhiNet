@@ -275,3 +275,68 @@ def test_reported_use_adds_back_a_transfer_received_between_counts_and_smooths()
         assert recent_use()[(SRC, "ors")][0] == pytest.approx(210)
         count(2, 110)   # 10 used = 70 a week, averaged with 210
         assert recent_use()[(SRC, "ors")][0] == pytest.approx(140)
+
+
+def test_a_late_retry_never_outranks_a_newer_count(monkeypatch):
+    """Judge's case: A=100 saved but its reply failed, B=20 saved, A retried: stock stays 20."""
+    from backend.providers import messaging_local
+    from backend.runtime import handle_inbound
+    with TestClient(create_app()):
+        real, calls = messaging_local.LocalMessaging.send_text, {"n": 0}
+
+        def flaky(self, to, body):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise RuntimeError("WhatsApp down")
+            return real(self, to, body)
+        monkeypatch.setattr(messaging_local.LocalMessaging, "send_text", flaky)
+        a = {"from": PHONE, "reporter_phone_hash": "h", "body": "ORS 100", "num_media": 0, "message_sid": "SM-A"}
+        with pytest.raises(RuntimeError):
+            handle_inbound(a)
+        handle_inbound({**a, "body": "ORS 20", "message_sid": "SM-B"})
+        handle_inbound(a)
+        assert latest_records()[(SRC, "ors")].on_hand == 20
+
+
+def test_units_sent_away_do_not_read_as_demand():
+    """Judge's case: 100 counted, 80 dispatched, 20 counted a day later: nobody was treated."""
+    from datetime import timedelta
+    from backend.domain import Confidence, ConfidenceSource, StockRecord
+    from backend.runtime import latest_records, note_confirmed, recent_use
+    with TestClient(create_app()):
+        latest_records()
+        start = datetime.now(timezone.utc)
+        factory.get("store_live").put("orders", "out-1", TransferOrder(
+            order_id="out-1", kind=OrderKind.DRUG_TRANSFER, from_facility_id=SRC, to_facility_id=DST, drug_id="ors",
+            quantity=80, batches=[BatchLine(batch_no="B1", quantity=80)], drive_minutes=10.0, rationale="t",
+            created_at=start, created_by="solver", status=OrderStatus.DISPATCHED, dispatched_at=start + timedelta(hours=2)))
+        for days, on_hand in ((0, 100), (1, 20)):
+            note_confirmed(StockRecord(
+                record_id=f"d{days}", facility_id=SRC, drug_id="ors", reported_at=start + timedelta(days=days),
+                as_of_date=(start + timedelta(days=days)).date(), on_hand=on_hand, status=RecordStatus.CONFIRMED,
+                confidence=Confidence(field_confidence={"on_hand": 1.0}, overall=1.0, source=ConfidenceSource.MANUAL),
+                reporter_phone_hash="nurse", raw_message_id=f"d{days}"))
+        assert recent_use()[(SRC, "ors")][0] == 0
+
+
+def test_a_late_sent_never_undoes_a_receipt():
+    from backend.api.officer import mark_dispatched, mark_received
+    with TestClient(create_app()) as client:
+        _send(client, body="ORS 60")
+        _order("o-late", 20)
+        client.post("/officer/orders/o-late/approve", headers=OFFICER)
+        stale = factory.get("store_live").get("orders", "o-late")
+        mark_received(stale)
+        assert mark_dispatched(stale).status == OrderStatus.RECEIVED
+        assert factory.get("store_live").get("orders", "o-late").status == OrderStatus.RECEIVED
+
+
+def test_approval_keeps_the_donors_own_two_weeks(monkeypatch):
+    """Judge's case: drafted 80 from 100, donor reports 80 before approval: sending all would empty it."""
+    import backend.runtime as runtime
+    with TestClient(create_app()) as client:
+        monkeypatch.setattr(runtime, "weekly_demand", lambda: {(SRC, "ors"): 10.0})
+        _send(client, body="ORS 80")
+        _order("o-buf", 80)
+        response = client.post("/officer/orders/o-buf/approve", headers=OFFICER)
+        assert response.status_code == 409 and "two weeks" in response.json()["detail"]

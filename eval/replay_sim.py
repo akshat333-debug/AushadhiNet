@@ -125,6 +125,8 @@ def run_weeks(world: World, state: State, start: int, stop: int, policy: Policy 
     n = len(world.series)
     totals = {"wanted_units": 0.0, "unmet_units": 0.0, "stockout_weeks": 0, "expired_units": 0.0,
               "transfers": 0, "units_moved": 0.0, "drive_minutes": 0.0}
+    # Per facility x drug, for the breakdown (eval/run_replay.py --breakdown); not part of the totals.
+    per = {k: np.zeros(n) for k in ("wanted", "unmet", "stockout_weeks", "sent", "received", "trips_out", "trips_in", "drive_minutes_in")}
 
     for i in range(start, stop):
         for s in range(n):
@@ -144,6 +146,11 @@ def run_weeks(world: World, state: State, start: int, stop: int, policy: Policy 
                 totals["transfers"] += 1
                 totals["units_moved"] += qty
                 totals["drive_minutes"] += order.drive_minutes
+                per["sent"][src] += qty
+                per["received"][dst] += qty
+                per["trips_out"][src] += 1
+                per["trips_in"][dst] += 1
+                per["drive_minutes_in"][dst] += order.drive_minutes
 
         reported = np.zeros(n)
         closing = np.zeros(n)
@@ -161,6 +168,9 @@ def run_weeks(world: World, state: State, start: int, stop: int, policy: Policy 
             totals["wanted_units"] += wanted
             totals["unmet_units"] += unmet
             totals["stockout_weeks"] += int(unmet > 0.5)
+            per["wanted"][s] += wanted
+            per["unmet"][s] += unmet
+            per["stockout_weeks"][s] += int(unmet > 0.5)
             totals["expired_units"] += expired
             reported[s] = max(0.0, dispensed * (1.0 + world.noise[s, i]))
             closing[s] = close
@@ -180,6 +190,7 @@ def run_weeks(world: World, state: State, start: int, stop: int, policy: Policy 
         state.history_weeks = (state.history_weeks + [world.weeks[i]])[-HISTORY_WEEKS:]
 
     totals["fill_rate"] = 1.0 - totals["unmet_units"] / totals["wanted_units"] if totals["wanted_units"] else 1.0
+    totals["per_series"] = per
     return totals
 
 

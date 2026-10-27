@@ -44,11 +44,18 @@ def latest_forecasts(
         ledger_on_hand=("on_hand_close", "last"), origin=("week", "max"),
     ).reset_index()
     stats = stats[stats["n"] >= 2]
+    use = recent_use or {}
+    # A facility new to the ledger enters on its own reported use (one measured interval), with a
+    # wide range (half its use either side) until it has history; the ledger's on-hand is unknown.
+    have = set(zip(stats["facility_id"], stats["drug_id"]))
+    new = [{"facility_id": f, "drug_id": d, "n": 0, "p50": u, "spread": u / 2 / 1.2816, "ledger_on_hand": 0.0, "origin": pd.Timestamp(day)}
+           for (f, d), (u, day) in use.items() if f in set(facility_ids) and d in set(drug_ids) and (f, d) not in have]
+    if new:
+        stats = pd.concat([stats, pd.DataFrame(new)], ignore_index=True)
     if stats.empty:
         return []
 
     stats["spread"] = stats["spread"].fillna(0.0)
-    use = recent_use or {}
     stats["reported"] = [(f, d) in use for f, d in zip(stats["facility_id"], stats["drug_id"])]
     stats["p50"] = [use[(f, d)][0] if r else p for f, d, r, p in zip(stats["facility_id"], stats["drug_id"], stats["reported"], stats["p50"])]
     stats["origin"] = [pd.Timestamp(use[(f, d)][1]) if r else o for f, d, r, o in zip(stats["facility_id"], stats["drug_id"], stats["reported"], stats["origin"])]

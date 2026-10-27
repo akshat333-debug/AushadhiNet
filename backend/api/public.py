@@ -26,7 +26,8 @@ def voice_clip(token: str) -> Response:
     import base64
     from backend.providers import factory
     clip = factory.get("store_live").get("voice_clips", token) if token.isalnum() else None
-    if clip is None:
+    from datetime import datetime, timezone
+    if clip is None or (clip.expires_at and clip.expires_at < datetime.now(timezone.utc)):  # TTL deletion can lag a day
         raise HTTPException(404, "no such clip")
     return Response(base64.b64decode(clip.audio_b64), media_type="audio/ogg")
 
@@ -52,7 +53,7 @@ def federated_model() -> dict:
              "history": r.get("history", True)} for r in latest["rows"]]  # False: no earlier month reported for this item
     return {**json.loads(str(model["card"])), "month": latest["month"],
             "wape": round(float(wape(np.array([r["actual"] for r in rows]), np.array([r["estimate"] for r in rows]))), 3),
-            "rows": sorted(rows, key=lambda r: -r["actual"])[:20]}
+            "rows_total": len(rows), "rows": sorted(rows, key=lambda r: -r["actual"])[:20]}
 
 
 @router.get("/facility-points")

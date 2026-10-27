@@ -368,3 +368,28 @@ replies (`1` = YES); alerts only to registered numbers outside demo mode; voice 
 scenario dates on order cards; replay of the deployed policy (-4.9% stock-out weeks, +0.41% unmet,
 6,016 transfers vs 14,815); a two-process federation demo whose model the API serves (WAPE 0.90 on
 Meghalaya's latest validation month).
+
+## Fourth and fifth reviews (2026-10-27)
+
+Reproduced and fixed, each with a test:
+- Demand from counts read 80 units sent away as 560 a week of use; counts every 12 hours never
+  measured; an empty shelf read as zero demand. One estimator (`ml/forecast/reported_use.py`) now nets
+  transfers in and out, keeps a day-old anchor, and treats an empty shelf as a lower bound.
+- A late retry of an older report overwrote a newer count (fresh timestamp); retries keep the time
+  the message was first saved.
+- Approving a referral or deputation changed reported beds and staff on site. Approvals are now
+  commitments the solvers plan around; reported numbers change only with a new census or check-in.
+- Approval checked only that the donor had the units, not its own two weeks; it now rechecks.
+- A stale SENT could turn a received order back to dispatched; transitions are checked on the stored
+  order under the lock.
+- A facility outside the ledger got no forecast even with measured use; it now does, with a wide range.
+- Agent capacity and orders tools cut to the district's top 5 or 10 before filtering; they now take a
+  facility. The number check is now called what it is: a numerical consistency filter.
+- Public labels: "facilities in the national directory", "potential local imbalances", "showing the 8
+  largest of 87 records"; the federated card no longer claims no rows crossed (serving uses the
+  state's own public HMIS features), and no-history rows show "—".
+- Voice clips expire after a week (Firestore TTL policy).
+
+End-to-end replay (`eval/run_replay.py --breakdown`), same window and hidden events, deployed policy:
+ledger demand -4.9% stock-out weeks / +0.41% unmet; demand from weekly counts -1.9% / -1.07%. The
+objective was not changed. The count version helps fewer facilities and makes vitamin A syrup worse.

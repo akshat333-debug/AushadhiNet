@@ -29,7 +29,7 @@
  ],
  [
   "agent",
-  "The officer can ask the agent about any facility by name. Common questions use fixed templates; comparisons go to Gemini function calling over read only tools. An answer is kept only if a tool answered and every number came from a tool. Asked to ignore its rules and approve everything, it refuses: it has no approve or send tool at all."
+  "The officer can ask the agent about any facility by name. Common questions use fixed templates; comparisons go to Gemini function calling over read only tools. A filter drops any answer whose numbers did not come from a tool. Asked to ignore its rules and approve everything, it refuses: it has no approve or send tool at all."
  ],
  [
   "public",
@@ -37,6 +37,6 @@
  ],
  [
   "outro",
-  "Honest numbers. On real government data our forecaster beats the naive baseline by nineteen percent at district level. In a twenty six week replay of the policy we deploy, stock out weeks fall by about five percent, with about two hundred and thirty transfers a week, and unmet demand rises slightly: rebalancing spreads scarcity, it does not add supply. Federation ties local training; its value is privacy, not accuracy. Next is a four week pilot in one Nashik block, compared with a matched block. Earlier warnings, smarter sharing, people in control. Thank you."
+  "Honest numbers. On real government data our forecaster beats the naive baseline by nineteen percent at district level. In a twenty six week replay of the policy we deploy, stock out weeks fall by about five percent but unmet demand rises slightly; with demand read from the nurses' own counts, unmet demand falls by about one percent but fewer facilities improve. Rebalancing spreads scarcity, it does not add supply. Federation ties local training; its value is privacy, not accuracy. Next is a four week pilot in one Nashik block, compared with a matched block. Earlier warnings, smarter sharing, people in control. Thank you."
  ]
 ]

@@ -26,7 +26,7 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 
 | Check | Result |
 |---|---|
-| Backend, ML, eval tests | 404 passed (2026-10-27) |
+| Backend, ML, eval tests | 413 passed (2026-10-27) |
 | Playwright e2e, real UI sign-in | 17/17 on the live Cloud Run site (2026-10-27) |
 | Fresh clone from GitHub (`scripts/fresh_clone_check.sh`) | passes end to end |
 | `docker compose up --build` | healthy; ledger sealed at image build |
@@ -39,6 +39,7 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 |---|---|---|
 | AC4 forecasting, real HMIS frozen test | LightGBM WAPE 0.871 vs lag-1 naive 1.078, median-of-3 0.959 | Clean win (-19%). Second logged attempt; the first (1.110) lost and is kept. |
 | AC6 stock-out replay, synthetic test window, deployed policy (>= 10 units, <= 5 donors) | stock-out weeks 10,774 → 10,244 (-4.9%) | Unmet units +0.41%, fill 67.83% → 67.70%, ~230 transfers/week. Unconstrained run kept: -6.0%, +0.25% unmet, ~570/week, 2.7x the driving. |
+| AC6 end to end, demand read from weekly counts (live estimator), same window and events | stock-out weeks 10,774 → 10,568 (-1.9%) | Unmet units -1.07%, fill 67.83% → 68.17%, 4,204 transfers. 310 facilities better, 194 worse; vitamin A syrup worse (417 → 516). `eval/reports/replay_breakdown.json`. |
 | AC9 federation, Meghalaya validation | local 0.993, federated 0.996, centralised 1.000 | Ties local-only (all ~21% better than naive). Value is privacy, not accuracy. |
 | App forecasts, facility-week | lag-1 naive kept | Beats best LightGBM variant 0.220 vs 0.239 on the last 13 train weeks. |
 | AC3 extraction accuracy | measured on synthetic renders | Gemini (gemini-3.1-flash-lite) on 206 of 220 rendered register lines (14 hit free-tier 429s), 4 scripts: medicine 98.1% (Bengali 92.2%, others 100%), quantity 100%, batch 100% outside Devanagari. Devanagari batch scores 0% because the render font has no Latin "B" (drawn as a box), so the label is unreadable in the image itself: an eval-data bug, not a read error. Images are rendered text, not photographs; no real-photo number yet. Report: eval/reports/extraction_gemini.json. |
@@ -96,6 +97,13 @@ agent answers, native-script reports). Audited against the Vercel web interface 
   and deputations move patients and staff in today's numbers (no double suggestion), and their
   alerts ask for RECEIVED; voice clips over the store limit go as text only; the public page shows
   the federated model's estimates. 404 backend tests.
+- Fifth review (2026-10-27): demand from counts nets transfers out, keeps a day-old anchor and treats
+  an empty shelf as censored (shared estimator `ml/forecast/reported_use.py`); a late retry keeps its
+  original time; approved referrals and deputations are planned around, reported beds and staff stay
+  as reported; approval rechecks the donor's two-week buffer; dispatch and receipt are checked on the
+  stored order; new facilities forecast from their own use; agent capacity and orders take a
+  facility; voice clips expire after a week (Firestore TTL); end-to-end replay with demand from
+  counts (-1.9% stock-out weeks, -1.07% unmet units).
 - Limits: backend max 1 instance (in-memory simulator outbox; caps cost), frontend max 2, both scale
   to zero. Budget alert Rs 850/month (alerts only).
 - Not configured: Firebase Auth and Twilio (demo sign-in and the simulator stand in), Maps

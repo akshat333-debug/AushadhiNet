@@ -87,7 +87,7 @@ docs/               review1/, api/, finale/ (demo script, Q&A), pitch/ (deck, vi
 | Secrets | `.env` only (gitignored), Secret Manager in the cloud, `.env.example` holds placeholders |
 | Injection | Parameterised BigQuery/DuckDB queries only; Pydantic validation at every boundary; React escaping; no `dangerouslySetInnerHTML` |
 | CSRF | Bearer-token API (no cookies) for officer routes |
-| Personal data | Staff names and phone numbers are stored per state only. The public view is aggregate-only. Phone numbers are hashed in logs |
+| Personal data | Staff names and phone numbers are stored per state only. The public view is aggregate-only. Contact numbers sit in the contacts registry (alerts go to them); stock, bed and check-in records and logs carry a hash |
 | Order tampering | Orders are signed; signatures are verified on delivery and display |
 | Data sovereignty | Planned: one GCP project per state, with only model updates leaving it. Today one project serves the demo |
 | Dependencies | Pinned lockfiles (`uv.lock`, `package-lock.json`); `pip-audit` and `npm audit` in CI |

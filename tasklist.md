@@ -11,7 +11,10 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
       Secret Manager + Vertex AI, Terraform-provisioned; 14/14 e2e on the Cloud Run URLs.
 - [x] Backend warm (`--min-instances=1`) from 2026-10-26 for the judging window.
 - [ ] **After results (30 Oct): set it back to 0** (`gcloud run services update aushadhinet-backend --min-instances=0 --region asia-south1 --project aushadhinet`), about Rs 5 an hour until then.
-- [ ] **After results (30 Oct): delete `.github/workflows/keep-render-warm.yml`** (pings the Render link every 10 minutes so it never sleeps during judging).
+- [ ] **After results (30 Oct): remove both Render keep-awake pings** (reliability aid for judging, not an uptime guarantee):
+  - Cloud Scheduler job (every 5 min; free: 1 of the billing account's 3 free jobs):
+    `gcloud scheduler jobs delete keep-render-warm --location asia-south1 --project aushadhinet`
+  - GitHub Actions workflow (every 10 min, often delayed): `git rm .github/workflows/keep-render-warm.yml`, commit, push.
 - [x] Render backend suspended (2026-10-26); the Render frontend (submitted link) calls the Cloud Run backend. 8/8 e2e on it.
 - [x] Gemini adds a guarded plain-language note to agent answers on Cloud Run (2026-10-25); the tools still decide every fact and action.
 - [ ] **Real register photos (needs the team):** 15-50 phone photos of handwritten stock lists

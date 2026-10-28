@@ -31,6 +31,7 @@ Finale (Track 3, virtual): between 26 and 29 Oct 2026; winners announced 30 Oct.
 - [x] **National reach** (2026-10-25): every state in the MoHFW directory on the Public view and region browser.
 - [x] **Deck to 12 slides** covering every topic in the brief; **video re-recorded** (3:22) on the new flow.
 - [x] **Beds and staff wired** (2026-10-26): WhatsApp `BEDS 4/6` and location check-ins; briefing card with referral and deputation suggestions; deck, README and demo script updated. The 3:22 video predates it (medicines only).
+- [x] **Video re-recorded** (2026-10-28, 3:51): beds and staff, state-wide orders, the federated cross-check, Chirp 3 HD narration.
 - [ ] **Re-upload the video** (`docs/pitch/AushadhiNet-demo.mp4`) as a new version of the same Drive file
       (Drive: File > Manage versions), so the submitted link shows the new one.
 - [ ] Native speakers review the translations (all 6 Indian languages; new strings added 2026-10-25).

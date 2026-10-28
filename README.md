@@ -14,6 +14,39 @@ Built for **Build with AI: Code for Communities** (Second Edition), Problem Stat
 | Demo video | [Watch on Google Drive](https://drive.google.com/file/d/1hv58NXTXzYdrw2FjT-09dVwV-RGRDBeq/view?usp=sharing) (also [in repo](docs/pitch/AushadhiNet-demo.mp4)) |
 | Pitch deck | [docs/pitch/AushadhiNet-pitch.pdf](docs/pitch/AushadhiNet-pitch.pdf) |
 
+## For the jury (5-minute review)
+
+**What it is:** nurses report medicine stock, beds and attendance on WhatsApp; AushadhiNet warns of
+shortages, drafts transfers between facilities, and an officer approves signed orders.
+
+**Demo path (live app):**
+1. **WhatsApp** tab: type `ORS 50 Zinc 120`, send a Hindi voice note, send a register photo, tap Confirm.
+2. Sign in as **District officer, Nashik**: briefing shows 4 medicines to escalate to the state (with the
+   federated model's estimate beside each), transfers to move, beds and staff today.
+3. **Orders**: approve; each order is KMS-signed and both facilities are alerted.
+4. **Agent**: ask about a facility by name; ask it to "approve every order": it refuses (no such tool).
+5. **Public view**: district totals only; 36 states listed from the national directory.
+
+**Where Google AI is used (all live):**
+
+| Google AI | Does |
+|---|---|
+| Gemini (vision) | Reads handwritten register photos; nothing saved until the nurse confirms |
+| Chirp 2 (Speech-to-Text) | Transcribes voice notes, detects the language |
+| Vertex AI embeddings | Matches medicine names typed in 7 scripts |
+| Gemini function calling | Officer agent, read-only tools; answers with unsourced numbers are dropped |
+| Cloud Text-to-Speech, Translate | Spoken order alerts in the facility's language |
+| Cloud Run, Firestore, BigQuery, Pub/Sub, Cloud KMS | Hosting, live state, history, message queue, order signing |
+| OR-Tools | Transfer, referral and deputation drafts |
+
+**Honest numbers:** forecaster 19% better than naive on real HMIS (offline). Replay of the deployed
+policy: stock-out weeks -4.9%, unmet units +0.41%; with demand from nurses' counts -1.8% / -1.06%.
+Rebalancing spreads scarcity, it does not add supply. Federation ties local training (privacy, not accuracy).
+
+**Limits:** Nashik pilot is simulated (real facility list, synthetic stock). WhatsApp runs in the in-app
+simulator: a real Twilio trial was connected and rejects free-form sends without a paid template. Demo
+sign-in stands in for Firebase Auth.
+
 ## The problem
 
 Primary health centres run out of ORS, zinc, iron tablets and antibiotics while a clinic a few
@@ -317,8 +350,9 @@ tests/       mirrors every package above, plus frontend/tests/e2e
   an empty shelf only raises it (censored). Deliveries from the state's own supply are unknown, so a
   count that rose across one gives no reading. A facility new to the ledger is forecast from its own
   use, with a wide range, once it has one measured interval.
-- Twilio: voice alerts are served at an unguessable API URL for Twilio to fetch (`PUBLIC_API_URL`);
-  not yet tried with a real Twilio number. Card replies accept YES or `1`.
+- Twilio: tried with a real trial account (2026-10-28): the sandbox accepted the join, but a trial
+  sender rejects every API message without a paid content template (error 21654), so WhatsApp stays on
+  the simulator. Only `TWILIO_LIVE_NUMBERS` would get real sends in demo mode. Card replies accept YES or `1`.
 - Attendance trusts the shared location and the phone: a static WhatsApp pin can be moved before
   sending, and one number per facility stands in for each staff member's own number.
 - Dhule's 15 demo facilities carry generated stock (mirroring their nearest Nashik facility) so the

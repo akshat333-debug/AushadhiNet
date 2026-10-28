@@ -16,6 +16,11 @@ substitutions:
   _FRONTEND_URL: https://REPLACE_ME
   _DEMO_MODE: "false"   # "true" keeps demo sign-in and the simulator for a hosted demo
   _BACKEND_MIN_INSTANCES: "0"  # "1" during judging: no 60 s cold start (about Rs 5 an hour)
+  # Real WhatsApp: add ",TWILIO_AUTH_TOKEN=twilio-auth-token:latest" once that secret has a version,
+  # with the account SID and, in demo mode, the phones that may receive it (comma-separated).
+  _SECRETS: GEMINI_API_KEY=gemini-api-key:latest
+  _TWILIO_SID: REPLACE_ME
+  _TWILIO_LIVE_NUMBERS: ""
 
 steps:
   - id: backend-image
@@ -46,16 +51,16 @@ steps:
       - --allow-unauthenticated
       - --memory=2Gi
       - --cpu-boost
-      # Startup loads the drug index, facility directory and stock index: about 3.7 min on 1 vCPU,
-      # past the default 4-minute TCP probe on a slow start. 8 x 60 s gives it room.
+      # Startup loads the drug index, facility directory and stock index: about 70 s on 1 vCPU
+      # (3.7 min before the demo panel fix); 8 x 60 s leaves room for a slow Firestore read.
       - --startup-probe=tcpSocket.port=8080,periodSeconds=60,timeoutSeconds=60,failureThreshold=8
       # One instance: the demo's simulator outbox lives in memory, and it caps the bill.
       - --min-instances=${_BACKEND_MIN_INSTANCES}
       - --max-instances=1
       # ^;^ makes ';' the separator, so CORS_ALLOWED_ORIGINS can list origins with commas (Cloud Run + the Render frontend).
-      - --set-env-vars=^;^AUSHADHI_MODE=cloud;DEMO_MODE=${_DEMO_MODE};GEMINI_MODEL=gemini-3.1-flash-lite;VERTEX_LOCATION=us-central1;GCP_PROJECT=$PROJECT_ID;BIGQUERY_PROJECT=$PROJECT_ID;BIGQUERY_DATASET=aushadhinet_${_STATE};CORS_ALLOWED_ORIGINS=${_FRONTEND_URL},https://aushadhinet-frontend.onrender.com;PUBSUB_PUSH_AUDIENCE=${_BACKEND_URL}/internal/pubsub/ingest;PUBLIC_API_URL=${_BACKEND_URL};PUBSUB_PUSH_SERVICE_ACCOUNT=pubsub-push@$PROJECT_ID.iam.gserviceaccount.com;SIGNING_KEY=projects/$PROJECT_ID/locations/${_REGION}/keyRings/aushadhinet-order-signing/cryptoKeys/transfer-order-signer/cryptoKeyVersions/1
+      - --set-env-vars=^;^AUSHADHI_MODE=cloud;DEMO_MODE=${_DEMO_MODE};GEMINI_MODEL=gemini-3.1-flash-lite;VERTEX_LOCATION=us-central1;GCP_PROJECT=$PROJECT_ID;BIGQUERY_PROJECT=$PROJECT_ID;BIGQUERY_DATASET=aushadhinet_${_STATE};CORS_ALLOWED_ORIGINS=${_FRONTEND_URL},https://aushadhinet-frontend.onrender.com;PUBSUB_PUSH_AUDIENCE=${_BACKEND_URL}/internal/pubsub/ingest;PUBLIC_API_URL=${_BACKEND_URL};PUBSUB_PUSH_SERVICE_ACCOUNT=pubsub-push@$PROJECT_ID.iam.gserviceaccount.com;SIGNING_KEY=projects/$PROJECT_ID/locations/${_REGION}/keyRings/aushadhinet-order-signing/cryptoKeys/transfer-order-signer/cryptoKeyVersions/1;TWILIO_ACCOUNT_SID=${_TWILIO_SID};TWILIO_LIVE_NUMBERS=${_TWILIO_LIVE_NUMBERS}
       # Twilio is optional: without its secret, replies go to the simulator outbox.
-      - --set-secrets=GEMINI_API_KEY=gemini-api-key:latest
+      - --set-secrets=${_SECRETS}
 
   - id: deploy-frontend
     name: gcr.io/google.com/cloudsdktool/cloud-sdk

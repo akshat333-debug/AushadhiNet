@@ -139,6 +139,7 @@ const en = {
   brief_escalate_title: "Escalate to the state",
   brief_escalate_sub: "{n} medicines are short across the whole district. Transfers can only even them out between facilities; the district needs more supply.",
   brief_escalate_line: "{weeks} weeks of stock in the district · request {units}",
+  brief_federated_line: "Federated model, real HMIS ({month}): about {units} a month district-wide. A cross-check, not the request size.",
   brief_copy: "Copy request",
   brief_copied: "Copied",
   request_header: "Supply request, {district} district (two weeks of demand, less current stock):",

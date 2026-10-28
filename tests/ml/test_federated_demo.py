@@ -22,3 +22,10 @@ def test_two_state_processes_produce_one_aggregated_model(tmp_path, monkeypatch)
 def test_the_api_serves_the_committed_federated_model():
     served = TestClient(create_app()).get("/public/federated").json()
     assert served["states"] == ["MH", "ML"] and served["rows"] and 0 <= served["wape"] < 5
+
+
+def test_the_federated_model_sits_beside_each_medicine_escalated_to_the_state():
+    with TestClient(create_app()) as client:
+        nashik = next(r for r in client.get("/public/district-summary").json() if r["district_id"] == "mh/nashik")
+    assert nashik["escalate"] and set(nashik["federated_month_units"]) == set(nashik["escalate"])
+    assert nashik["federated_month"] and all(v >= 0 for v in nashik["federated_month_units"].values())

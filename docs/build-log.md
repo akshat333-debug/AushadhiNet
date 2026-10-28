@@ -427,3 +427,13 @@ the test window.
   referrals now hold until RECEIVED, for as long as the census they were planned on stays current.
 - The empty-shelf guard compared with the 4-week mean while the forecast shows last week; it now uses
   the larger of the two.
+
+## Federation in planning, real WhatsApp routing (2026-10-28)
+- The federated model now reaches the officer: each medicine escalated to the state shows its
+  district-month estimate from Maharashtra's own HMIS features (`/public/district-summary`
+  `federated_month_units`). It was meant to be a floor under the request too; the numbers ruled that
+  out: the synthetic Nashik stock is on another scale (ORS ~3,600 a month in the app, ~205,000 in real
+  HMIS), so a floor would have inflated requests about 50x. It is shown as a cross-check only.
+- Twilio in demo mode: every send is still logged for the simulator, and only `TWILIO_LIVE_NUMBERS`
+  reach real WhatsApp, so the generated facility numbers never do. Alerts prefer a registered real
+  phone. `python -m backend.runtime register whatsapp:+<n> <facility>` adds one.

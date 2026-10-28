@@ -76,6 +76,8 @@ export interface DistrictSummaryRow {
   at_risk_by_drug: Record<string, number>;
   escalate: Record<string, number>; // drug -> district weeks of cover, below the solver's 2-week plan
   procurement_units: Record<string, number>; // drug -> units to request from the state
+  federated_month_units: Record<string, number>; // drug -> federated model's monthly district estimate (real HMIS), a cross-check
+  federated_month: string;
   facilities_needing_transfer: number;
 }
 

@@ -182,3 +182,23 @@ def test_failed_pubsub_publish_is_reported_not_swallowed(monkeypatch):
     monkeypatch.setattr(pubsub_v1, "SubscriberClient", lambda: None)
     with pytest.raises(ProviderError):
         GooglePubSubQueue().publish("ingest.raw_message", {"body": "ORS 50"})
+
+
+def test_demo_twilio_reaches_only_the_live_numbers(monkeypatch):
+    """Demo mode with Twilio: the tester's phone gets real WhatsApp, generated facility numbers stay in the simulator."""
+    import sys
+    import types
+    sent = []
+    fake = types.ModuleType("twilio.rest")
+    fake.Client = lambda *a: types.SimpleNamespace(messages=types.SimpleNamespace(create=lambda **kw: sent.append(kw["to"])))
+    monkeypatch.setitem(sys.modules, "twilio.rest", fake)
+    monkeypatch.setenv("DEMO_MODE", "true")
+    monkeypatch.setenv("TWILIO_LIVE_NUMBERS", "whatsapp:+919000000001")
+    from backend.config import get_settings
+    get_settings.cache_clear()
+    from backend.providers.messaging_google import TwilioMessaging
+    m = TwilioMessaging()
+    m.send_text("whatsapp:+919000000001", "hi")
+    m.send_buttons("whatsapp:+919800000221", "card", ["Confirm"])
+    assert sent == ["whatsapp:+919000000001"] and [s.to for s in m.sent] == ["whatsapp:+919000000001", "whatsapp:+919800000221"]
+    get_settings.cache_clear()

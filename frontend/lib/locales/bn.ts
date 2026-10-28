@@ -141,6 +141,7 @@ const bn: Messages = {
   brief_escalate_title: "রাজ্যকে জানান",
   brief_escalate_sub: "{n}টি ওষুধের পুরো জেলায় ঘাটতি। স্থানান্তর শুধু কেন্দ্রগুলির মধ্যে সমান করতে পারে; জেলার আরও সরবরাহ দরকার।",
   brief_escalate_line: "জেলায় {weeks} সপ্তাহের স্টক · {units} চান",
+  brief_federated_line: "ফেডারেটেড মডেল, প্রকৃত HMIS ({month}): জেলায় মাসে প্রায় {units}। এটি যাচাইয়ের জন্য, চাহিদার পরিমাণ নয়।",
   brief_copy: "অনুরোধ কপি করুন",
   brief_copied: "কপি হয়েছে",
   request_header: "সরবরাহ অনুরোধ, {district} জেলা (দুই সপ্তাহের চাহিদা, বর্তমান স্টক বাদে):",

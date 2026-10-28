@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     twilio_account_sid: str = Field("REPLACE_ME", validation_alias="TWILIO_ACCOUNT_SID")
     twilio_auth_token: str = Field("REPLACE_ME", validation_alias="TWILIO_AUTH_TOKEN")
     twilio_whatsapp_from: str = Field("whatsapp:+14155238886", validation_alias="TWILIO_WHATSAPP_FROM")
+    # Demo mode with Twilio: only these numbers (comma-separated, "whatsapp:+91...") get real WhatsApp;
+    # the generated facility numbers stay in the simulator.
+    twilio_live_numbers: str = Field("", validation_alias="TWILIO_LIVE_NUMBERS")
     firestore_emulator_host: str = Field("localhost:8080", validation_alias="FIRESTORE_EMULATOR_HOST")
     bigquery_project: str = Field("REPLACE_ME", validation_alias="BIGQUERY_PROJECT")
     bigquery_dataset: str = Field("aushadhinet_mh", validation_alias="BIGQUERY_DATASET")

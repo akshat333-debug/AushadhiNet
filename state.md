@@ -26,7 +26,7 @@ agent answers, native-script reports). Audited against the Vercel web interface 
 
 | Check | Result |
 |---|---|
-| Backend, ML, eval tests | 423 passed (2026-10-28) |
+| Backend, ML, eval tests | 425 passed (2026-10-28) |
 | Playwright e2e, real UI sign-in | 17/17 on the live Cloud Run site (2026-10-27) |
 | Fresh clone from GitHub (`scripts/fresh_clone_check.sh`) | passes end to end |
 | `docker compose up --build` | healthy; ledger sealed at image build |

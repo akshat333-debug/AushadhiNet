@@ -36,7 +36,7 @@ real facility list, synthetic stock ledger), **offline** (measured in a frozen e
 | **Forecast demand** | Live: next-week demand per facility and medicine is the facility's own use, measured from two of its WhatsApp counts a day or more apart, net of transfers in and out; until it has those, the last ledger week (lag-1 naive, which beat LightGBM at facility-week grain). A surge in use raises the stock-out risk and the transfer drafts. Offline: LightGBM beats naive by 19% on real HMIS district-month data |
 | **Early warnings for stock-outs** | Morning briefing: medicines short district-wide are escalated to the state with quantities; facilities under a week of cover are flagged |
 | **Automated cross-district redistribution** | Live: OR-Tools drafts medicine transfers within a district, or state-wide across district lines; a cross-district order needs an officer covering both districts. Approval checks the donor still holds the units, not already promised, and keeps its own two weeks, then signs (Cloud KMS) and alerts both ends; the receiver confirms arrival. Beds and staff: referral and deputation suggestions an officer approves into signed orders the same way. Live cross-district demo: 15 Dhule facilities near Nashik carry labelled demo stock, so "State officer, Maharashtra" sees Dhule surplus drafted to Nashik |
-| **Shared predictive modelling across states** | Connected demo: Maharashtra and Meghalaya run as separate client processes, each reading only its own HMIS files; training exchanges only row counts, feature sums and FedProx updates, never rows; the aggregated model, packaged with its feature scale, is served by the API (`/public/federated`: applied to Meghalaya's own public HMIS features for its latest validation month, beside actual units). It is a historical demonstration: it does not drive the live transfers. Offline experiment on 4 states: federation ties local-only training, no accuracy gain. Planned: each node in its state's own Google Cloud project (the Terraform module provisions one) |
+| **Shared predictive modelling across states** | Connected demo: Maharashtra and Meghalaya run as separate client processes, each reading only its own HMIS files; training exchanges only row counts, feature sums and FedProx updates, never rows; the aggregated model, packaged with its feature scale, is served by the API (`/public/federated`: applied to Meghalaya's own public HMIS features for its latest validation month, beside actual units). In the officer's briefing, each medicine escalated to the state shows the model's district-month estimate (Maharashtra's own public HMIS features, Aug 2019) beside the requested quantity, as a cross-check. It does not size the request or drive transfers: the demo stock is synthetic and on a different scale (ORS about 3,600 a month in the app against about 205,000 in real Nashik HMIS). Offline experiment on 4 states: federation ties local-only training, no accuracy gain. Planned: each node in its state's own Google Cloud project (the Terraform module provisions one) |
 
 ## How it works
 
@@ -66,7 +66,7 @@ real facility list, synthetic stock ledger), **offline** (measured in a frozen e
 | Federation (offline experiment, 4 states, data-poor Meghalaya) | Local-only 0.993, federated 0.996, centralised 1.000 WAPE: **a tie, no accuracy gain**. Connected demo (2 processes, 1 round): served model's WAPE 0.90 on Meghalaya's latest validation month |
 | Gemini register reading (206 synthetic lines, 4 scripts) | **98.1% medicine, 100% quantity** |
 | Languages, end to end (UI, WhatsApp replies, voice, agent) | **7** (en, hi, mr, bn, ta, te, kn) |
-| Automated tests | **440** (423 backend + 17 Playwright E2E, run against the live site) |
+| Automated tests | **442** (425 backend + 17 Playwright E2E, run against the live site) |
 
 ## Try it in 2 minutes
 
@@ -151,7 +151,7 @@ Requires: Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 20+.
 uv sync --extra ml --extra dev    # add --extra gcp only for cloud mode
 cp .env.example .env               # defaults are all local-mode; no keys needed
 uv run python -m eval.seal_generator   # rebuilds data/synthetic/, fails if hash != protocol.lock
-uv run pytest -q                   # 423 tests, about 5 minutes
+uv run pytest -q                   # 425 tests, about 5 minutes
 uv run uvicorn backend.app:app --reload --port 8000
 
 # 2. Frontend (separate terminal)
@@ -268,7 +268,7 @@ numbers behind these headlines):
 ## Testing
 
 ```bash
-uv run pytest -q                          # backend + ml + eval: 423 tests
+uv run pytest -q                          # backend + ml + eval: 425 tests
 cd frontend && npx playwright test        # frontend e2e, needs both dev servers (playwright.config.ts starts them)
 ```
 
@@ -340,6 +340,7 @@ tests/       mirrors every package above, plus frontend/tests/e2e
 - Nashik has the sealed synthetic ledger; 15 Dhule facilities carry labelled demo stock; every other
   district is in the national directory only (not onboarded: no contacts, history or stock yet).
 - Federation ties but does not beat local-only training for the data-poor state; its value here is
-  matching local accuracy without pooling raw data, not beating it. The connected demo runs both
+  matching local accuracy without pooling raw data, not beating it. In the app it is a cross-check
+  beside the state request, not an input to any quantity. The connected demo runs both
   state nodes on one machine, exchanging files instead of Flower's gRPC transport, with no
   differential privacy (noise 0).

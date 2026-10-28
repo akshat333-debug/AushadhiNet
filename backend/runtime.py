@@ -166,10 +166,10 @@ def contact_phone(facility_id: str) -> str | None:
     """The facility's registered WhatsApp number (the contacts registry). Only local and demo
     mode fall back to the derived dev number; a real deployment alerts verified numbers only."""
     from backend.config import get_settings
-    registered = factory.get("store_live").query("contacts", {"facility_id": facility_id})
-    if registered:
-        return sorted(c.phone for c in registered)[0]
     settings = get_settings()
+    registered = factory.get("store_live").query("contacts", {"facility_id": facility_id})
+    if registered:  # a real phone (TWILIO_LIVE_NUMBERS) before the generated one
+        return min((c.phone for c in registered), key=lambda p: (p not in settings.twilio_live_numbers.split(","), p))
     return phone_for_facility(facility_id) if settings.mode == "local" or settings.demo_mode else None
 
 
@@ -564,5 +564,13 @@ if __name__ == "__main__":
         print(f"contacts: {seed_contacts()}, stock records: {seed()}")
     elif sys.argv[1:] == ["seed-neighbour"]:
         print(f"demo stock records for {NEIGHBOUR_DISTRICT}: {seed_neighbour()}")
+    elif len(sys.argv) == 4 and sys.argv[1] == "register":  # register whatsapp:+91... MH-0000230
+        from backend.domain import Contact
+        from ml.data.facilities import served_facility_index
+        phone, fid = sys.argv[2], sys.argv[3]
+        if not phone.startswith("whatsapp:+") or fid not in served_facility_index():
+            raise SystemExit("usage: python -m backend.runtime register whatsapp:+<number> <facility_id>")
+        factory.get("store_live").put("contacts", phone, Contact(phone=phone, facility_id=fid))
+        print(f"{phone} reports for {fid}")
     else:
-        raise SystemExit("usage: python -m backend.runtime seed | seed-neighbour")
+        raise SystemExit("usage: python -m backend.runtime seed | seed-neighbour | register whatsapp:+<number> <facility_id>")

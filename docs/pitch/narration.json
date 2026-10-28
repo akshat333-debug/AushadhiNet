@@ -13,7 +13,7 @@
  ],
  [
   "briefing",
-  "The officer's morning starts here. Four medicines are short across the whole district: AushadhiNet drafts the supply request to the state, with quantities, ready to copy. Everything else is a local imbalance a neighbour can cover. Demand comes from each facility's own counts once it has reported twice, so a surge in use raises the risk the same day."
+  "The officer's morning starts here. Four medicines are short across the whole district: AushadhiNet drafts the supply request to the state, with quantities, ready to copy, with the federated model's estimate from real state data beside each one as a check. Everything else is a local imbalance a neighbour can cover. Demand comes from each facility's own counts once it has reported twice, so a surge in use raises the risk the same day."
  ],
  [
   "map",
@@ -33,7 +33,7 @@
  ],
  [
   "public",
-  "Citizens see district totals, never a facility name. Every state is already listed: one lakh ninety thousand facilities from the national directory. A district goes live with its nurses' numbers, an opening count and its issue history. And states can learn together without sharing rows: two state nodes train one shared model, and our API serves it."
+  "Citizens see district totals, never a facility name. Every state is already listed: one lakh ninety thousand facilities from the national directory. A district goes live with its nurses' numbers, an opening count and its issue history. And states can learn together without sharing rows: two state nodes train one shared model, and the officer sees its estimate beside every request to the state."
  ],
  [
   "outro",

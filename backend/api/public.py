@@ -4,7 +4,9 @@ what distinguishes this from a monitoring dashboard leak.
 """
 from __future__ import annotations
 
+import pathlib
 from collections import defaultdict
+from functools import lru_cache
 
 from fastapi import APIRouter, HTTPException, Response
 
@@ -32,6 +34,24 @@ def voice_clip(token: str) -> Response:
     return Response(base64.b64decode(clip.audio_b64), media_type="audio/ogg")
 
 
+@lru_cache(maxsize=4)
+def federated_rows(state: str) -> tuple[str, list[dict]]:
+    """The federated model's estimate for every district and medicine of one state's latest
+    validation month (ml/federated/demo.py writes the model and each state's own features)."""
+    import json
+    import numpy as np
+    from ml.data.drugs import M19_CATALOGUE
+    folder = pathlib.Path(__file__).resolve().parents[1] / "federated"
+    if not (folder / "model.npz").exists() or not (folder / f"{state}.latest.json").exists():
+        return "", []
+    w = np.load(folder / "model.npz")["w"]
+    latest = json.loads((folder / f"{state}.latest.json").read_text())
+    drug_id = {c["aliases"][0]: c["drug_id"] for c in M19_CATALOGUE}
+    return latest["month"], [{"district_id": r["district_id"], "drug": r["drug"], "drug_id": drug_id.get(r["drug"]), "actual": r["actual"],
+                              "estimate": round(float(np.expm1(np.dot(r["x"], w[:-1]) + w[-1]))),
+                              "history": r.get("history", True)} for r in latest["rows"]]  # False: no earlier month for this item
+
+
 @router.get("/federated")
 def federated_model() -> dict:
     """The model the federation demo trained (ml/federated/demo.py: two state processes, one
@@ -39,19 +59,14 @@ def federated_model() -> dict:
     in the latest validation month, beside the units actually distributed. District totals from
     public HMIS data only."""
     import json
-    import pathlib
     import numpy as np
     from eval.metrics import wape
-    folder = pathlib.Path(__file__).resolve().parents[1] / "federated"
-    if not (folder / "model.npz").exists():
+    month, rows = federated_rows("ML")
+    if not rows:
         raise HTTPException(404, "no federated model: run `python -m ml.federated.demo`")
-    model = np.load(folder / "model.npz")
-    w = model["w"]
-    latest = json.loads((folder / "ML.latest.json").read_text())
-    rows = [{"district_id": r["district_id"], "drug": r["drug"], "actual": r["actual"],
-             "estimate": round(float(np.expm1(np.dot(r["x"], w[:-1]) + w[-1]))),
-             "history": r.get("history", True)} for r in latest["rows"]]  # False: no earlier month reported for this item
-    return {**json.loads(str(model["card"])), "month": latest["month"],
+    model = np.load(pathlib.Path(__file__).resolve().parents[1] / "federated" / "model.npz")
+    rows = [{k: r[k] for k in ("district_id", "drug", "actual", "estimate", "history")} for r in rows]
+    return {**json.loads(str(model["card"])), "month": month,
             "wape": round(float(wape(np.array([r["actual"] for r in rows]), np.array([r["estimate"] for r in rows]))), 3),
             "rows_total": len(rows), "rows": sorted(rows, key=lambda r: -r["actual"])[:20]}
 
@@ -105,6 +120,7 @@ def district_summary() -> list[dict]:
         return {drug: round(stock_sum[d][drug] / need, 2) for drug, need in demand_sum[d].items()
                 if drug in by_drug[d] and stock_sum[d][drug] < SolverConfig().cover_weeks * need}
 
+    fed_month, fed_rows = federated_rows("MH")  # shortcut: the served state only (SERVED_STATES), as its own deployment
     rows = []
     for d, f in sorted(reporting.items()):
         gaps = escalate(d)
@@ -114,6 +130,10 @@ def district_summary() -> list[dict]:
             "escalate": dict(sorted(gaps.items(), key=lambda kv: kv[1])),
             # units that bring the district back to the planning cover: what to request from the state
             "procurement_units": {drug: round(SolverConfig().cover_weeks * demand_sum[d][drug] - stock_sum[d][drug]) for drug in gaps},
+            # The federated model's estimate of a month's district-wide use from the state's own public
+            # HMIS figures: a cross-check beside the request, not its size (the demo stock is synthetic).
+            "federated_month_units": {r["drug_id"]: r["estimate"] for r in fed_rows if r["district_id"] == d and r["drug_id"] in gaps},
+            "federated_month": fed_month,
             "facilities_needing_transfer": sum(1 for drugs in short[d].values() if drugs - gaps.keys()),
         })
     return rows

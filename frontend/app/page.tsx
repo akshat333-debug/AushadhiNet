@@ -207,6 +207,11 @@ export default function DashboardPage() {
                         <li key={id} className="flex flex-wrap items-baseline justify-between gap-x-3 py-1.5">
                           <span className="font-medium">{drug(id)}</span>
                           <span className="muted text-xs">{t("brief_escalate_line", { weeks: num(weeks, 1), units: num(row.procurement_units[id] ?? 0) })}</span>
+                          {row.federated_month_units?.[id] !== undefined && (
+                            <span className="muted basis-full text-xs" data-testid="federated-check">
+                              {t("brief_federated_line", { units: num(row.federated_month_units[id]), month: row.federated_month.slice(0, 7) })}
+                            </span>
+                          )}
                         </li>
                       ))}
                     </ul>

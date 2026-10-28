@@ -12,6 +12,7 @@ provably the same pipeline, not three parallel reimplementations
 from __future__ import annotations
 
 import hashlib
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Request, Response
 
@@ -39,6 +40,7 @@ def publish_inbound_message(
         "media_url": media_url,
         "media_content_type": media_content_type,
         "message_sid": message_sid,
+        "received_at": datetime.now(timezone.utc).isoformat(),  # kept across redeliveries: what the sender had seen
     }
     if lang:
         payload["lang"] = lang

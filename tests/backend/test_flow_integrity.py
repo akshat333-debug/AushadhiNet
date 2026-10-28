@@ -393,3 +393,35 @@ def test_the_demo_count_lets_one_typed_count_measure_use_live():
         assert recent_use()[DEMO_PRIOR][0] == pytest.approx(70, rel=1e-3)  # 30 used in 3 days
         forecast = client.get(f"/officer/facility/{fid}", headers=OFFICER).json()["forecasts"]
         assert next(f for f in forecast if f["drug_id"] == drug)["model"] == "reported_use"
+
+
+def test_a_redelivered_yes_never_confirms_a_card_made_after_it():
+    """Audit case: YES was sent, its reply failed, a new card came, then the YES was redelivered."""
+    from datetime import timedelta
+    from backend.runtime import handle_inbound
+    with TestClient(create_app()):
+        sent_yes = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+        handle_inbound({"from": PHONE, "reporter_phone_hash": "h", "body": "Zync 40", "num_media": 0, "message_sid": "SM-new-card"})
+        handle_inbound({"from": PHONE, "reporter_phone_hash": "h", "body": "YES", "num_media": 0, "message_sid": "SM-old-yes",
+                        "received_at": sent_yes})
+        assert factory.get("store_live").get("stock_records", "SM-new-card-0").status == RecordStatus.PENDING
+
+
+def test_an_empty_shelf_never_lowers_the_forecasts_own_fallback(monkeypatch):
+    """Audit case: last week 700, 4-week mean 250; a first empty-shelf reading of 300 a week must not
+    replace the 700 the forecast shows."""
+    from datetime import timedelta
+    from backend import runtime
+    from backend.domain import Confidence, ConfidenceSource, StockRecord
+    key = ("X-1", "ors")
+    monkeypatch.setattr(runtime, "_ledger_demand", lambda: {key: 250.0})
+    monkeypatch.setattr(runtime, "_last_week", lambda: {key: 700.0})
+    monkeypatch.setattr(runtime, "_use", None)
+    monkeypatch.setattr(runtime, "_moves", [])
+    now = datetime.now(timezone.utc)
+    for days_ago, on_hand in ((7, 300), (0, 0)):
+        at = now - timedelta(days=days_ago)
+        runtime._note_use(StockRecord(record_id=f"r{days_ago}", facility_id=key[0], drug_id=key[1], reported_at=at, as_of_date=at.date(),
+                                      on_hand=on_hand, status=RecordStatus.CONFIRMED, reporter_phone_hash="nurse", raw_message_id="m",
+                                      confidence=Confidence(field_confidence={}, overall=1.0, source=ConfidenceSource.MANUAL)))
+    assert key not in runtime._use.rates

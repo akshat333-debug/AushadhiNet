@@ -66,7 +66,7 @@ real facility list, synthetic stock ledger), **offline** (measured in a frozen e
 | Federation (offline experiment, 4 states, data-poor Meghalaya) | Local-only 0.993, federated 0.996, centralised 1.000 WAPE: **a tie, no accuracy gain**. Connected demo (2 processes, 1 round): served model's WAPE 0.90 on Meghalaya's latest validation month |
 | Gemini register reading (206 synthetic lines, 4 scripts) | **98.1% medicine, 100% quantity** |
 | Languages, end to end (UI, WhatsApp replies, voice, agent) | **7** (en, hi, mr, bn, ta, te, kn) |
-| Automated tests | **437** (420 backend + 17 Playwright E2E, run against the live site) |
+| Automated tests | **440** (423 backend + 17 Playwright E2E, run against the live site) |
 
 ## Try it in 2 minutes
 
@@ -151,7 +151,7 @@ Requires: Python 3.12+, [uv](https://docs.astral.sh/uv/), Node 20+.
 uv sync --extra ml --extra dev    # add --extra gcp only for cloud mode
 cp .env.example .env               # defaults are all local-mode; no keys needed
 uv run python -m eval.seal_generator   # rebuilds data/synthetic/, fails if hash != protocol.lock
-uv run pytest -q                   # 420 tests, about 5 minutes
+uv run pytest -q                   # 423 tests, about 5 minutes
 uv run uvicorn backend.app:app --reload --port 8000
 
 # 2. Frontend (separate terminal)
@@ -268,7 +268,7 @@ numbers behind these headlines):
 ## Testing
 
 ```bash
-uv run pytest -q                          # backend + ml + eval: 420 tests
+uv run pytest -q                          # backend + ml + eval: 423 tests
 cd frontend && npx playwright test        # frontend e2e, needs both dev servers (playwright.config.ts starts them)
 ```
 

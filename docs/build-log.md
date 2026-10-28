@@ -419,3 +419,11 @@ Replay rerun after the estimator fix (`--breakdown`): demand from counts -1.8% s
 to 517. The earlier run is kept in `eval/reports/replay_breakdown_0c90044.json`. Nothing was tuned on
 the test window.
 - Demo: `seed-neighbour` also stores one Nandgaon ORS count three days back (`demo-prior`), so a count typed live measures use at once.
+
+## Audit (2026-10-28)
+- A redelivered YES confirmed every pending card, including one made after the YES was sent. Inbound
+  messages now carry `received_at`, and YES confirms only cards older than it.
+- Referrals approved before midnight dropped out of planning at midnight while still on the road. Open
+  referrals now hold until RECEIVED, for as long as the census they were planned on stays current.
+- The empty-shelf guard compared with the 4-week mean while the forecast shows last week; it now uses
+  the larger of the two.

@@ -114,6 +114,15 @@ def _live(day: date) -> tuple[dict, list]:
     return beds, checkins
 
 
+def _still_planned(order, day: date) -> bool:
+    """Deputations are for the day they were approved; a referral holds until RECEIVED, for as
+    long as the census it was planned on stays current (patients can be on the road past midnight)."""
+    from backend.domain import OrderKind, OrderStatus
+    age = (day - order.approved_at.astimezone(IST).date()).days
+    open_referral = order.kind == OrderKind.REFERRAL and order.status != OrderStatus.RECEIVED
+    return age == 0 or (open_referral and age <= FRESH_DAYS)
+
+
 def district_capacity(district_id: str, facility_id: str | None = None) -> dict:
     """Today's beds and staff for a district. With `facility_id`, also that facility's own
     reported beds and staff on site, and every suggestion touching it (the lists are cut to SHOW)."""
@@ -139,7 +148,7 @@ def district_capacity(district_id: str, facility_id: str | None = None) -> dict:
     from backend.domain import OrderKind, OrderStatus
     approved = [o for status in (OrderStatus.APPROVED, OrderStatus.DISPATCHED, OrderStatus.RECEIVED)
                 for o in factory.get("store_live").query("orders", {"status": status})
-                if o.kind in (OrderKind.REFERRAL, OrderKind.DEPUTATION) and o.approved_at and o.approved_at.astimezone(IST).date() == day
+                if o.kind in (OrderKind.REFERRAL, OrderKind.DEPUTATION) and o.approved_at and _still_planned(o, day)
                 and o.from_facility_id in index and o.to_facility_id in index]
     census_at = _census_times(day)
     planned = dict(beds)

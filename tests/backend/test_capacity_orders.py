@@ -107,3 +107,15 @@ def test_two_simultaneous_approvals_of_one_suggestion_make_one_order(monkeypatch
         for t in threads:
             t.join()
         assert len(set(ids)) == 1
+
+
+def test_a_referral_approved_before_midnight_stays_reserved():
+    from datetime import timedelta
+    with TestClient(create_app()) as client:
+        referral = client.get("/officer/capacity/mh/nashik", headers=OFFICER).json()["beds"]["referrals"][0]
+        order = client.post("/officer/capacity/approve", json={"kind": "referral", "from_id": referral["from_id"], "to_id": referral["to_id"]},
+                            headers=OFFICER).json()
+        live = factory.get("store_live")
+        stored = live.get("orders", order["order_id"])
+        live.put("orders", stored.order_id, stored.model_copy(update={"approved_at": stored.approved_at - timedelta(days=1)}))  # still on the road
+        assert _no_new_suggestion(client, referral)

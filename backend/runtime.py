@@ -127,6 +127,12 @@ def _ledger_demand() -> dict[tuple[str, str], float]:
     return recent.groupby(["facility_id", "drug_id"])["dispensed"].mean().to_dict()
 
 
+@lru_cache(maxsize=1)
+def _last_week() -> dict[tuple[str, str], float]:
+    """Units dispensed in the last ledger week: the forecast's fallback (ml/forecast/service.py)."""
+    return forecast_panel().sort_values("week").groupby(["facility_id", "drug_id"], observed=True)["dispensed"].last().to_dict()
+
+
 _demand_cache: tuple[int, dict] | None = None
 
 
@@ -302,7 +308,9 @@ def _note_use(record: StockRecord) -> None:
     day = record.reported_at.timestamp() / 86400
     anchor = _use.anchor(key)
     net = 0.0 if anchor is None else _net_in(*key, datetime.fromtimestamp(anchor[0] * 86400, timezone.utc), record.reported_at)
-    if _use.observe(key, day, record.on_hand, net, _ledger_demand().get(key, 0.0)):
+    # The guard's baseline is the larger fallback in use: weekly_demand's 4-week mean, the forecast's last week.
+    baseline = max(_ledger_demand().get(key, 0.0), _last_week().get(key, 0.0))
+    if _use.observe(key, day, record.on_hand, net, baseline):
         _dates[key] = record.as_of_date
         _use_version += 1
 
@@ -457,6 +465,9 @@ def _handle_inbound(payload: dict) -> None:
     if not payload.get("num_media") and body.upper().strip(" .!") in CONFIRM_WORDS | {"1"}:
         live = factory.get("store_live")
         pending = live.query("stock_records", {"facility_id": facility_id, "status": RecordStatus.PENDING})
+        if payload.get("received_at"):  # a redelivered YES confirms only cards that existed when it was sent
+            sent = datetime.fromisoformat(payload["received_at"])
+            pending = [r for r in pending if r.reported_at < sent]
         for record in pending:
             confirmed = apply_reply(record, {})
             live.put("stock_records", confirmed.record_id, confirmed)

@@ -12,7 +12,7 @@ Team **Visible**, Track 3 finalist.
 
 | | |
 |---|---|
-| ▶️ **Demo video (3:51, latest build)** | [**Watch the demo**]((https://drive.google.com/file/d/1lqK3nV-yIKOFTyx_a7R2aOhzeKag5bXm/view?usp=drive_link)) |
+| ▶️ **Demo video (3:51, latest build)** | [https://drive.google.com/file/d/1lqK3nV-yIKOFTyx_a7R2aOhzeKag5bXm/view?usp=drive_link]((https://drive.google.com/file/d/1lqK3nV-yIKOFTyx_a7R2aOhzeKag5bXm/view?usp=drive_link)) |
 | 🌐 **Live app** (Google Cloud Run) | [aushadhinet-frontend-449585498230.asia-south1.run.app](https://aushadhinet-frontend-449585498230.asia-south1.run.app) |
 | 🌐 Submitted link (same app, Render frontend) | [aushadhinet-frontend.onrender.com](https://aushadhinet-frontend.onrender.com) |
 | 📊 Pitch deck | [docs/pitch/AushadhiNet-pitch.pdf](docs/pitch/AushadhiNet-pitch.pdf) |
